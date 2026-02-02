@@ -33,17 +33,18 @@ pip install -e .
 
 ## Configuration
 
-Create a `.env` file with your Anthropic API key:
+Create a `.env` file with your Anthropic API key and optional model override:
 
 ```bash
 cp .env.example .env
-# Edit .env and add your API key
+# Edit .env and add your API key (and optional CLAUDE_MODEL)
 ```
 
 Or set the environment variable directly:
 
 ```bash
 export ANTHROPIC_API_KEY=your-api-key-here
+export CLAUDE_MODEL=claude-sonnet-4-5  # default alias; override with pinned if desired
 ```
 
 ## Usage
