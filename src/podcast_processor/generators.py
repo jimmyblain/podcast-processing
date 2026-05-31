@@ -12,6 +12,22 @@ from .prompts import CHAPTERS_PROMPT, DESCRIPTION_PROMPT, TITLES_PROMPT
 
 console = Console()
 
+# The maximum number of transcript characters we send to Claude in a single
+# request. Why this number?
+#
+# Claude reads text in "tokens" (~4 characters each), and Opus 4.8's standard
+# context window holds ~200,000 tokens TOTAL — and that total must fit the
+# prompt instructions + the transcript + Claude's written reply, all at once.
+# Reserving room for the reply (~4k tokens) and the prompt (~1k tokens) leaves
+# roughly 195k tokens (~780k chars) for the transcript itself.
+#
+# We set the cap to 500,000 characters (~125k tokens): a 10x increase over the
+# old 50k limit, big enough to cover multi-hour episodes in full, while keeping
+# a safety margin so a long episode never overflows the window and crashes.
+# (Note: this assumes the standard 200k window. The 1M-token mode is a separate
+# opt-in API feature this tool does not currently request.)
+MAX_TRANSCRIPT_CHARS = 500_000
+
 
 class GenerationError(Exception):
     """Error during content generation."""
@@ -39,7 +55,9 @@ def _extract_json(text: str) -> str:
     return text
 
 
-def _truncate_transcript(transcript: Transcript, max_chars: int = 50000) -> str:
+def _truncate_transcript(
+    transcript: Transcript, max_chars: int = MAX_TRANSCRIPT_CHARS
+) -> str:
     """Truncate transcript to fit within token limits."""
     full_text = transcript.full_text
     if len(full_text) <= max_chars:
@@ -69,7 +87,7 @@ def generate_description(client: ClaudeClient, transcript: Transcript) -> str:
             transcript=_truncate_transcript(transcript),
         )
 
-        description = client.generate(prompt, temperature=0.7)
+        description = client.generate(prompt)
 
     console.print("[bold green]Description generated!")
     return description.strip()
@@ -96,7 +114,7 @@ def generate_titles(client: ClaudeClient, transcript: Transcript) -> list[Title]
             transcript=_truncate_transcript(transcript),
         )
 
-        response = client.generate(prompt, temperature=0.8)
+        response = client.generate(prompt)
 
     try:
         json_str = _extract_json(response)
@@ -143,10 +161,10 @@ def generate_chapters(
         # Format transcript with timestamps for better chapter alignment
         transcript_with_ts = _format_transcript_with_timestamps(transcript)
 
-        # Truncate if needed
-        if len(transcript_with_ts) > 50000:
+        # Truncate if needed (uses the same shared cap as the other generators)
+        if len(transcript_with_ts) > MAX_TRANSCRIPT_CHARS:
             transcript_with_ts = (
-                transcript_with_ts[:50000]
+                transcript_with_ts[:MAX_TRANSCRIPT_CHARS]
                 + "\n\n[... transcript truncated for length ...]"
             )
 
@@ -155,7 +173,7 @@ def generate_chapters(
             chapter_count=chapter_count,
         )
 
-        response = client.generate(prompt, temperature=0.5)
+        response = client.generate(prompt)
 
     try:
         json_str = _extract_json(response)
