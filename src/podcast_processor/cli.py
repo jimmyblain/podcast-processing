@@ -163,32 +163,54 @@ def process(
         )
     )
 
+    # Step 1: Transcribe the audio. This is the slow, expensive part (it runs
+    # the Whisper model locally), so we protect it in its own try/except.
     try:
-        # Transcribe
         transcriber = WhisperLocalTranscriber(model_name=whisper_model)
         transcript = transcriber.transcribe(audio_file)
-
-        # Generate content
-        client = ClaudeClient(api_key=resolved_api_key, model=settings.claude_model)
-        content = generate_all_content(client, transcript, chapter_count=chapters)
-
-        # Save outputs
-        console.print("\n[bold blue]Saving outputs...[/]")
-        _save_outputs(output_dir, transcript, content)
-
-        # Display summary
-        _display_summary(transcript, content)
-
-        console.print(
-            f"\n[bold green]Done![/] All files saved to: {output_dir}"
-        )
-
     except TranscriptionError as e:
         console.print(f"[bold red]Transcription error:[/] {e}")
         raise typer.Exit(1)
+
+    # Step 2: Save the transcript to disk RIGHT NOW, before we do anything else.
+    # Why: content generation (step 3) calls the Claude API, which can fail for
+    # all sorts of reasons (bad API key, rate limits, a deprecated parameter,
+    # network blips). If we waited until the very end to save — as the old code
+    # did — any such failure would throw away all the Whisper work we just did.
+    # By writing transcript.json here, the transcript always survives, and the
+    # user can resume later with `podcast-process generate transcript.json`.
+    console.print("\n[bold blue]Saving transcript...[/]")
+    _save_outputs(output_dir, transcript, content=None)
+
+    # Step 3: Generate the YouTube content (description, titles, chapters) via
+    # the Claude API. If this fails, we point the user at the saved transcript
+    # so they can pick up exactly where they left off without re-transcribing.
+    try:
+        client = ClaudeClient(api_key=resolved_api_key, model=settings.claude_model)
+        content = generate_all_content(client, transcript, chapter_count=chapters)
     except LLMError as e:
         console.print(f"[bold red]LLM error:[/] {e}")
+        transcript_path = output_dir / "transcript.json"
+        console.print(
+            "\n[yellow]Good news:[/] your transcript was already saved before "
+            "this error, so no transcription work was lost.\n"
+            "Once the issue is resolved, resume content generation with:\n"
+            f"  [bold]podcast-process generate \"{transcript_path}\"[/]"
+        )
         raise typer.Exit(1)
+
+    # Step 4: Save the full set of outputs (transcript + generated content).
+    # Re-saving the transcript here is harmless — it just overwrites the
+    # identical file — and keeps the success path's output identical to before.
+    console.print("\n[bold blue]Saving outputs...[/]")
+    _save_outputs(output_dir, transcript, content)
+
+    # Display summary
+    _display_summary(transcript, content)
+
+    console.print(
+        f"\n[bold green]Done![/] All files saved to: {output_dir}"
+    )
 
 
 @app.command()

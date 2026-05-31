@@ -41,14 +41,12 @@ class ClaudeClient:
         self,
         prompt: str,
         max_tokens: int = 4096,
-        temperature: float = 0.7,
     ) -> str:
         """Generate content using Claude.
 
         Args:
             prompt: The prompt to send
             max_tokens: Maximum tokens in response
-            temperature: Sampling temperature (0-1)
 
         Returns:
             Generated text response
@@ -57,7 +55,6 @@ class ClaudeClient:
             message = self.client.messages.create(
                 model=self.model,
                 max_tokens=max_tokens,
-                temperature=temperature,
                 messages=[{"role": "user", "content": prompt}],
             )
 
