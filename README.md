@@ -44,7 +44,7 @@ Or set the environment variable directly:
 
 ```bash
 export ANTHROPIC_API_KEY=your-api-key-here
-export CLAUDE_MODEL=claude-sonnet-4-5  # default alias; override with pinned if desired
+export CLAUDE_MODEL=claude-opus-4-8  # default alias; override with pinned if desired
 ```
 
 ## Usage

@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # Claude model
     claude_model: str = Field(
-        default="claude-sonnet-4-5",
+        default="claude-opus-4-8",
         description="Claude model to use for content generation",
     )
 

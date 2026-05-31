@@ -16,7 +16,7 @@ class LLMError(Exception):
 class ClaudeClient:
     """Client for Anthropic Claude API."""
 
-    def __init__(self, api_key: str, model: str = "claude-sonnet-4-5"):
+    def __init__(self, api_key: str, model: str = "claude-opus-4-8"):
         """Initialize the Claude client.
 
         Args:
