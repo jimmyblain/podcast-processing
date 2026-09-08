@@ -4,9 +4,9 @@ Run date: 2026-09-08 UTC. Architecture decision: [issue #11](https://github.com/
 
 ## Recommendation and evidence limit
 
-Recommend AssemblyAI Universal-3.5 Pro as the initial primary candidate, with Deepgram Nova-3 / diarization v2 as the automatic backup. Both processed this full episode comfortably within the 15-minute target. AssemblyAI's word-level speaker assignments were more plausible in several short guest answers and closing exchanges when assessed against conversational context; Deepgram was substantially faster and has useful separate speaker-confidence fields.
+The user accepted AssemblyAI Universal-3.5 Pro as the initial primary provider, with Deepgram Nova-3 / diarization v2 as the automatic backup, and approved finalizing architecture issue #11 while tracking detailed timing acceptance in #10. Both processed this full episode comfortably within the 15-minute target. AssemblyAI's word-level speaker assignments were more plausible in several short guest answers and closing exchanges when assessed against conversational context; Deepgram was substantially faster and has useful separate speaker-confidence fields.
 
-This recommendation is supported by one recording, structural checks, contextual review, and the user’s listening annotations for selected phrases. It is **not** a representative full-episode accuracy ranking. This session could not directly listen to audio through the available tool interface. The user subsequently supplied five single-speaker phrase annotations and one both-speaker thanks annotation from the prepared source excerpts (see below). WER, full-episode diarization error rate, overlap accuracy, and the source-audited approximately ±1-second boundary target remain unmeasured. Historical transcripts and agreement between providers are not ground truth. The selected listening check is complete and favors AssemblyAI. Source-audited cut timing remains outstanding; do not describe the complete quality contract as validated.
+This recommendation is supported by one recording, structural checks, contextual review, and the user’s listening annotations for selected phrases. It is **not** a representative full-episode accuracy ranking. This session could not directly listen to audio through the available tool interface. The user subsequently supplied five single-speaker phrase annotations and one both-speaker thanks annotation from the prepared source excerpts (see below). WER, full-episode diarization error rate, overlap accuracy, and the source-audited approximately ±1-second boundary target remain unmeasured. Historical transcripts and agreement between providers are not ground truth. The selected listening check is complete and favors AssemblyAI. Source-audited cut timing remains outstanding under #10; closing the architecture decision does not mean the complete quality contract has been validated.
 
 ## Input, authorization, and requests
 
@@ -82,16 +82,16 @@ Sources: [AssemblyAI pricing](https://www.assemblyai.com/pricing), [Deepgram pri
 
 Exact billed deductions could not be verified: Deepgram project discovery succeeded, but balance, request-details, and billing-breakdown reads returned HTTP 403 with this key. AssemblyAI's transcript response supplies duration, not billed dollars; billing is exposed in its account dashboard. No purchases or account billing settings were changed. Actual usage dollars remain unavailable; retain an estimate/actual distinction and reconcile account-specific rates before implementing a strict dollar cap. No further paid calls were made.
 
-## Proposed architecture to carry forward
+## Accepted architecture to carry forward
 
-- Managed full-episode ASR plus diarization behind small provider adapters; AssemblyAI primary candidate, Deepgram backup candidate. Preserve raw responses and normalize to the agreed provider-neutral timed-transcript contract before downstream work.
+- Managed full-episode ASR plus diarization behind small provider adapters; AssemblyAI primary, Deepgram backup. Preserve raw responses and normalize to the agreed provider-neutral timed-transcript contract before downstream work.
 - No mandatory local models, separate forced-alignment stage, or chunk stitching in the initial default. This full episode fits both services. Chunking would require explicit offset mapping and cross-chunk speaker reconciliation, and was not validated here.
 - Preserve source timing through minimal preprocessing. A lossless FLAC transport copy worked. Optimize upload size only after a separate quality check; don't remove pauses or run untested denoising by default.
 - Record selected model names, all request settings, returned versions/UUIDs, source fingerprint, endpoint/region, request IDs, and artifact versions. Pin immutable versions where supported; do not pretend AssemblyAI's generic metadata is a reproducible model pin. Provider/model changes require evaluation under #10.
 - Use introductions, confirmed participant metadata, and consistent later dialogue to map anonymous voices. Keep ambiguous attribution anonymous and finish. No enrollment or mandatory operator identity review.
 - Automatic backup for service failure or an unusable transcript, subject to the shared time/cost budget. Do not invoke a second provider merely for individual low-confidence words. Preserve usable results and report limited/unsupported outputs after bounded recovery. Exact checkpoints, uncertain POST handling, caching, and retry accounting remain #4; measured quality thresholds and reference fixtures remain #10.
 
-These are recommendations, not production changes or a completed acceptance test. The existing CLI still uses its existing local transcriber.
+These are accepted architecture decisions, not production changes or a completed acceptance test. The existing CLI still uses its existing local transcriber. Detailed state and recovery behavior is next in #4; source-audited timing, broader quality gates, and actual-cost verification belong to #10.
 
 ## Local evidence
 
