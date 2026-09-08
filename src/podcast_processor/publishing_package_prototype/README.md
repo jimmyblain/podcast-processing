@@ -1,6 +1,6 @@
 # Publishing-package prototype
 
-**THROWAWAY — editorial review pending.** This is the concrete sample for [Prototype the copy-paste-ready publishing package](https://github.com/jimmyblain/podcast-processing/issues/6). It is not a production generator or an approved evaluation golden.
+**THROWAWAY — editorial sample approved on 2026-09-07.** This is the concrete sample for [Prototype the copy-paste-ready publishing package](https://github.com/jimmyblain/podcast-processing/issues/6). It is an approved editorial reference, not a production generator or a verified transcription/timing golden.
 
 ## Question
 
@@ -53,4 +53,4 @@ Passed one-off structural checks: 15 distinct titles, 5/5/5 strategy mix, title 
 
 The browser tool blocked local-file navigation. The preview has not received an interactive browser smoke check in this session. JavaScript syntax was checked separately. No prototype test suite was introduced.
 
-**Verdict: awaiting user review.** Review the description voice, usefulness and intensity of the 15 title concepts, the chapter granularity, the completion-report clarity, and which viewing arrangement helps. No production decisions should be inferred solely from this artifact's existence. The original CLI is unchanged.
+**Verdict: approved by the user on 2026-09-07.** The user confirmed the voice across the package, liked all 15 titles, found the thumbnail briefs sufficient, and accepted the operator experience and completion report. Favorite titles are T01, T06, and T13, one from each strategy. See [the recorded review](REVIEW.md). This approves the editorial sample and output shapes; audio timing and production automation remain unverified. No single preview layout was selected as a production UI requirement. The original CLI is unchanged.
