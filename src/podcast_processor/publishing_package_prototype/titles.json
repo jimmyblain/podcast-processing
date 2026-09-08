@@ -1,0 +1,182 @@
+[
+  {
+    "id": "T01",
+    "category": "Topic / benefit",
+    "title": "5 Communication Skills for More Honest Relationships",
+    "thumbnail_text": "SAY WHAT MATTERS",
+    "visual_direction": "Lish in a calm, direct-to-camera close-up on the left; a simple speech-bubble outline on the right holds the overlay. Keep the background quiet.",
+    "reasoning": "Names the practical framework; the overlay makes its personal purpose immediate.",
+    "evidence": {
+      "start": 365.2,
+      "end": 560.4
+    }
+  },
+  {
+    "id": "T02",
+    "category": "Topic / benefit",
+    "title": "How to Say What You Need Without Building Resentment",
+    "thumbnail_text": "LET IT OUT",
+    "visual_direction": "Lish mid-explanation with an open hand and an earnest expression, cropped on the right; large overlay in open space on the left.",
+    "reasoning": "Connects an everyday skill to the emotional cost of holding back.",
+    "evidence": {
+      "start": 1763.26,
+      "end": 1917.54
+    }
+  },
+  {
+    "id": "T03",
+    "category": "Topic / benefit",
+    "title": "How to Listen Without Planning Your Reply",
+    "thumbnail_text": "HEAR THEM FIRST",
+    "visual_direction": "A thoughtful close-up of Lish angled slightly toward the center; a single uncluttered speech shape opposite her with the overlay.",
+    "reasoning": "Offers one recognizable behavior to change, with a complementary action in the overlay.",
+    "evidence": {
+      "start": 1098.46,
+      "end": 1309.0
+    }
+  },
+  {
+    "id": "T04",
+    "category": "Topic / benefit",
+    "title": "How to Bring Up the Past Without Losing the Conversation",
+    "thumbnail_text": "STAY WITH ME",
+    "visual_direction": "Lish with a measured, open-palmed gesture on the left; one simple looping arrow fades behind the overlay on the right.",
+    "reasoning": "Keeps the nuance that past experiences can be relevant when their purpose is clear.",
+    "evidence": {
+      "start": 1506.84,
+      "end": 1645.76
+    }
+  },
+  {
+    "id": "T05",
+    "category": "Topic / benefit",
+    "title": "Faith and Communication: Finding the Words for Hard Talks",
+    "thumbnail_text": "PRAY. THEN SPEAK.",
+    "visual_direction": "Lish with a reflective expression, framed slightly off-center against a warm plain background; overlay beside her at eye level.",
+    "reasoning": "Makes the episode’s Christian perspective visible without promising a guaranteed outcome.",
+    "evidence": {
+      "start": 2011.86,
+      "end": 2234.87
+    }
+  },
+  {
+    "id": "T06",
+    "category": "Curiosity / story",
+    "title": "You Said Everything. Why Do You Still Feel Unheard?",
+    "thumbnail_text": "WHAT GOT LOST?",
+    "visual_direction": "Lish with a questioning expression on the right; two offset speech-bubble outlines on the left, with the overlay between them.",
+    "reasoning": "Starts with a familiar frustration and invites viewers into the communication framework.",
+    "evidence": {
+      "start": 45.28,
+      "end": 144.68
+    }
+  },
+  {
+    "id": "T07",
+    "category": "Curiosity / story",
+    "title": "The Pause That Changed How Lish Listens",
+    "thumbnail_text": "BEFORE YOU REPLY",
+    "visual_direction": "Lish listening with an attentive expression, cropped close on the left; a small pause symbol under the overlay on the right.",
+    "reasoning": "Uses the specific friendship story to introduce active listening rather than vague transformation.",
+    "evidence": {
+      "start": 1103.18,
+      "end": 1224.0
+    }
+  },
+  {
+    "id": "T08",
+    "category": "Curiosity / story",
+    "title": "What Are You Really Saying When You Say Nothing?",
+    "thumbnail_text": "THE UNSPOKEN PART",
+    "visual_direction": "Lish looking thoughtful with her hands gently clasped; generous blank space above her shoulder for the overlay.",
+    "reasoning": "Creates curiosity around withheld needs and the resentment discussed in the episode.",
+    "evidence": {
+      "start": 1763.26,
+      "end": 1917.54
+    }
+  },
+  {
+    "id": "T09",
+    "category": "Curiosity / story",
+    "title": "The Conversation Before the Difficult Conversation",
+    "thumbnail_text": "START WITH YOU",
+    "visual_direction": "Lish in a reflective three-quarter portrait beside a plain notebook; place the overlay across the empty opposite half.",
+    "reasoning": "Points to the private work of identifying feelings before trying to express them.",
+    "evidence": {
+      "start": 754.0,
+      "end": 870.02
+    }
+  },
+  {
+    "id": "T10",
+    "category": "Curiosity / story",
+    "title": "What Lish Learned About Communication From Pentecost",
+    "thumbnail_text": "A DIFFERENT LANGUAGE",
+    "visual_direction": "Lish with an engaged, thoughtful expression on the left; two simple speech shapes meeting on the right beneath the overlay.",
+    "reasoning": "Highlights a distinctive faith reflection and its connection to emotional understanding.",
+    "evidence": {
+      "start": 2011.86,
+      "end": 2161.07
+    }
+  },
+  {
+    "id": "T11",
+    "category": "Bold perspective",
+    "title": "Being Clear Doesn’t Mean They’ll Understand You",
+    "thumbnail_text": "YOUR PART. THEIR PART.",
+    "visual_direction": "Lish with a composed, firm expression centered slightly left; a fine vertical line separates her from the overlay on the right.",
+    "reasoning": "Preserves the limit Lish places on what clear communication can control.",
+    "evidence": {
+      "start": 870.74,
+      "end": 1087.86
+    }
+  },
+  {
+    "id": "T12",
+    "category": "Bold perspective",
+    "title": "You Can Win the Argument and Miss the Person",
+    "thumbnail_text": "UNDERSTANDING FIRST",
+    "visual_direction": "Lish speaking with a steady expression and one open hand; overlay on the opposite side, with no opponent or staged confrontation.",
+    "reasoning": "Frames the discussion’s emphasis on understanding rather than entering a conversation to be right.",
+    "evidence": {
+      "start": 1224.0,
+      "end": 1309.0
+    }
+  },
+  {
+    "id": "T13",
+    "category": "Bold perspective",
+    "title": "Keeping Quiet Isn’t Always Keeping the Peace",
+    "thumbnail_text": "WHAT’S UNSAID?",
+    "visual_direction": "Lish with a knowing, gently challenging expression on the right; the overlay sits alone in open space on the left.",
+    "reasoning": "Uses the episode’s challenge to avoidance while the word “always” preserves nuance.",
+    "evidence": {
+      "start": 705.38,
+      "end": 753.78
+    }
+  },
+  {
+    "id": "T14",
+    "category": "Bold perspective",
+    "title": "Honesty Doesn’t Have to Be Brutal",
+    "thumbnail_text": "TRUTH WITH CARE",
+    "visual_direction": "Lish mid-conversation with a warm but serious expression; balanced close crop on the left and oversized overlay on the right.",
+    "reasoning": "Connects respectful assertiveness with the episode’s explicit caution about brutal honesty.",
+    "evidence": {
+      "start": 1763.26,
+      "end": 1901.76
+    }
+  },
+  {
+    "id": "T15",
+    "category": "Bold perspective",
+    "title": "Listening Doesn’t Mean You Have to Reconcile",
+    "thumbnail_text": "YOU CAN DECIDE",
+    "visual_direction": "Lish with a grounded, reassuring expression, shoulders visible; overlay in the open upper-left area, with minimal visual decoration.",
+    "reasoning": "Names a specific boundary in the conversation without implying reconciliation is always wrong.",
+    "evidence": {
+      "start": 1455.0,
+      "end": 1506.1
+    }
+  }
+]
