@@ -153,3 +153,8 @@ After processing, you'll find these files in the output directory:
 ## License
 
 MIT
+
+## Versioned episode import
+
+Import preserved transcripts without transcription, then inspect and generate from
+recoverable episode workspaces. See [the import workflow and current limitations](docs/workspace-import.md).

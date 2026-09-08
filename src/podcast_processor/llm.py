@@ -1,10 +1,16 @@
 """Claude API client for content generation."""
 
+from typing import Protocol
+
 import anthropic
 from rich.console import Console
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 console = Console()
+
+
+class TextClient(Protocol):
+    def generate(self, prompt: str, max_tokens: int = 4096) -> str: ...
 
 
 class LLMError(Exception):
@@ -58,7 +64,7 @@ class ClaudeClient:
                 messages=[{"role": "user", "content": prompt}],
             )
 
-            if message.content and len(message.content) > 0:
+            if message.content and isinstance(message.content[0], anthropic.types.TextBlock):
                 return message.content[0].text
 
             raise LLMError("Empty response from Claude API")

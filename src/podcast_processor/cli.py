@@ -1,6 +1,5 @@
 """CLI interface for podcast processing."""
 
-import json
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -9,11 +8,12 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from .config import Settings, WhisperModel, get_settings
-from .generators import generate_all_content
-from .llm import ClaudeClient, LLMError
+from .config import WhisperModel, get_settings
+from .operations import generate_legacy, load_legacy_transcript, transcribe_legacy
+from .workspace import WorkspaceError
+from .llm import LLMError
 from .models import GeneratedContent, Transcript
-from .transcriber import TranscriptionError, WhisperLocalTranscriber
+from .transcriber import TranscriptionError
 
 app = typer.Typer(
     name="podcast-process",
@@ -21,50 +21,6 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 console = Console()
-
-
-def _save_outputs(
-    output_dir: Path,
-    transcript: Transcript,
-    content: GeneratedContent | None = None,
-) -> None:
-    """Save all outputs to the output directory."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Save transcript JSON
-    transcript_json = output_dir / "transcript.json"
-    with open(transcript_json, "w") as f:
-        json.dump(transcript.model_dump(), f, indent=2)
-    console.print(f"  [dim]Saved:[/] {transcript_json}")
-
-    # Save transcript plain text
-    transcript_txt = output_dir / "transcript.txt"
-    with open(transcript_txt, "w") as f:
-        f.write(transcript.full_text)
-    console.print(f"  [dim]Saved:[/] {transcript_txt}")
-
-    if content:
-        # Save description
-        if content.description:
-            desc_file = output_dir / "description.md"
-            with open(desc_file, "w") as f:
-                f.write(content.description)
-            console.print(f"  [dim]Saved:[/] {desc_file}")
-
-        # Save titles
-        if content.titles:
-            titles_file = output_dir / "titles.json"
-            with open(titles_file, "w") as f:
-                json.dump([t.model_dump() for t in content.titles], f, indent=2)
-            console.print(f"  [dim]Saved:[/] {titles_file}")
-
-        # Save chapters
-        if content.chapters:
-            chapters_file = output_dir / "chapters.txt"
-            with open(chapters_file, "w") as f:
-                for chapter in content.chapters:
-                    f.write(chapter.to_youtube_format() + "\n")
-            console.print(f"  [dim]Saved:[/] {chapters_file}")
 
 
 def _display_summary(transcript: Transcript, content: GeneratedContent | None) -> None:
@@ -166,28 +122,16 @@ def process(
     # Step 1: Transcribe the audio. This is the slow, expensive part (it runs
     # the Whisper model locally), so we protect it in its own try/except.
     try:
-        transcriber = WhisperLocalTranscriber(model_name=whisper_model)
-        transcript = transcriber.transcribe(audio_file)
+        transcript = transcribe_legacy(audio_file, output_dir, whisper_model)
     except TranscriptionError as e:
         console.print(f"[bold red]Transcription error:[/] {e}")
         raise typer.Exit(1)
-
-    # Step 2: Save the transcript to disk RIGHT NOW, before we do anything else.
-    # Why: content generation (step 3) calls the Claude API, which can fail for
-    # all sorts of reasons (bad API key, rate limits, a deprecated parameter,
-    # network blips). If we waited until the very end to save — as the old code
-    # did — any such failure would throw away all the Whisper work we just did.
-    # By writing transcript.json here, the transcript always survives, and the
-    # user can resume later with `podcast-process generate transcript.json`.
-    console.print("\n[bold blue]Saving transcript...[/]")
-    _save_outputs(output_dir, transcript, content=None)
 
     # Step 3: Generate the YouTube content (description, titles, chapters) via
     # the Claude API. If this fails, we point the user at the saved transcript
     # so they can pick up exactly where they left off without re-transcribing.
     try:
-        client = ClaudeClient(api_key=resolved_api_key, model=settings.claude_model)
-        content = generate_all_content(client, transcript, chapter_count=chapters)
+        content = generate_legacy(transcript, output_dir, resolved_api_key, settings.claude_model, chapters)
     except LLMError as e:
         console.print(f"[bold red]LLM error:[/] {e}")
         transcript_path = output_dir / "transcript.json"
@@ -198,12 +142,6 @@ def process(
             f"  [bold]podcast-process generate \"{transcript_path}\"[/]"
         )
         raise typer.Exit(1)
-
-    # Step 4: Save the full set of outputs (transcript + generated content).
-    # Re-saving the transcript here is harmless — it just overwrites the
-    # identical file — and keeps the success path's output identical to before.
-    console.print("\n[bold blue]Saving outputs...[/]")
-    _save_outputs(output_dir, transcript, content)
 
     # Display summary
     _display_summary(transcript, content)
@@ -248,12 +186,7 @@ def transcribe(
 
     try:
         # Transcribe
-        transcriber = WhisperLocalTranscriber(model_name=whisper_model)
-        transcript = transcriber.transcribe(audio_file)
-
-        # Save outputs (transcript only)
-        console.print("\n[bold blue]Saving transcript...[/]")
-        _save_outputs(output_dir, transcript, content=None)
+        transcript = transcribe_legacy(audio_file, output_dir, whisper_model)
 
         # Display summary
         _display_summary(transcript, content=None)
@@ -290,6 +223,24 @@ def generate(
     Reads a transcript.json file and generates description, titles, and chapters.
     Useful when you already have a transcript and want to regenerate content.
     """
+    if transcript_file.is_dir():
+        from .operations import generate_episode
+        from .workspace import Workspace
+        if output is not None:
+            typer.echo("Error: versioned generation writes to the workspace; omit --output.")
+            raise typer.Exit(1)
+        settings = get_settings()
+        try:
+            state = generate_episode(transcript_file, api_key or settings.anthropic_api_key,
+                                     settings.claude_model, chapters)
+            typer.echo(Workspace(transcript_file).report(state))
+            if state.runs[-1].status != 'completed':
+                raise typer.Exit(1)
+            return
+        except (WorkspaceError, OSError, ValueError) as error:
+            typer.echo(f"Error: {error}")
+            raise typer.Exit(1)
+
     settings = get_settings()
 
     # Resolve API key
@@ -320,9 +271,7 @@ def generate(
 
     try:
         # Load transcript
-        with open(transcript_file) as f:
-            transcript_data = json.load(f)
-        transcript = Transcript.model_validate(transcript_data)
+        transcript = load_legacy_transcript(transcript_file)
 
         console.print(
             f"[bold blue]Loaded transcript:[/] {len(transcript.segments)} segments, "
@@ -330,12 +279,7 @@ def generate(
         )
 
         # Generate content
-        client = ClaudeClient(api_key=resolved_api_key, model=settings.claude_model)
-        content = generate_all_content(client, transcript, chapter_count=chapters)
-
-        # Save outputs (content only, transcript already exists)
-        console.print("\n[bold blue]Saving outputs...[/]")
-        _save_outputs(output_dir, transcript, content)
+        content = generate_legacy(transcript, output_dir, resolved_api_key, settings.claude_model, chapters)
 
         # Display summary
         _display_summary(transcript, content)
@@ -344,11 +288,77 @@ def generate(
             f"\n[bold green]Done![/] Content saved to: {output_dir}"
         )
 
-    except json.JSONDecodeError as e:
-        console.print(f"[bold red]Error parsing transcript:[/] {e}")
+    except (ValueError, WorkspaceError, OSError) as e:
+        console.print(f"Error parsing transcript: {e}", markup=False)
         raise typer.Exit(1)
     except LLMError as e:
         console.print(f"[bold red]LLM error:[/] {e}")
+        raise typer.Exit(1)
+
+
+@app.command("import")
+def import_command(
+    transcript_file: Path,
+    root: Annotated[Path, typer.Option(help="Versioned workspace collection")] = Path("output/episodes"),
+    source: Annotated[Optional[Path], typer.Option()] = None,
+    copy_source: Annotated[bool, typer.Option("--copy-source")] = False,
+    workspace: Annotated[Optional[Path], typer.Option(help="Explicit existing episode to update")] = None,
+    show_profile: Annotated[Optional[Path], typer.Option()] = None,
+    metadata: Annotated[Optional[Path], typer.Option()] = None,
+) -> None:
+    """Explicitly import preserved data without transcription or paid calls."""
+    from .operations import import_episode
+    from .workspace import WorkspaceError
+    try:
+        from .workspace_models import ShowProfile, EpisodeMetadata
+        profile = ShowProfile.model_validate_json(show_profile.read_bytes()) if show_profile else None
+        episode = EpisodeMetadata.model_validate_json(metadata.read_bytes()) if metadata else None
+        path = import_episode(transcript_file, root, source, copy_source, workspace, profile, episode)
+        console.print(str(path), markup=False)
+    except (WorkspaceError, OSError, ValueError) as error:
+        console.print(f"Error: {error}", markup=False)
+        raise typer.Exit(1)
+
+
+@app.command("inspect")
+def inspect_command(
+    workspace: Path,
+    as_json: Annotated[bool, typer.Option("--json", help="Print committed structured state")] = False,
+) -> None:
+    """Read current usable outputs and recover interrupted writes."""
+    from .operations import inspect_episode
+    from .workspace import Workspace, WorkspaceError
+    try:
+        state = inspect_episode(workspace)
+        typer.echo(state.model_dump_json(indent=2) if as_json else Workspace(workspace).report(state))
+    except (WorkspaceError, OSError, ValueError) as error:
+        console.print(f"Error: {error}", markup=False)
+        raise typer.Exit(1)
+
+
+@app.command("attach-source")
+def attach_source_command(workspace: Path, source: Path,
+                          copy_source: Annotated[bool, typer.Option("--copy-source")] = False) -> None:
+    """Reattach matching media or create a new source revision for changed bytes."""
+    from .operations import attach_source
+    from .workspace import WorkspaceError
+    try:
+        state = attach_source(workspace, source, copy_source)
+        typer.echo(f"Episode {state.episode_id}: source revision {state.source_revision}")
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f"Error: {error}")
+        raise typer.Exit(1)
+
+
+@app.command("check-source")
+def check_source_command(workspace: Path) -> None:
+    """Verify a media-dependent operation can access the exact recording bytes."""
+    from .operations import check_source
+    from .workspace import WorkspaceError
+    try:
+        typer.echo(str(check_source(workspace)))
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f"Error: {error}")
         raise typer.Exit(1)
 
 

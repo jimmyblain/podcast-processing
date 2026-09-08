@@ -16,6 +16,13 @@ dependencies = [
     "tenacity>=8.0.0",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "mypy>=1.10"]
+
+[tool.mypy]
+ignore_missing_imports = true
+check_untyped_defs = true
+
 [project.scripts]
 podcast-process = "podcast_processor.cli:app"
 
