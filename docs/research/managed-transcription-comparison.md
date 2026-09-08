@@ -6,7 +6,7 @@ Run date: 2026-09-08 UTC. Architecture decision: [issue #11](https://github.com/
 
 Recommend AssemblyAI Universal-3.5 Pro as the initial primary candidate, with Deepgram Nova-3 / diarization v2 as the automatic backup. Both processed this full episode comfortably within the 15-minute target. AssemblyAI's word-level speaker assignments were more plausible in several short guest answers and closing exchanges when assessed against conversational context; Deepgram was substantially faster and has useful separate speaker-confidence fields.
 
-This is a preliminary recommendation from one recording, structural checks, and contextual review of returned text and word-level speaker labels. It is **not** an audio-verified accuracy ranking. This session could not directly listen to audio through the available tool interface. No manually annotated reference was created; WER, diarization error rate, overlap accuracy, and the source-audited approximately ±1-second boundary target remain unmeasured. Historical transcripts and agreement between providers are not ground truth. Keep issue #11 open for that remaining acceptance evidence; do not describe a provider as finally quality-approved.
+This recommendation is supported by one recording, structural checks, contextual review, and the user’s listening annotations for selected phrases. It is **not** a representative full-episode accuracy ranking. This session could not directly listen to audio through the available tool interface. The user subsequently supplied five single-speaker phrase annotations and one both-speaker thanks annotation from the prepared source excerpts (see below). WER, full-episode diarization error rate, overlap accuracy, and the source-audited approximately ±1-second boundary target remain unmeasured. Historical transcripts and agreement between providers are not ground truth. The selected listening check is complete and favors AssemblyAI. Source-audited cut timing remains outstanding; do not describe the complete quality contract as validated.
 
 ## Input, authorization, and requests
 
@@ -105,4 +105,21 @@ Under ignored `output/provider-comparison-erica-campbell/`:
 - `deepgram-balance-before.json`, `deepgram-usage.json`: access status for attempted billing verification.
 - `run_comparison.py`, `analyze_results.py`: one-off evaluation scripts, not integrated production code.
 
-The full audio and credentials must not be committed. The source file was not modified. Remaining source-verified evaluation needs a manually checked reference or an audio-capable review environment; it does not introduce a human gate into normal episode processing.
+The full audio and credentials must not be committed. The source file was not modified. Remaining source-verified timing and broader accuracy evaluation needs an annotated reference or an audio-capable review environment; it does not introduce a human gate into normal episode processing.
+
+## Completed user listening check
+
+The user listened to all three prepared source clips. Erica says the five single-speaker phrases below. For the final thanks, the user clarified that both speakers said “thank you”; exact word ownership, ordering, and simultaneous overlap were not specified.
+
+| Source phrase | User-confirmed speaker | AssemblyAI word label | Deepgram word label |
+| --- | --- | --- | --- |
+| “Hello” near 02:44 | Erica | Lish — mismatch | Erica — match |
+| “Six” near 02:48 | Erica | Erica — match | Lish — mismatch |
+| “Harmonica” near 16:46 | Erica | Erica — match | Lish — mismatch |
+| “my sisters, my kids” near 16:51 | Erica | Erica — match | Lish — mismatch |
+| “I don’t think it will” near 55:02 | Erica | Erica — match | Lish — mismatch |
+| Closing “thank you” | Both Lish and Erica | Erica only | Lish only |
+
+AssemblyAI matches **4 of 5 single-speaker phrase checks**; Deepgram matches **1 of 5**. These deliberately selected disputed phrases provide direct listening evidence favoring AssemblyAI for these cases, not representative accuracy percentages. Exclude the both-speaker thanks from that score: neither single-label rendering fully captures the user’s description. Do not infer that both said the entire “Thank you so much” phrase or that their speech was simultaneous without finer annotation.
+
+The user's listening answers are complete. The provider recommendation remains AssemblyAI primary and Deepgram backup. These annotations do not validate precise timestamps or cut boundaries. Preserve the both-speaker observation as uncertainty to handle conservatively, rather than force a single-person attribution or claim verified overlap timing. Machine-readable annotations are saved locally in `output/provider-comparison-erica-campbell/listening-check/user-annotations.json`.
