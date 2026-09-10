@@ -8,10 +8,10 @@ from .planning_models import (
     FinishedSection, NaturalBoundary, PlanningEvidence, PlanningOutcome, SectionProposal,
 )
 from .workspace import Workspace, digest, identifier, now, ownership
-from .workspace_models import PreservedTranscript, Run, WorkspaceState
+from .workspace_models import PreservedSegment, PreservedTranscript, PreservedWord, Run, WorkspaceState
 
 VERSION = 'section-planner-v1'
-PLAN_FILES = ('section-plan.json', 'section-proposal.json')
+PLAN_FILES = ('section-plan.json', 'section-boundaries.json')
 LIMITATIONS = [
     'No transition preparation, trimming, media cutting, stitching or export was performed.',
     'Natural-boundary assertions are supplied evidence, not inferred from punctuation or waveform silence.',
@@ -79,6 +79,11 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
         reasons.append('Supplied source duration differs from the preserved original-source duration.')
     if transcript.duration is not None and source.duration is not None and source.duration != Decimal(str(transcript.duration)):
         reasons.append('Timed transcript duration differs from the original-source duration; source offsets are unsupported.')
+    intervals: list[PreservedSegment | PreservedWord] = [*transcript.segments, *transcript.words]
+    if source.duration is not None and any(
+            bound is not None and Decimal(str(bound)) > source.duration
+            for interval in intervals for bound in (interval.start, interval.end)):
+        reasons.append('Timed transcript evidence extends outside the original-source duration.')
     if source.basis == 'fixture':
         limitations.append('Source identity/duration use labeled fixture assumptions; this is not verified real audio quality.')
     assets = {'episode_start': evidence.episode_start, 'transition_in': evidence.transition_in, 'transition_out': evidence.transition_out}
@@ -167,7 +172,7 @@ def plan_episode(path: Path, evidence_path: Path) -> WorkspaceState:
         prior = state.artifacts.get('section-plan.json')
         if prior and prior.dependencies == dependencies:
             outcome = PlanningOutcome.model_validate_json(workspace.artifact_bytes(prior))
-            if outcome.proposal is None or 'section-proposal.json' in state.artifacts:
+            if outcome.proposal is None or 'section-boundaries.json' in state.artifacts:
                 return state
         run = Run(id=identifier(), operation_id=identifier(), operation='plan', status='running', started_at=now(),
                   inputs={'evidence': evidence.model_dump(mode='json'), 'dependencies': dependencies})
@@ -178,7 +183,7 @@ def plan_episode(path: Path, evidence_path: Path) -> WorkspaceState:
         outcome = propose(evidence, transcript, state, dependencies)
         workspace.add_artifact(state, 'section-plan.json', outcome.model_dump_json(indent=2).encode(), dependencies, VERSION)
         if outcome.proposal:
-            workspace.add_artifact(state, 'section-proposal.json', outcome.proposal.model_dump_json(indent=2).encode(), dependencies, VERSION)
+            workspace.add_artifact(state, 'section-boundaries.json', outcome.proposal.model_dump_json(indent=2).encode(), dependencies, VERSION)
         run.status, run.finished_at = 'completed', now()
         run.limitations = outcome.limitations + outcome.reasons
         workspace.commit(state)

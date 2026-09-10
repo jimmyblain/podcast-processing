@@ -63,7 +63,7 @@ def test_unequal_sections_keep_original_offsets_music_pauses_and_source_tail(tmp
     before = inspect(workspace)
     outcome = plan(workspace, evidence)
     assert outcome['status'] == 'valid'
-    proposal = SectionProposal.model_validate_json((workspace / 'current/section-proposal.json').read_bytes())
+    proposal = SectionProposal.model_validate_json((workspace / 'current/section-boundaries.json').read_bytes())
     assert [(s.source_start, s.source_end) for s in proposal.sections] == [(0, 600), (600, 1300), (1300, 2100)]
     assert [s.finished_duration for s in proposal.sections] == [Decimal('616.5'), Decimal('711.5'), Decimal('811.5')]
     assert outcome['overhead'] == ['16.5', '11.5', '11.5']
@@ -102,8 +102,8 @@ def test_just_outside_each_finished_section_limit_never_exposes_proposal(tmp_pat
     result = plan(workspace, evidence)
     assert result['status'] == 'unavailable'
     assert 'No pair' in ' '.join(result['reasons'])
-    assert 'section-proposal.json' not in inspect(workspace)['artifacts']
-    assert not (workspace / 'current/section-proposal.json').exists()
+    assert 'section-boundaries.json' not in inspect(workspace)['artifacts']
+    assert not (workspace / 'current/section-boundaries.json').exists()
 
 
 @pytest.mark.parametrize('duration,expected', [
@@ -120,7 +120,7 @@ def test_impossibility_explains_source_and_transition_budgets(tmp_path, duration
     assert result['evidence']['source']['duration'] == duration
     assert result['overhead'] == ['16.5', '11.5', '11.5']
     assert all(item in inspect(workspace)['artifacts'].items() for item in original.items())
-    assert 'section-proposal.json' not in inspect(workspace)['artifacts']
+    assert 'section-boundaries.json' not in inspect(workspace)['artifacts']
     assert inspect(workspace)['runs'][-1]['status'] == 'completed'
 
 
@@ -250,9 +250,9 @@ def test_planning_input_changes_preserve_independent_publishing_and_transcript(t
     assert inspect(workspace)['artifacts'] == after['artifacts']
     if change == 'duration':
         assert outcome['status'] == 'unavailable'
-        assert 'section-proposal.json' not in after['artifacts']
-        assert not (workspace / 'current/section-proposal.json').exists()
-        assert (workspace / before['artifacts']['section-proposal.json']['path']).is_file()
+        assert 'section-boundaries.json' not in after['artifacts']
+        assert not (workspace / 'current/section-boundaries.json').exists()
+        assert (workspace / before['artifacts']['section-boundaries.json']['path']).is_file()
 
 
 def test_correction_invalidates_boundary_evidence_and_leaves_copy_reusable(tmp_path, monkeypatch):
@@ -269,7 +269,7 @@ def test_correction_invalidates_boundary_evidence_and_leaves_copy_reusable(tmp_p
                          'evidence': 'Synthetic correction for invalidation acceptance'}])
     corrected = inspect(workspace)
     assert 'section-plan.json' not in corrected['artifacts']
-    assert 'section-proposal.json' not in corrected['artifacts']
+    assert 'section-boundaries.json' not in corrected['artifacts']
     assert corrected['artifacts']['titles.json'] == before['artifacts']['titles.json']
     assert corrected['artifacts']['import-original.json'] == before['artifacts']['import-original.json']
     stale = plan(workspace, evidence)
@@ -289,14 +289,14 @@ def test_unknown_word_timing_uses_another_supported_natural_boundary(tmp_path):
     assert [b['time'] for b in outcome['proposal']['boundaries']] == ['700', '1400']
 
 
-@pytest.mark.parametrize('filename', ['section-plan.json', 'section-proposal.json'])
+@pytest.mark.parametrize('filename', ['section-plan.json', 'section-boundaries.json'])
 def test_direct_edits_preserved_without_leaving_validity_claims(tmp_path, filename):
     workspace, evidence = episode(tmp_path)
     plan(workspace, evidence)
     edited = b'\xff\x00 Directly edited planning evidence\r\n'
     (workspace / 'current' / filename).write_bytes(edited)
     recovered = inspect(workspace)
-    assert 'section-proposal.json' not in recovered['artifacts']
+    assert 'section-boundaries.json' not in recovered['artifacts']
     assert 'section-plan.json' not in recovered['artifacts']
     saved_edit = next(a for a in recovered['history'] if a['status'] == 'human-edited')
     assert (workspace / saved_edit['path']).read_bytes() == edited
@@ -323,3 +323,14 @@ def test_invalid_configuration_preserves_previous_valid_output(tmp_path):
     result = runner.invoke(app, ['plan', str(workspace), '--evidence', str(path)])
     assert result.exit_code == 1
     assert inspect(workspace)['artifacts'] == before['artifacts']
+
+
+def test_timing_outside_explicit_source_duration_cannot_support_a_proposal(tmp_path):
+    def mutate(data):
+        data['duration'] = None
+        data['words'][-1]['end'] = 2110
+        data['segments'][-1]['end'] = 2110
+    workspace, evidence = episode(tmp_path, mutate=mutate)
+    outcome = plan(workspace, evidence)
+    assert outcome['status'] == 'unavailable'
+    assert 'outside the original-source duration' in ' '.join(outcome['reasons'])

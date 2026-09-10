@@ -215,7 +215,7 @@ class Workspace:
         # A plan outcome and its valid proposal form one exposed planning result.
         # Removing either damaged member must not leave a stale validity claim.
         planning = state.artifacts.get('section-plan.json')
-        proposal = state.artifacts.get('section-proposal.json')
+        proposal = state.artifacts.get('section-boundaries.json')
         if planning:
             from .planning_models import PlanningOutcome
             outcome = PlanningOutcome.model_validate_json(self.artifact_bytes(planning))
@@ -223,7 +223,7 @@ class Workspace:
                 state.artifacts.pop('section-plan.json')
                 changed = True
         elif proposal:
-            state.artifacts.pop('section-proposal.json')
+            state.artifacts.pop('section-boundaries.json')
             changed = True
         if 'transcript.json' not in state.artifacts:
             state.artifacts.clear()

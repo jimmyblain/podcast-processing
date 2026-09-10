@@ -6,7 +6,7 @@ prepared transition durations, and supported natural-boundary candidates. It doe
 not require a publishing package or an API key and does not prepare or export media.
 
 The result is a versioned `section-plan.json` outcome. A valid outcome also exposes
-`section-proposal.json`; an unavailable outcome explains the limiting evidence or
+`section-boundaries.json`; an unavailable outcome explains the limiting evidence or
 duration constraints and exposes no proposal. Independent outputs remain usable.
 
 Candidate evidence must identify complete thoughts and natural topic breaks on the
@@ -134,7 +134,7 @@ durations by 129.842358 seconds, before transition overhead.
 Exit code 0 means the planning operation completed, including an explained
 `unavailable` outcome; consumers must inspect `section-plan.json.status` to
 distinguish feasibility. Invalid JSON/configuration or workspace failures exit 1.
-An unavailable outcome never exposes `section-proposal.json`.
+An unavailable outcome never exposes `section-boundaries.json`.
 
 Unchanged evidence and transcript inputs retain artifact IDs and make no paid
 requests. Changes to transition revisions, prepared durations, pauses or limits
