@@ -1,6 +1,47 @@
 # Speaker-aware podcast pipeline v2 — implementation specification
 
-Status: **Specification for review. Production implementation and release acceptance are not complete.**
+Status on 2026-09-10: **Implemented through #13–#19. Scoped source, editorial and runtime acceptance is complete; A14 actual-cost evidence remains incomplete under the accepted nonblocking closure exception, tracked in #20.**
+
+## Implementation and acceptance outcome
+
+The completed implementation is on `codex/podcast-pipeline-v2`, through
+`d6b5339`. The [workflow acceptance record](../workflow-acceptance.md) maps the
+deterministic checks to A1–A11. The [source acceptance record](../source-acceptance.md)
+and [machine-readable evidence](../evidence/source-acceptance-2026-09-10.json)
+retain the actual-output approvals, source annotations, measurements and limitations.
+
+| Build step | Completed ticket | Implementation commit |
+| --- | --- | --- |
+| B1 — Versioned inputs, imports and preserved generation | [#13](https://github.com/jimmyblain/podcast-processing/issues/13) | `608ca4e` |
+| B2 — Managed transcription and bounded recovery | [#14](https://github.com/jimmyblain/podcast-processing/issues/14) | `33f67a2` |
+| B3 — Participant mapping and corrections | [#15](https://github.com/jimmyblain/podcast-processing/issues/15) | `8838bdd` |
+| B4 — Publishing package and shared chapters | [#16](https://github.com/jimmyblain/podcast-processing/issues/16) | `20693c1` |
+| B5 — Three-section planning | [#17](https://github.com/jimmyblain/podcast-processing/issues/17) | `b3b6fe3`, `1229719` |
+| B6 — Integrated workflow, recovery and documentation | [#18](https://github.com/jimmyblain/podcast-processing/issues/18) | `edbd5a3` |
+| B7 — Source, editorial, runtime and cost evaluation | [#19](https://github.com/jimmyblain/podcast-processing/issues/19) | `d6b5339`; closed with the billing exception below |
+
+| Acceptance | Current outcome |
+| --- | --- |
+| A1–A5, A8–A11 | Deterministic workflow, normalization, corrections, publishing, reuse, durability, recovery and import checks pass. |
+| A6 | Sampled source timing and both Communication cuts pass independent human anchors/safe intervals. Maximum scored consumer error is 0.789 seconds, including whole-second chapter rendering; this does not establish full-episode timing accuracy. |
+| A7 | Deterministic arithmetic passes. Source-reviewed Communication cuts produce 860.184, 854.025 and 849.973676-second finished sections using explicit E=55/I=50/O=50-second transition fixtures. Erica's explained duration-limit outcome is accepted. |
+| A12 | Both actual production publishing packages are human approved after supported corrections and chapter repair. Scoped speech diagnostics retain one missed approximately 315 ms overlap and conservative anonymous attribution for the preceding mixed passage; no full-episode speech/overlap accuracy claim. |
+| A13 | Normal and controlled-fallback Communication transcription operations measured 147.211 and 184.364 seconds, including preparation and recovery. Publishing is measured separately; these are single observations, not service guarantees. |
+| A14 | Incomplete. AssemblyAI's observed actual aggregate is $0.51009; the new Deepgram fallback charge is unknown. The accepted closure exception and [nonblocking follow-up #20](https://github.com/jimmyblain/podcast-processing/issues/20) permit #12 completion without claiming verified fallback cost or a hard dollar cap. |
+
+The first-release human review is recorded for the pinned packages. Material
+provider/model/prompt changes still require affected evaluation; routine episodes
+retain unattended completion. Section 3 uses only its opening transition and the
+original episode ending (`D3 = I + P3`), as corrected by the user during #19.
+Prepared transition durations remain fixtures; transition preparation, media export
+and broader long-episode handling remain future work.
+
+This outcome supersedes the original pending-status statements preserved below.
+The handoff ledger and build sequence describe the September 8 specification
+baseline, not outstanding implementation work. Closing the specification does not
+claim every original release gate passed or deploy a release.
+
+## Specification baseline and authority
 
 Consolidated on 2026-09-08 from [Wayfinder map #2](https://github.com/jimmyblain/podcast-processing/issues/2), all nine closed decision tickets and their comments, referenced research, the approved publishing prototype, and the current planning checkout. Repository work belongs on `codex/podcast-pipeline-v2`.
 
@@ -10,7 +51,7 @@ The accepted resolutions are authoritative. Later unattended-completion, provide
 
 An operator needs to turn an English episode of I'll Just Let Myself In into a useful, speaker-aware timed transcript and a complete YouTube publishing package in one run. The operator may know nothing about the conversation beyond the required supplied inputs. They need trustworthy source references, faithful wording, grounded publishing copy in Lish Speaks' voice, and clear outcomes without having to adjudicate normal speech-recognition uncertainty.
 
-The current CLI performs local transcription without speaker identity, emits ten title concepts without visual direction, permits chapter descriptions, and does not assemble the required shared chapters into the description. Saving the timed transcript before publishing generation already protects valuable work, but publishing stages lack independent durable recovery, selective reuse, version history, and budget accounting. Repeating work can overwrite useful artifacts or require unnecessary calls.
+At the specification baseline, the CLI performed local transcription without speaker identity, emitted ten title concepts without visual direction, permitted chapter descriptions, and did not assemble the required shared chapters into the description. Saving the timed transcript before publishing generation already protected valuable work, but publishing stages lacked independent durable recovery, selective reuse, version history, and budget accounting. Repeating work could overwrite useful artifacts or require unnecessary calls. The v2 implementation now replaces that baseline behavior; explicit legacy commands remain available.
 
 The same timed transcript must support source-relative section-boundary proposals for a later three-section media workflow. Plausible timestamps, provider agreement, or a well-formed document cannot establish safe natural cuts. The specification must retain the accepted design while making outstanding audio, timing, production, editorial, runtime, and cost evidence explicit.
 
@@ -322,7 +363,7 @@ Prototype read: [approved sample at 05cc30b76389b5ec0e029baf51014f2b98519d9b](ht
 
 The domain glossary's distinctions remain controlling: a speaker is an anonymous voice, a participant is a known person, a YouTube chapter is a timestamp/title, a section boundary is a proposed source cut, an episode part covers source content, and a finished section includes transitions/pauses. The accepted v2 decisions intentionally replace the legacy local-only/ten-title/chapter-description behavior; old implementation documentation describes the current baseline rather than overruling v2.
 
-### Evidence ledger at specification handoff
+### Historical evidence ledger at specification handoff — September 8, 2026
 
 | Evidence | Status now | Completion requirement |
 | --- | --- | --- |
@@ -337,7 +378,7 @@ The domain glossary's distinctions remain controlling: a speaker is an anonymous
 
 The ignored local evaluation-corpus manifest records exact source locations/fingerprints and candidate windows. The ignored Erica provider-comparison bundle contains raw responses, requests/timings, fingerprints, one-off analyses, and the listening-check annotations. Preserve those bundles, existing untracked media, the local domain glossary, and audience research. Do not commit private recordings, credentials, or raw local benchmark bundles as part of this specification.
 
-### Sequenced implementation handoff for review
+### Historical sequenced implementation handoff — September 8, 2026
 
 This is a proposed breakdown for subsequent build tickets, not tickets dispatched or production work started by this specification. Each build ticket must link the relevant I/A identifiers, preserve evidence status, and include observable acceptance outcomes. The sequence delivers through the common public operation seam instead of independently shipping internal scaffolding with no user-visible proof.
 

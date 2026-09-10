@@ -186,8 +186,14 @@ pytest tests/
 Tests use isolated workspaces, generated media, controlled services/clock and actual
 process interruptions; no paid API trials are needed. The
 [deterministic acceptance record](docs/workflow-acceptance.md) maps evidence to A1–A11.
-Real source annotations, precise timing/safe cuts, actual-output human editorial
-review, representative full-operation runtime and account-adjusted billed usage
-remain release gates in [issue 19](https://github.com/jimmyblain/podcast-processing/issues/19).
+The [v2 specification outcome](docs/specs/podcast-pipeline-v2.md#implementation-and-acceptance-outcome)
+reconciles the completed build tickets and acceptance gates. The
+[source acceptance record](docs/source-acceptance.md) documents passing sampled
+timing/safe-cut checks, human approval of both production publishing packages and
+measured normal/fallback runtime, with coverage and overlap limitations.
+Actual-cost gate A14 remains incomplete under the accepted closure exception;
+the missing Deepgram fallback charge is tracked as
+[nonblocking issue #20](https://github.com/jimmyblain/podcast-processing/issues/20).
+Material provider/model/prompt changes still require affected evaluation.
 
 MIT licensed.

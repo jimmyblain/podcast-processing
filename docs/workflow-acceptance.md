@@ -1,5 +1,17 @@
 # Integrated workflow acceptance evidence — issue #18
 
+## Parent specification reconciliation — issue #12
+
+On 2026-09-10, the completed #13–#19 tickets were reconciled against the
+[specification outcome](specs/podcast-pipeline-v2.md#implementation-and-acceptance-outcome).
+Fresh verification of implementation `d6b5339` passed mypy for all 31 source files
+and **256 tests in 71.71 seconds**, with no skips. This reconciliation changes
+documentation and tracker status only; it makes no new provider requests or
+human-approval claims. The A14 actual-cost exception remains explicit, with
+[nonblocking follow-up #20](https://github.com/jimmyblain/podcast-processing/issues/20).
+
+## Deterministic evidence scope
+
 Deterministic evidence is collected at the public CLI/episode-operation seam using
 real isolated workspaces, controlled HTTP/publishing responses and clock, generated
 media and actual subprocess crashes. Fixtures establish structural/recovery behavior;

@@ -1,7 +1,13 @@
 # Source acceptance record — issue #19
 
-Status on 2026-09-10: **ready for issue closure with an explicit user-authorized
+Status on 2026-09-10: **issue #19 closed with an explicit user-authorized
 billing exception. Actual-cost gate A14 remains incomplete.**
+
+The remaining charge reconciliation is tracked in
+[nonblocking issue #20](https://github.com/jimmyblain/podcast-processing/issues/20).
+The [parent specification outcome](specs/podcast-pipeline-v2.md#implementation-and-acceptance-outcome)
+records the completed build sequence and current acceptance status. Earlier
+open/pending statements below retain the chronology of this evidence record.
 
 The user explicitly directed that missing Deepgram spend data must not hold up
 closure. Delayed reporting is possible, but unverified. This decision changes the
