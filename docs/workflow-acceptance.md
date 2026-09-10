@@ -15,8 +15,8 @@ quality. No live paid trials are required or authorized by these tests.
 | A3 corrections/provenance | `test_participant_corrections.py`: relabel/merge/separate/split/text/timing, incompatible bases and immutable lineage; `test_episode_workflow.py`: corrected full reruns preserve edits and avoid ASR, timing-only changes retain text copy |
 | A4 publishing structure | `test_publishing_package.py`: fifteen distinct concepts, length/overlay/visual/rationale validation, description structure, supplied facts and complete-description bounds; `test_episode_workflow.py`: completed full package |
 | A5 chapters/assembly | `test_publishing_package.py`: supported boundaries, timestamp rendering and durations, labels, regeneration/reassembly and independent body recovery; integrated tests: failed chapters preserve body, selected recovery, exact standalone/embedded match, invalid local labels remain partial |
-| A6 deterministic timing mechanics | `test_managed_transcription.py`, `test_participant_corrections.py`, `test_section_planning.py`: lossless original offsets, corrected bounds, overlapping/unknown timing rejected at cuts. **Real point anchors and source-safe cuts remain incomplete.** |
-| A7 section arithmetic | `test_section_planning.py`: inclusive limits, adjacent complete coverage, unequal sections, just-outside/overhead/overlap failures and 3369.842358-second impossibility; integrated tests: valid synthetic 616.5/711.5/811.5-second finished sections, transition-only changes, missing/invalid evidence without blocking usable publishing |
+| A6 deterministic timing mechanics | `test_managed_transcription.py`, `test_participant_corrections.py`, `test_section_planning.py`: lossless original offsets, corrected bounds, overlapping/unknown timing rejected at cuts. Real sampled anchors and two source-safe cuts are recorded separately in [source acceptance](source-acceptance.md). |
+| A7 section arithmetic | `test_section_planning.py`: inclusive limits, adjacent complete coverage, unequal sections, just-outside/overhead/overlap failures and 3369.842358-second impossibility; integrated tests: valid synthetic 616.5/711.5/805-second finished sections under the user-corrected final-section rule, transition-only changes, missing/invalid evidence without blocking usable publishing |
 | A8 reuse/invalidation | `test_episode_workflow.py`: unchanged completed rerun has zero paid calls and identical IDs, full/selected fresh ledgers, profile/links, metadata/facts, publishing model/template, raw-response normalization reuse, actual ASR hints, corrections and transitions; publishing/correction suites cover other model/template/metadata/label changes |
 | A9 current/history/ownership | `test_episode_recovery.py`: real CLI process death at inspection, preparation, submission, accepted identity, raw response, normalization, mapping, publishing response/body/titles/chapters, assembly and planning; interrupted output writes; two simultaneous full CLI processes; `test_workspace_recovery.py` and integrated edit tests: exact edit preservation even with a damaged original artifact |
 | A10 bounded recovery | Integrated recovery/accounting tests: primary failure/ambiguous acceptance, backup allowed/denied, exhausted reservations, unchanged deadline, pending/completed remote jobs after expiry, saved response reuse; managed/publishing suites: rejection/auth/transient/SDK/invalid-output retry bounds, unknown billing and no new allowance on resume |
@@ -39,23 +39,31 @@ integrated workflow and subprocess recovery files were also run during developme
 The optional cached provider replays can skip elsewhere when private bundles are absent.
 This suite duration is test runtime, not production episode-performance evidence.
 
-## Remaining release gates — issue #19
+## Source acceptance and cost exception — issue #19
 
-The following are **incomplete**, regardless of deterministic suite success:
+The dated [source acceptance record](source-acceptance.md) contains the actual
+source/transport correspondence, independent timing anchors, two natural safe-cut
+intervals, scoped speaker/overlap diagnostics and human approval of both production
+publishing packages. Communication has a feasible proposal under explicit
+transition-duration fixtures. Erica's explained duration-limit outcome is accepted.
 
-- Source correspondence and targeted source-audio annotations for the accepted
-  communication and Erica recordings, with independently reviewed point anchors,
-  overlap evidence, complete thoughts and safe-cut intervals (real A6/A7).
-- Actual v2 speech/identity/wording evaluation and human editorial review of both
-  episodes' publishing outputs (A12). Approved prototype concepts are not a review
-  of new production outputs.
-- Representative near-40-minute normal/fallback transcription runtime including
-  preparation, upload, polling, normalization and recovery; publishing measured
-  separately (A13).
-- An explicitly bounded evaluation allowance, account-specific request rates and
-  observed billed deductions for normal/fallback runs (A14). Unknown bills remain
-  unknown; fixture usage and reservation estimates are not actual cost or a verified cap.
+The representative Communication transcription operations measured **147.211 s**
+for normal primary and **184.364 s** for controlled fallback, including preparation,
+upload, provider processing, normalization and recovery. Publishing is accounted
+for separately. These are single observations, not service guarantees.
 
-Issue #19 must retain any externally blocked or missing evidence explicitly. This
-implementation does not close the parent specification/map, claim release approval,
-export media, or introduce a mandatory per-episode review queue.
+AssemblyAI's observed actual aggregate is **$0.51009**. The accepted Deepgram
+fallback request's actual charge remains unavailable. On September 10, the user
+explicitly authorized issue closure without waiting for that charge. **A14 remains
+incomplete, with an authorized closure exception**; unknown charges are not zero,
+and reservations or advertised estimates are not actual bills or a verified cap.
+
+After the issue #19 code corrections, mypy passed all 31 source files and the full
+suite passed **256 tests in 79.81 seconds**. The later source annotations and closure
+exception change evidence only. The detailed record retains the test logs and
+independent standards/specification review outcomes.
+
+Issue closure does not close the parent specification/map, certify unreviewed
+full-episode speech or overlap accuracy, export media, or create a mandatory
+per-episode review queue. First-release/material-change human review remains
+recorded independently of the missing actual-cost evidence.

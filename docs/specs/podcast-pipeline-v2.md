@@ -160,9 +160,13 @@ Let P1, P2, P3 be source-part durations and E, I, O the prepared episode-start, 
 | --- | --- | --- |
 | 1 | Episode-start → part 1 → separate 1.5-second pause → transition-out | D1 = E + P1 + 1.5 + O; 600 ≤ D1 ≤ 1080 seconds |
 | 2 | Transition-in → part 2 → separate 1.5-second pause → transition-out | D2 = I + P2 + 1.5 + O; 600 ≤ D2 ≤ 1080 seconds |
-| 3 | Transition-in → part 3 → separate 1.5-second pause → transition-out | D3 = I + P3 + 1.5 + O; 600 ≤ D3 ≤ 1080 seconds |
+| 3 | Transition-in → part 3 through original episode ending | D3 = I + P3; 600 ≤ D3 ≤ 1080 seconds |
 
-Budget transition durations and pauses before choosing source boundaries. The separate 1.5-second pause does not replace or shorten any prepared asset's 2.5-second tail, including the final transition-out tail. Transition additions never shift stored source timestamps.
+The user clarified during issue #19 listening review that section 3 has no added
+closing pause or transition-out. This supersedes the earlier three-closing assembly
+formula; the first two sections retain their closing transitions and pauses.
+
+Budget transition durations and pauses before choosing source boundaries. The separate 1.5-second pause does not replace or shorten any prepared asset's 2.5-second tail. Transition additions never shift stored source timestamps.
 
 The planner consumes explicit transition asset revisions/prepared-duration evidence and settings. It does not prepare or export media. Real-episode acceptance must use verified prepared durations or clearly labeled fixture assumptions; absent duration evidence must be reported rather than replaced with fabricated precision. Preliminary estimates of E≈12.93, I≈6.59, O≈8.78 seconds are planning observations only, never approved trim points or hard-coded defaults.
 

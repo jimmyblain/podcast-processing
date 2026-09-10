@@ -229,7 +229,7 @@ def test_full_planning_valid_reuse_and_transition_only_change(tmp_path, full_ser
     assert result.exit_code == 0, result.output
     valid = inspect(workspace)
     proposal = json.loads((workspace / 'current/section-boundaries.json').read_bytes())
-    assert [part['finished_duration'] for part in proposal['sections']] == ['616.5', '711.5', '811.5']
+    assert [part['finished_duration'] for part in proposal['sections']] == ['616.5', '711.5', '805']
     assert runner.invoke(app, ['process', str(workspace)]).exit_code == 0
     assert inspect(workspace)['artifacts'] == valid['artifacts']
     evidence['transition_in']['duration'] = '6'

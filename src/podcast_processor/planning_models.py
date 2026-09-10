@@ -82,12 +82,13 @@ class FinishedSection(Record):
     opening: Literal['episode_start', 'transition_in']
     opening_duration: Decimal = Field(gt=0)
     pause: Decimal = Field(ge=0)
-    closing_duration: Decimal = Field(gt=0)
+    closing_duration: Decimal = Field(ge=0)
     finished_duration: Decimal = Field(gt=0)
 
 
 class SectionProposal(Record):
-    schema_version: Literal[1] = 1
+    # Version 1 remains readable as historical evidence of the earlier assembly rule.
+    schema_version: Literal[1, 2] = 2
     evidence: PlanningEvidence
     boundaries: list[NaturalBoundary] = Field(min_length=2, max_length=2)
     sections: list[FinishedSection] = Field(min_length=3, max_length=3)
@@ -113,12 +114,15 @@ class SectionProposal(Record):
             closing = evidence.transition_out
             if opening is None or closing is None or opening.duration is None or closing.duration is None:
                 raise ValueError('Explicit prepared transition durations are required.')
+            has_closing = index < 2 or self.schema_version == 1
+            closing_duration = closing.duration if has_closing else Decimal(0)
+            pause = evidence.settings.pause if has_closing else Decimal(0)
             if (section.number != index + 1 or section.source_start != endpoints[index]
                     or section.source_end != endpoints[index + 1]
                     or section.part_duration != section.source_end - section.source_start):
                 raise ValueError('Exactly three ordered parts must cover the source once with exact adjacency.')
             if (section.opening != opening_name or section.opening_duration != opening.duration
-                    or section.closing_duration != closing.duration or section.pause != evidence.settings.pause
+                    or section.closing_duration != closing_duration or section.pause != pause
                     or section.finished_duration != section.opening_duration + section.part_duration + section.pause + section.closing_duration):
                 raise ValueError('Finished duration must include the explicit opening, part, separate pause and closing.')
             if not evidence.settings.minimum <= section.finished_duration <= evidence.settings.maximum:
@@ -127,7 +131,7 @@ class SectionProposal(Record):
 
 
 class PlanningOutcome(Record):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     status: Literal['valid', 'unavailable']
     evidence: PlanningEvidence
     dependencies: dict[str, str]

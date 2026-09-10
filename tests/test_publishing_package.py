@@ -158,6 +158,27 @@ def test_invalid_response_repairs_within_shared_allowance_and_accepts_category_f
     assert [a['status'] for a in ledger['attempts']] == ['invalid', 'validated']
 
 
+def test_chapter_retry_identifies_each_mismatched_time_without_accepting_it(tmp_path, monkeypatch):
+    def publish(self, prompt, max_tokens=4096):
+        data = json.loads(response_for(prompt))
+        if 'STAGE: chapters' in prompt:
+            feedback = prompt.split('Validation feedback:\n')[-1] if 'Validation feedback:\n' in prompt else ''
+            # The provider can repair both numeric mistakes from actionable feedback.
+            if not ('turn-1' in feedback and '20.5' in feedback
+                    and 'turn-2' in feedback and '45.0' in feedback):
+                data[1]['start_time'] = 20.4
+                data[2]['start_time'] = 43.0
+        return json.dumps(data)
+    monkeypatch.setattr(ClaudeClient, 'generate', publish)
+    workspace = episode(tmp_path)
+    assert generate(workspace).exit_code == 0
+    assert (workspace / 'current/chapters.txt').read_text() == (
+        '00:00 Honest conversation\n00:20 Listen with care\n00:45 Prayer and practice\n')
+    ledger = next(op for op in inspect(workspace)['publishing_operations'] if op['stage'] == 'chapters')
+    assert [a['status'] for a in ledger['attempts']] == ['invalid', 'validated']
+    assert generate(workspace).exit_code == 0
+
+
 def test_edited_outputs_preserved_as_exact_bytes_and_never_used_as_facts(tmp_path, publishing):
     workspace = episode(tmp_path)
     assert generate(workspace).exit_code == 0

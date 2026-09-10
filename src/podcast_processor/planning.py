@@ -10,7 +10,7 @@ from .planning_models import (
 from .workspace import Workspace, digest, identifier, now, ownership
 from .workspace_models import PreservedSegment, PreservedTranscript, PreservedWord, Run, WorkspaceState
 
-VERSION = 'section-planner-v1'
+VERSION = 'section-planner-v2'
 PLAN_FILES = ('section-plan.json', 'section-boundaries.json')
 LIMITATIONS = [
     'No transition preparation, trimming, media cutting, stitching or export was performed.',
@@ -97,9 +97,13 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
     overhead: list[Decimal | None] = []
     limits: list[tuple[Decimal, Decimal] | None] = []
     settings = evidence.settings
-    for opening in (evidence.episode_start, evidence.transition_in, evidence.transition_in):
-        budget = (opening.duration + settings.pause + closing.duration
-                  if opening and closing and opening.duration is not None and closing.duration is not None else None)
+    for index, opening in enumerate((evidence.episode_start, evidence.transition_in, evidence.transition_in)):
+        budget = None
+        if opening and opening.duration is not None:
+            if index == 2:
+                budget = opening.duration
+            elif closing and closing.duration is not None:
+                budget = opening.duration + settings.pause + closing.duration
         overhead.append(budget)
         limits.append((settings.minimum - budget, settings.maximum - budget) if budget is not None else None)
     duration = source.duration
@@ -141,7 +145,8 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
                 assert opening and opening.duration is not None and closing and closing.duration is not None
                 sections.append(FinishedSection(number=index + 1, source_start=endpoints[index], source_end=endpoints[index + 1],
                     part_duration=part, opening='episode_start' if index == 0 else 'transition_in',
-                    opening_duration=opening.duration, pause=settings.pause, closing_duration=closing.duration,
+                    opening_duration=opening.duration, pause=settings.pause if index < 2 else Decimal(0),
+                    closing_duration=closing.duration if index < 2 else Decimal(0),
                     finished_duration=part + budget))
             if len(sections) != 3:
                 continue
@@ -217,6 +222,8 @@ def planning_report(workspace: Workspace, state: WorkspaceState) -> str:
     lines = [f'Section planning: {result.status}.', f'Original-source duration: {evidence.source.duration} seconds.',
              f'Finished-section limits: {evidence.settings.minimum}–{evidence.settings.maximum} seconds inclusive.',
              f'Separate pause before every transition-out: {evidence.settings.pause} seconds.']
+    if result.schema_version == 2:
+        lines.append('Section 3 plays through the original episode ending, with no added closing pause or transition-out.')
     for index, (budget, bounds) in enumerate(zip(result.overhead, result.source_part_limits), 1):
         lines.append(f'Section {index}: transition/pause overhead {budget if budget is not None else "unknown"}; source-part budget {bounds if bounds else "unknown"}.')
     if result.proposal:

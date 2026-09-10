@@ -65,9 +65,9 @@ def test_unequal_sections_keep_original_offsets_music_pauses_and_source_tail(tmp
     assert outcome['status'] == 'valid'
     proposal = SectionProposal.model_validate_json((workspace / 'current/section-boundaries.json').read_bytes())
     assert [(s.source_start, s.source_end) for s in proposal.sections] == [(0, 600), (600, 1300), (1300, 2100)]
-    assert [s.finished_duration for s in proposal.sections] == [Decimal('616.5'), Decimal('711.5'), Decimal('811.5')]
-    assert outcome['overhead'] == ['16.5', '11.5', '11.5']
-    assert outcome['source_part_limits'] == [['583.5', '1063.5'], ['588.5', '1068.5'], ['588.5', '1068.5']]
+    assert [s.finished_duration for s in proposal.sections] == [Decimal('616.5'), Decimal('711.5'), Decimal('805')]
+    assert outcome['overhead'] == ['16.5', '11.5', '5']
+    assert outcome['source_part_limits'] == [['583.5', '1063.5'], ['588.5', '1068.5'], ['595', '1075']]
     assert all(item in inspect(workspace)['artifacts'].items() for item in before['artifacts'].items())
     assert 'synthetic' in ' '.join(proposal.limitations).lower()
     assert 'pending evaluation' in (workspace / 'current/completion-report.md').read_text()
@@ -77,13 +77,40 @@ def test_unequal_sections_keep_original_offsets_music_pauses_and_source_tail(tmp
     assert inspect(workspace)['publishing_operations'] == []
 
 
+def test_final_section_runs_to_original_end_without_added_pause_or_transition_out(tmp_path):
+    workspace, evidence = episode(tmp_path, duration='2375')
+    outcome = plan(workspace, evidence)
+    assert outcome['status'] == 'valid'
+    final = outcome['proposal']['sections'][2]
+    assert final['source_start'] == '1300'
+    assert final['source_end'] == '2375'
+    assert final['opening_duration'] == '5'
+    assert final['pause'] == '0'
+    assert final['closing_duration'] == '0'
+    assert final['finished_duration'] == '1080'
+    assert outcome['overhead'] == ['16.5', '11.5', '5']
+    assert outcome['proposal']['schema_version'] == 2
+    assert 'no added closing pause or transition-out' in (workspace / 'current/completion-report.md').read_text()
+
+
+def test_historical_proposal_remains_readable_without_allowing_old_ending_in_new_proposals(tmp_path):
+    workspace, evidence = episode(tmp_path)
+    historical = deepcopy(plan(workspace, evidence)['proposal'])
+    historical['schema_version'] = 1
+    historical['sections'][2].update(pause='1.5', closing_duration='5', finished_duration='811.5')
+    assert SectionProposal.model_validate(historical).sections[2].finished_duration == Decimal('811.5')
+    historical['schema_version'] = 2
+    with pytest.raises(ValidationError):
+        SectionProposal.model_validate(historical)
+
+
 @pytest.mark.parametrize('duration,cuts,expected', [
-    ('2100', ('583.5', '1300'), ['600', '728', '811.5']),
-    ('2400', ('1063.5', '1700'), ['1080', '648', '711.5']),
-    ('1900', ('600', '1188.5'), ['616.5', '600', '723']),
-    ('2300', ('600', '1668.5'), ['616.5', '1080', '643']),
-    ('1888.5', ('600', '1300'), ['616.5', '711.5', '600']),
-    ('2368.5', ('600', '1300'), ['616.5', '711.5', '1080']),
+    ('2100', ('583.5', '1300'), ['600', '728', '805']),
+    ('2400', ('1063.5', '1700'), ['1080', '648', '705']),
+    ('1900', ('600', '1188.5'), ['616.5', '600', '716.5']),
+    ('2300', ('600', '1668.5'), ['616.5', '1080', '636.5']),
+    ('1895', ('600', '1300'), ['616.5', '711.5', '600']),
+    ('2375', ('600', '1300'), ['616.5', '711.5', '1080']),
 ])
 def test_each_finished_section_accepts_inclusive_limits(tmp_path, duration, cuts, expected):
     workspace, evidence = episode(tmp_path, duration, cuts)
@@ -95,7 +122,7 @@ def test_each_finished_section_accepts_inclusive_limits(tmp_path, duration, cuts
 @pytest.mark.parametrize('duration,cuts', [
     ('2100', ('583.499999', '1300')), ('2400', ('1063.500001', '1700')),
     ('1900', ('600', '1188.499999')), ('2300', ('600', '1668.500001')),
-    ('1888.499999', ('600', '1300')), ('2368.500001', ('600', '1300')),
+    ('1894.999999', ('600', '1300')), ('2375.000001', ('600', '1300')),
 ])
 def test_just_outside_each_finished_section_limit_never_exposes_proposal(tmp_path, duration, cuts):
     workspace, evidence = episode(tmp_path, duration, cuts)
@@ -108,8 +135,8 @@ def test_just_outside_each_finished_section_limit_never_exposes_proposal(tmp_pat
 
 @pytest.mark.parametrize('duration,expected', [
     ('3369.842358', '129.842358 seconds before overhead'),
-    ('3220', 'exceeding capacity 3240 by 19.5'),
-    ('1700', 'below required 1800 by 60.5'),
+    ('3220', 'exceeding capacity 3240 by 13'),
+    ('1700', 'below required 1800 by 67'),
 ])
 def test_impossibility_explains_source_and_transition_budgets(tmp_path, duration, expected):
     workspace, evidence = episode(tmp_path, duration, ('600', '1200'))
@@ -118,7 +145,7 @@ def test_impossibility_explains_source_and_transition_budgets(tmp_path, duration
     assert result['status'] == 'unavailable'
     assert expected in ' '.join(result['reasons'])
     assert result['evidence']['source']['duration'] == duration
-    assert result['overhead'] == ['16.5', '11.5', '11.5']
+    assert result['overhead'] == ['16.5', '11.5', '5']
     assert all(item in inspect(workspace)['artifacts'].items() for item in original.items())
     assert 'section-boundaries.json' not in inspect(workspace)['artifacts']
     assert inspect(workspace)['runs'][-1]['status'] == 'completed'
@@ -136,7 +163,7 @@ def test_missing_or_unprepared_transition_evidence_is_reported(tmp_path, field, 
     assert result['status'] == 'unavailable'
     assert any('transition_out' in reason for reason in result['reasons'])
     if field == 'duration':
-        assert result['overhead'] == [None, None, None]
+        assert result['overhead'] == [None, None, '5']
 
 
 @pytest.mark.parametrize('field,value', [('duration', None), ('fingerprint', None), ('basis', 'unknown'),

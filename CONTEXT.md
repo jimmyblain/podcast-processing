@@ -69,7 +69,10 @@ One of three consecutive portions that together cover the entire episode, in ord
 _Avoid_: Excerpt, highlight
 
 **Finished section**:
-An episode part with its opening and closing transition audio and transition pauses included. Its duration includes all of those elements.
+An episode part with its applicable transition audio and transition pauses included.
+The first two sections have opening and closing transitions; the third has only an
+opening transition and plays through the original episode ending. Its duration
+includes all applicable elements.
 _Avoid_: Episode part, section boundary
 
 **Transition audio**:

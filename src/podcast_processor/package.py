@@ -95,9 +95,15 @@ def validate_chapters(raw: str, transcript: PreservedTranscript, limit: int) -> 
     if transcript.duration is None:
         raise ValueError('Chapters unavailable: source duration is unknown.')
     candidates = {t['boundary_id']: t['start_time'] for t in chapter_context(transcript)['turns']}
-    for chapter in chapters[1:]:
-        if chapter.boundary_id not in candidates or chapter.start_time != candidates[chapter.boundary_id]:
-            raise ValueError('Chapter time must match its supported natural boundary evidence.')
+    mismatches = []
+    for index, chapter in enumerate(chapters[1:], start=2):
+        if chapter.boundary_id not in candidates:
+            mismatches.append(f'Entry {index}: unknown boundary_id; select an ID from the supplied turns.')
+        elif chapter.start_time != candidates[chapter.boundary_id]:
+            mismatches.append(f'Entry {index}: boundary_id {chapter.boundary_id} requires '
+                              f'start_time {candidates[chapter.boundary_id]}, received {chapter.start_time}.')
+    if mismatches:
+        raise ValueError('Chapter time must match its supported natural boundary evidence. ' + ' '.join(mismatches))
     for chapter, end in zip(chapters, [c.start_time for c in chapters[1:]] + [transcript.duration]):
         if end - chapter.start_time < 10 or end - int(chapter.start_time) < 10:
             raise ValueError('Every chapter including the last must last at least ten seconds.')

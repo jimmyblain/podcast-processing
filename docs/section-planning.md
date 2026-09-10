@@ -112,7 +112,7 @@ pauses between topics, and trailing source audio.
 Among feasible pairs, the planner first prefers the stronger weakest boundary,
 then combined editorial strength (1–3), then similar finished durations. There is
 no equality tolerance. The example's source parts are 600, 700 and 800 seconds;
-finished durations are 616.5, 711.5 and 811.5 seconds.
+finished durations are 616.5, 711.5 and 805 seconds.
 
 ## Duration accounting and outcomes
 
@@ -123,7 +123,15 @@ before transition-out remains 1.5 seconds under the default contract.
 
 - `D1 = E + P1 + pause + O`
 - `D2 = I + P2 + pause + O`
-- `D3 = I + P3 + pause + O`
+- `D3 = I + P3`
+
+Section 3 plays through the original episode ending. It has an opening transition,
+but no added closing pause or transition-out, as clarified by the user during
+issue #19 review. Only the first two sections have a closing transition.
+New outcomes/proposals use schema version 2 and `section-planner-v2`; final-section
+`pause` and `closing_duration` are zero. Version 1 proposals remain readable as
+historical evidence of the earlier rule. Resuming planning replaces current plans
+under the new rule while retaining history and independent publishing outputs.
 
 Defaults are 600–1080 seconds inclusive. Explicit settings changes are preserved
 as a new planning input revision and evaluated against their stated limits. The
