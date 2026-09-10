@@ -160,13 +160,31 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
         limitations=proposal.limitations if proposal else limitations, proposal=proposal)
 
 
-def plan_episode(path: Path, evidence_path: Path) -> WorkspaceState:
-    evidence = PlanningEvidence.model_validate_json(evidence_path.read_bytes())
+def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceState:
     workspace = Workspace(path)
     with ownership(workspace.path, 'plan episode sections'):
         state = workspace.read()
         workspace.reconcile(state)
         transcript = current_transcript(workspace, state)
+        if evidence_path is not None:
+            evidence = PlanningEvidence.model_validate_json(evidence_path.read_bytes())
+        else:
+            previous = next((run.inputs['evidence'] for run in reversed(state.runs)
+                             if run.operation == 'plan' and 'evidence' in run.inputs), None)
+            if previous:
+                evidence = PlanningEvidence.model_validate(previous)
+            else:
+                from .planning_models import SourceEvidence
+                source = next(s for s in state.sources if s.id == state.source_revision)
+                measured = (source.properties or {}).get('format', {}).get('duration')
+                duration = Decimal(str(measured)) if measured is not None else (
+                    Decimal(str(transcript.duration)) if transcript.duration else None)
+                verified = bool(source.fingerprint and measured is not None)
+                evidence = PlanningEvidence(source=SourceEvidence(revision=source.id,
+                    fingerprint=source.fingerprint, duration=duration,
+                    basis='verified' if verified else 'unknown',
+                    evidence='Preserved source inspection.' if verified else ''),
+                    transcript_sha256=state.artifacts['transcript.json'].sha256)
         dependencies = {'source_revision': state.source_revision, 'transcript': state.artifacts['transcript.json'].sha256,
                         'planning_evidence': digest(evidence.model_dump_json().encode()), 'planner': VERSION}
         prior = state.artifacts.get('section-plan.json')

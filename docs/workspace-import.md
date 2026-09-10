@@ -1,6 +1,8 @@
 # Import episodes into a versioned workspace
 
-This is the first v2 slice ([#13](https://github.com/jimmyblain/podcast-processing/issues/13)). It imports preserved text without transcription or paid calls, and supports generation through the existing publishing service. Existing `process`, `transcribe`, and generation from an unversioned `transcript.json` retain their original format.
+Import preserves existing text without transcription or paid calls. It creates a v2
+workspace for resumable publishing and full processing. Generation from an
+unversioned `transcript.json` retains the legacy format; import first to use v2.
 
 ## Demo
 
@@ -56,7 +58,11 @@ podcast-process generate output/episodes/fixtures-EPISODE_ID
 
 Generation uses `ANTHROPIC_API_KEY` and the configured Claude model. It requires the approved profile and confirmed participants but can use preserved text with missing media. It does not transcribe. A missing required result yields a nonzero exit and an honest partial report. Successful description, titles, chapters, and raw publishing responses are checkpointed independently. An unchanged completed rerun retains artifact IDs and makes no service calls, even without an API key. A metadata-only reimport supersedes publishing outputs while preserving the timed transcript.
 
-This is the **legacy publishing format**, currently ten title concepts and legacy chapter formatting. Fifteen concepts, visual directions, shared embedded chapters, full v2 editorial validation, section proposals, managed transcription, and the bounded provider/billing ledger belong to later slices. The completion report does not claim that these later acceptance gates passed. No real publishing or transcription calls are used in the acceptance suite.
+Versioned generation produces fifteen title concepts, actionable visual directions,
+shared embedded/standalone chapters and a validated publishing package. Use `process
+WORKSPACE` to add the independent planning outcome. Imported text never implicitly
+submits transcription. Deterministic completion is separate from real source,
+editorial, runtime and billing acceptance in issue #19.
 
 ## Source identity and copies
 

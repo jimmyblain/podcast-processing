@@ -7,6 +7,8 @@ import fcntl
 import hashlib
 import json
 import os
+import threading
+from contextvars import ContextVar
 from pathlib import Path
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -16,6 +18,7 @@ from uuid import uuid4
 from .workspace_models import Artifact, WorkspaceState
 
 PUBLISHING_FILES = ('description.md', 'titles.json', 'chapters.txt')
+PROCESS_FILES = ('transcript.json', 'transcript.txt', *PUBLISHING_FILES, 'section-plan.json')
 
 
 class WorkspaceError(Exception):
@@ -65,8 +68,16 @@ def write_file(path: Path, data: bytes) -> None:
     flush_directory(path.parent)
 
 
+_owned: ContextVar[frozenset[tuple[int, int, Path]]] = ContextVar("workspace_owners", default=frozenset())
+
+
 @contextmanager
 def ownership(path: Path, operation: str) -> Iterator[None]:
+    path = path.resolve()
+    owner = (os.getpid(), threading.get_ident(), path)
+    if owner in _owned.get():
+        yield
+        return
     path.mkdir(parents=True, exist_ok=True)
     with (path / '.writer.lock').open('a+') as lock:
         try:
@@ -80,7 +91,11 @@ def ownership(path: Path, operation: str) -> Iterator[None]:
             lock.write(json.dumps({'pid': os.getpid(), 'operation': operation, 'started_at': now()}))
             lock.flush()
             os.fsync(lock.fileno())
-            yield
+            token = _owned.set(_owned.get() | {owner})
+            try:
+                yield
+            finally:
+                _owned.reset(token)
         finally:
             fcntl.flock(lock, fcntl.LOCK_UN)
 
@@ -152,6 +167,9 @@ class Workspace:
         if 'transcript.json' in state.artifacts:
             uncertainty = uncertainty_report(current_transcript(self, state))
         run = state.runs[-1]
+        if run.operation == 'process':
+            from .workflow import completion_report
+            return completion_report(self, state)
         if run.operation == 'transcribe':
             operation = next(op for op in state.transcription_operations if op.id == run.operation_id)
             attempts = []
@@ -194,9 +212,12 @@ class Workspace:
             visible = self.path / 'current' / name
             try:
                 data = visible.read_bytes()
+            except OSError:
+                data = None
+            try:
                 original = self.artifact_bytes(artifact)
             except (OSError, WorkspaceError):
-                data, original = None, None
+                original = None
             if data is None or digest(data) != artifact.sha256 or original is None:
                 if data is not None and digest(data) != artifact.sha256:
                     edited = self.add_artifact(state, name, data, artifact.dependencies, 'manual-edit-v1')
@@ -235,8 +256,10 @@ class Workspace:
             if state.runs[-1].status == 'completed':
                 state.runs[-1].status = 'partial'
             required: tuple[str, ...] = ('transcript.json', 'transcript.txt')
-            if state.runs[-1].operation == 'generate':
+            if state.runs[-1].operation in ('generate', 'process'):
                 required += PUBLISHING_FILES
+            if state.runs[-1].operation == 'process':
+                required = PROCESS_FILES
             state.runs[-1].missing = [name for name in required if name not in state.artifacts]
             self.commit(state)
         return changed

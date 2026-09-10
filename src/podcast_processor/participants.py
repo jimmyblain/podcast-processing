@@ -13,6 +13,8 @@ MAPPING_VERSION = 'participant-introductions-v1'
 def map_supported(transcript: PreservedTranscript, metadata: EpisodeMetadata,
                   source_revision: str) -> PreservedTranscript:
     """Use explicit introduction evidence; label order and roster size prove no identity."""
+    if not transcript.speakers:
+        return transcript
     inputs = digest(json_bytes([MAPPING_VERSION, [(p.name, p.role) for p in metadata.participants],
                                [(t.id, t.speaker, t.text, t.quotation_usable, t.start, t.end) for t in transcript.segments]]))
     if transcript.mapping_inputs == inputs:

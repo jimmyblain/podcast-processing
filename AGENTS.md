@@ -1,110 +1,45 @@
 # Podcast Processor
 
-A CLI tool that processes podcast audio files to generate YouTube-ready content: transcription, descriptions, viral titles with thumbnail text, and chapters.
+This CLI creates a timed transcript, a YouTube publishing package, an independent
+section-planning outcome and a completion report in a resumable versioned workspace.
+Read `CONTEXT.md` before exploring domain behavior. Work on `codex/podcast-pipeline-v2`.
+Preserve existing media, local research and ignored evaluation bundles.
 
-## Directory Structure
+## Development and verification
 
-```
-src/podcast_processor/
-├── __init__.py       # Package initialization
-├── __main__.py       # Entry point for `python -m podcast_processor`
-├── cli.py            # Typer CLI with process, transcribe, generate commands
-├── config.py         # Settings via pydantic-settings, loads from .env
-├── models.py         # Pydantic models: Transcript, Chapter, Title, etc.
-├── transcriber.py    # WhisperLocalTranscriber using faster-whisper
-├── generators.py     # Content generation functions (description, titles, chapters)
-├── llm.py            # ClaudeClient wrapper for Anthropic API
-└── prompts.py        # Prompt templates for content generation
-```
+Install with `uv venv && uv pip install -e '.[dev]'`; activate `.venv`. FFmpeg and
+ffprobe are required. `.[local]` adds optional Whisper support for legacy commands.
+Run `mypy src/podcast_processor` and focused pytest files while developing, then
+`pytest tests/` for final verification. Tests use the public CLI/episode-operation
+seam, real isolated workspaces and controlled services; subprocesses verify crashes
+and concurrent ownership. Keep live paid trials out of deterministic tests.
 
-## Development Setup
+## Workflow invariants
 
-```bash
-# Create venv and install in editable mode
-uv venv && uv pip install -e .
+- `process RECORDING --solo` or `--guest NAME` uses approved show defaults and
+  managed ASR. `process WORKSPACE` resumes all independent stages.
+- `transcribe` makes no publishing requests. `generate WORKSPACE` and `import`
+  never implicitly submit transcription. Explicit `--local` retains legacy behavior.
+- One workspace writer spans the whole operation. Hash-verified immutable artifacts,
+  receipts and atomic current snapshots protect recovery and exact direct-edit history.
+- Preserve accepted/possibly accepted job slots, attempts, reservations and absolute
+  deadlines across restart. Missing actual billing is unknown. `--fresh` records
+  new possible spending and retains earlier ledgers.
+- Invalidate only actual consumers. Shared chapter versions keep the standalone
+  list and assembled description identical. A saved body alone is not a complete
+  required description. Impossible section proposals do not block publishing.
+- Use conservative supported attribution and text without mandatory per-episode
+  review. Human release review and real source/runtime/cost gates remain issue #19.
 
-# Or with pip
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
+## Context pointers
 
-Requires FFmpeg: `brew install ffmpeg`
-
-## Configuration
-
-Set `ANTHROPIC_API_KEY` in `.env` or environment:
-
-```bash
-export ANTHROPIC_API_KEY=your-key
-```
-
-## Running the CLI
-
-```bash
-# Activate venv first
-source .venv/bin/activate
-
-# Full processing (transcribe + generate all content)
-podcast-process process episode.mp3
-
-# Transcribe only (no API calls)
-podcast-process transcribe episode.mp3
-
-# Generate from existing transcript
-podcast-process generate output/episode/transcript.json
-
-# With options
-podcast-process process episode.mp3 -o ./output -m medium -c 10
-```
-
-## Testing
-
-No test framework is currently configured. To add tests:
-
-```bash
-uv pip install pytest
-pytest tests/
-```
-
-## Key Architectural Decisions
-
-- **Local transcription**: Uses faster-whisper for privacy and cost savings (no API calls for transcription)
-- **Word-level timestamps**: Enables accurate chapter timestamps aligned to speech
-- **Pydantic models**: Strong typing for all data structures (Transcript, Chapter, Title, GeneratedContent)
-- **Retry logic**: ClaudeClient uses tenacity for automatic retries with exponential backoff
-- **Lazy model loading**: Whisper model loads on first transcription to reduce startup time
-- **Modular commands**: Separate CLI commands for transcribe-only and generate-from-transcript workflows
-- **Rich console output**: Progress spinners and formatted tables for user feedback
-
-## CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `process` | Full pipeline: transcribe audio + generate all content |
-| `transcribe` | Transcribe only (no Claude API calls) |
-| `generate` | Generate content from existing transcript.json |
-
-## Output Files
-
-| File | Description |
-|------|-------------|
-| `transcript.json` | Full transcript with word-level timestamps |
-| `transcript.txt` | Plain text transcript |
-| `description.md` | YouTube description |
-| `titles.json` | 10 title variations with thumbnail text |
-| `chapters.txt` | YouTube-ready chapter format |
-
-## Agent skills
-
-### Issue tracker
-
-Issues are tracked in this repository’s GitHub Issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Triage uses the five default canonical label names. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Domain documentation uses a single-context layout. See `docs/agents/domain.md`.
+- For installation, CLI options, partial outcomes and recovery, read `README.md`.
+- For publishing dependencies or validation, read `docs/publishing-package.md`.
+- For source identity or schema imports, read `docs/workspace-import.md`.
+- For managed ASR or accounting, read `docs/managed-transcription.md`.
+- For participant mapping or corrections, read `docs/participant-corrections.md`.
+- For section evidence or duration arithmetic, read `docs/section-planning.md`.
+- For deterministic coverage and remaining release gates, read `docs/workflow-acceptance.md`.
+- For GitHub issue operations, use `gh` as described in `docs/agents/issue-tracker.md`.
+- For triage labels, read `docs/agents/triage-labels.md`.
+- For domain documentation conventions, read `docs/agents/domain.md`.

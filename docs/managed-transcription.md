@@ -2,8 +2,8 @@
 
 Implements issue #14 (B2 of #12). This slice produces a versioned timed transcript
 and completion report. [Participant mapping and optional corrections](participant-corrections.md)
-are implemented by issue #15. The new publishing package and source-quality/runtime/
-billed-cost acceptance belong to later slices.
+are implemented by issue #15. The full workflow and publishing package are integrated by issue #18; source-quality,
+runtime and billed-cost acceptance remain issue #19.
 
 ## Run and resume
 
@@ -18,7 +18,8 @@ podcast-process transcribe output/episodes/my-episode
 podcast-process inspect output/episodes/my-episode
 ```
 
-Use the approved show profile and confirmed episode metadata described in
+Use `--solo` or `--guest NAME` with the built-in approved show defaults, or supply
+the approved show profile and confirmed episode metadata described in
 [workspace import](workspace-import.md). Supply explicit solo status or confirmed
 guest names. Their presence never assigns vendor A/0 to Lish Speaks.
 Without `--workspace`, recordings use `output/episodes/episode-<content-identity>`;
@@ -32,7 +33,7 @@ completed; exit 1 means a partial/unavailable outcome or explicit input/configur
 failure. Transcription never invokes publishing text generation. Anonymous speakers
 are valid completed output. Timing is provider evidence, not source-audited truth.
 
-The existing `process` command remains the legacy full pipeline in this slice.
+The `process` command runs the complete resumable managed workflow; see [README](../README.md).
 For explicit legacy local transcription, use `transcribe episode.wav --local`.
 Existing `transcribe episode.wav -o old-output` also retains legacy behavior when
 neither authority files nor `--workspace` are given. For managed runs, use

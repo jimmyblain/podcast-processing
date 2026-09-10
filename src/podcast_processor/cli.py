@@ -68,8 +68,7 @@ def _display_summary(transcript: Transcript, content: GeneratedContent | None) -
         console.print(table)
 
 
-@app.command()
-def process(
+def process_local(
     audio_file: Annotated[
         Path, typer.Argument(help="Path to the podcast audio file")
     ],
@@ -152,6 +151,58 @@ def process(
 
 
 @app.command()
+def process(
+    audio_file: Annotated[Path, typer.Argument(help="Recording or episode workspace")],
+    workspace: Annotated[Optional[Path], typer.Option()] = None,
+    output: Annotated[Optional[Path], typer.Option("-o", "--output")] = None,
+    show_profile: Annotated[Optional[Path], typer.Option()] = None,
+    metadata: Annotated[Optional[Path], typer.Option()] = None,
+    solo: Annotated[bool, typer.Option(help="Confirm an episode with Lish alone")] = False,
+    guest: Annotated[Optional[list[str]], typer.Option(help="Confirmed guest name; repeat for multiple guests")] = None,
+    chapters: Annotated[int, typer.Option("--chapters", "-c")] = 10,
+    api_key: Annotated[Optional[str], typer.Option(envvar="ANTHROPIC_API_KEY")] = None,
+    fresh: Annotated[bool, typer.Option(help="New transcription and publishing allowances; retain history")] = False,
+    only: Annotated[Optional[str], typer.Option(help="Regenerate selected titles, description or chapters")] = None,
+    chapter_labels: Annotated[Optional[Path], typer.Option()] = None,
+    evidence: Annotated[Optional[Path], typer.Option(help="Optional source/transition/natural-cut evidence JSON")] = None,
+    allowance: Annotated[float, typer.Option()] = 3,
+    deadline: Annotated[float, typer.Option()] = 900,
+    local: Annotated[bool, typer.Option(help="Explicit legacy local pipeline")] = False,
+    whisper_model: Annotated[WhisperModel, typer.Option("--whisper-model", "-m")] = "medium",
+) -> None:
+    """Run or resume all independent episode outcomes under one workspace owner."""
+    if local:
+        process_local(audio_file, output, whisper_model, chapters, api_key)
+        return
+    from .workflow import process_episode, episode_path
+    from .managed_models import TranscriptionPolicy
+    from .workspace_models import ShowProfile, EpisodeMetadata
+    from .workspace import Workspace
+    from .authority import confirmed_metadata
+    settings = get_settings()
+    try:
+        if workspace and output:
+            raise WorkspaceError('Supply --workspace or --output, not both.')
+        destination = episode_path(audio_file, workspace or output)
+        state = process_episode(audio_file, workspace_path=destination,
+            show_profile=ShowProfile.model_validate_json(show_profile.read_bytes()) if show_profile else None,
+            metadata=confirmed_metadata(metadata, solo, guest),
+            primary_key=settings.assemblyai_api_key, backup_key=settings.deepgram_api_key,
+            api_key=api_key or settings.anthropic_api_key, model=settings.claude_model,
+            policy=TranscriptionPolicy(allowance_usd=allowance, deadline_seconds=deadline,
+                primary_reservation_per_hour=settings.transcription_primary_reservation_per_hour,
+                backup_reservation_per_hour=settings.transcription_backup_reservation_per_hour),
+            fresh=fresh, only=only, chapters=chapters, chapter_labels=chapter_labels, evidence=evidence)
+        typer.echo(f"Workspace: {destination.resolve()}")
+        typer.echo(Workspace(destination).report(state))
+        if state.runs[-1].status != 'completed':
+            raise typer.Exit(1)
+    except (WorkspaceError, OSError, ValueError, TranscriptionError) as error:
+        typer.echo(f"Error: {error}")
+        raise typer.Exit(1)
+
+
+@app.command()
 def transcribe(
     audio_file: Annotated[Path, typer.Argument(help="Recording or managed episode workspace")],
     output: Annotated[Optional[Path], typer.Option("-o", "--output")] = None,
@@ -159,6 +210,8 @@ def transcribe(
     workspace: Annotated[Optional[Path], typer.Option()] = None,
     show_profile: Annotated[Optional[Path], typer.Option()] = None,
     metadata: Annotated[Optional[Path], typer.Option()] = None,
+    solo: Annotated[bool, typer.Option(help="Confirm an episode with Lish alone")] = False,
+    guest: Annotated[Optional[list[str]], typer.Option(help="Confirmed guest name; repeat for multiple guests")] = None,
     fresh: Annotated[bool, typer.Option()] = False,
     local: Annotated[bool, typer.Option(help="Explicit legacy local transcription")] = False,
     allowance: Annotated[float, typer.Option(help="Transcription allowance in USD, at most 3")] = 3,
@@ -167,11 +220,13 @@ def transcribe(
     """Transcribe an English episode with managed services; never generate publishing text.
 
     Resume by passing its workspace. Use --fresh for a new recorded allowance.
-    Legacy -o/-m usage remains available; new managed recordings require authority files.
+    Legacy -o/-m usage remains available; new managed recordings require confirmed
+    --solo, --guest or --metadata inputs. Approved show defaults are included.
     """
+    from .authority import confirmed_metadata
     settings = get_settings()
     try:
-        if local or (output is not None and workspace is None and show_profile is None and metadata is None):
+        if local or (output is not None and workspace is None and show_profile is None and metadata is None and not solo and not guest):
             transcript = transcribe_legacy(audio_file, output or settings.default_output_dir / audio_file.stem, whisper_model)
             _display_summary(transcript, None)
             return
@@ -180,7 +235,7 @@ def transcribe(
         from .workspace_models import ShowProfile, EpisodeMetadata
         state = transcribe_episode(audio_file, workspace_path=workspace or output,
             show_profile=ShowProfile.model_validate_json(show_profile.read_bytes()) if show_profile else None,
-            metadata=EpisodeMetadata.model_validate_json(metadata.read_bytes()) if metadata else None,
+            metadata=confirmed_metadata(metadata, solo, guest),
             primary_key=settings.assemblyai_api_key, backup_key=settings.deepgram_api_key,
             policy=TranscriptionPolicy(allowance_usd=allowance, deadline_seconds=deadline,
                 primary_reservation_per_hour=settings.transcription_primary_reservation_per_hour,
@@ -261,7 +316,8 @@ def generate(
         raise typer.Exit(1)
 
     # Resolve output directory
-    output_dir = output or transcript_file.parent
+    from .workspace import identifier
+    output_dir = output or transcript_file.parent / 'generated' / identifier()
 
     console.print(
         Panel(
@@ -274,7 +330,9 @@ def generate(
     )
 
     try:
-        # Load transcript
+        # Preserve original legacy files and earlier publishing output exactly.
+        if output_dir.exists() and any(output_dir.iterdir()):
+            raise WorkspaceError('Legacy generation requires an empty output directory; omit --output for a new preserved version.')
         transcript = load_legacy_transcript(transcript_file)
 
         console.print(

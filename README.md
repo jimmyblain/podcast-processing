@@ -1,166 +1,193 @@
-> **Managed transcription (v2):** `transcribe` supports AssemblyAI primary and bounded
-> Deepgram backup, a versioned workspace, and crash-safe resume. See
-> [managed transcription](docs/managed-transcription.md) for required authority inputs,
-> credentials and recovery behavior. The `process` examples below remain the legacy
-> full pipeline; use `--local` for explicit legacy transcription-only behavior.
-
 # Podcast Processor
 
-A CLI tool that processes podcast audio files to generate YouTube-ready content: transcription, description, viral titles with thumbnail text, and chapters.
+A resumable CLI for a speaker-aware timed transcript, a YouTube publishing package,
+and a three-section proposal when the available evidence supports one. It prepares
+copy and planning data; it does not upload to YouTube, generate thumbnail images,
+or cut, stitch, or export media.
 
-## Features
+## Install and configure
 
-- **Local transcription** using faster-whisper with word-level timestamps
-- **AI-powered content generation** using Claude for descriptions, titles, and chapters
-- **Multiple output formats** ready for YouTube upload
-- **Flexible workflow** - transcribe only, generate from existing transcript, or full pipeline
+Python 3.10+, FFmpeg and ffprobe are required. On macOS, install FFmpeg with
+`brew install ffmpeg`, then:
 
-## Requirements
-
-- Python 3.10+
-- FFmpeg (install via `brew install ffmpeg` on macOS)
-- Anthropic API key
-
-## Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/jimmyblain/podcast-processing.git
-cd podcast-processing
-
-# Create virtual environment and install
-uv venv && uv pip install -e ".[local]"
-
-# Or with pip
-python -m venv .venv
+```sh
+uv venv
+uv pip install -e '.[dev]'
 source .venv/bin/activate
-pip install -e ".[local]"
-```
-
-## Configuration
-
-Create a `.env` file with your Anthropic API key and optional model override:
-
-```bash
 cp .env.example .env
-# Edit .env and add your API key (and optional CLAUDE_MODEL)
 ```
 
-Or set the environment variable directly:
+Alternatively use `python -m venv .venv` and `pip install -e '.[dev]'`.
+Set `ASSEMBLYAI_API_KEY` (primary), `DEEPGRAM_API_KEY` (automatic bounded backup),
+and `ANTHROPIC_API_KEY` (publishing) in `.env` or the environment. `CLAUDE_MODEL`
+selects the publishing model; the configured requested alias and returned model
+are recorded. Saved completed work is reusable without credentials or the media.
+Install `.[local]` only for the explicit legacy Whisper commands.
 
-```bash
-export ANTHROPIC_API_KEY=your-api-key-here
-export CLAUDE_MODEL=claude-opus-4-8  # default alias; override with pinned if desired
+## Run once, then resume
+
+```sh
+# Required inputs: recording and confirmed solo/guest status.
+podcast-process process episode.wav --solo --workspace output/episodes/my-episode
+podcast-process process interview.wav --guest 'Erica Campbell' --workspace output/episodes/interview
+
+# Rerun the same command, or pass its printed workspace location.
+podcast-process process output/episodes/my-episode
+podcast-process inspect output/episodes/my-episode
+podcast-process inspect output/episodes/my-episode --json
 ```
 
-## Usage
+Without `--workspace`, the command prints a content-addressed location under
+`output/episodes/episode-<identity>`. Different recordings with the same basename
+remain separate. `--output`/`-o` is an alternative explicit workspace for `process`.
+For changed recording bytes within an existing episode, pass the new recording
+with the same `--workspace`; dependent current outputs are superseded coherently.
 
-Activate the virtual environment first:
+The approved reusable show identity, audience and voice are included. Selected links
+and recurring promotional copy remain optional configuration, with no guessed
+links. To supply them or change editorial inputs, use `--show-profile show.json`.
+Use `--metadata episode.json` instead of `--solo`/`--guest` for optional angle,
+participant biographies, links, sponsors or current context. See the
+[authority JSON examples](docs/workspace-import.md#supply-authoritative-publishing-inputs).
+Repeat `--guest` for multiple confirmed guests. A roster never assigns a detected
+voice to a person by itself. Confirmed metadata and profile snapshots are saved;
+normal uncertainty produces conservative output and a report, without a review prompt.
 
-```bash
-source .venv/bin/activate
+## Current outputs and partial completion
+
+Open files under the workspace's `current/` directory:
+
+| File | Meaning |
+| --- | --- |
+| `transcript.json` | Timed speaker turns/words, uncertainty, participant evidence and correction lineage |
+| `transcript.txt` | Faithful readable timed transcript with supported names or anonymous labels |
+| `description.md` | Complete description, embedded chapters and approved supplied extras; ≤5,000 characters |
+| `titles.json` | Exactly 15 title concepts with 2–4-word overlays, visual directions and rationale |
+| `chapters.txt` | 3–10 timestamp/title lines, identical to the embedded chapter list |
+| `section-plan.json` | Valid or explained unavailable planning outcome |
+| `section-boundaries.json` | Three contiguous source parts with transition-inclusive duration calculations, when feasible |
+| `completion-report.md` | Full-operation status, reuse/supersession, failures/fallbacks, edits and separate usage ledgers |
+
+Exit **0** means required timed-transcript/publishing outputs and a planning outcome
+completed. An explained impossible/unavailable section proposal does not block publishing.
+Exit **1** means required outputs are partial/missing or an input, service or local
+stage failed. Successful independent work remains usable. If chapters fail, the
+saved description body remains a checkpoint in `state.json`'s `evidence` and the
+immutable artifact store; it is not exposed as a complete `description.md`.
+
+Section planning consumes optional `--evidence planning.json`, or the last saved
+planning evidence. See [planning evidence and arithmetic](docs/section-planning.md).
+With missing transitions, unsupported natural cuts or incompatible evidence, the
+operation records an unavailable result immediately. There is no default semantic
+candidate generator or transition-duration guess. Evidence referencing an older
+corrected transcript must be replaced with matching evidence. A synthetic feasible
+proposal proves arithmetic, not real audio quality or safe natural cuts.
+
+## Separate operations and selected regeneration
+
+```sh
+# Managed transcription only; no publishing requests.
+podcast-process transcribe episode.wav --solo --workspace output/episodes/my-episode
+
+# Publishing from preserved data; never transcribes.
+podcast-process generate output/episodes/my-episode
+
+# New title allowance only; preserve other usable artifacts.
+podcast-process process output/episodes/my-episode --only titles --fresh
+podcast-process generate output/episodes/my-episode --only chapters --fresh
+
+# Change chapter labels locally, with one label per saved chapter.
+podcast-process process output/episodes/my-episode --chapter-labels labels.json
+
+# New full operation and possible spending, preserving previous versions/ledgers.
+podcast-process process output/episodes/my-episode --fresh
 ```
 
-### Full Processing
+`--only` selects `titles`, `description`, or `chapters`. `description --fresh`
+regenerates its body and reuses valid shared chapters. A normal rerun resumes or
+reuses committed work and does not reset attempts, reservations or deadlines.
+`--fresh` without `--only` starts new transcription and publishing allowances; it
+never cancels an earlier remote job. Selected fresh regeneration replaces only the
+selected allowance. Direct edits to current publishing files are preserved as exact
+historical bytes before regeneration, without becoming episode facts or corrections.
 
-Process an audio file to generate all content (transcription + description + titles + chapters):
+Inputs invalidate only actual consumers: links/promotional copy reassemble locally;
+audience/voice/angle change editorial requests; timing changes chapters/plans while
+preserving unchanged text outputs; transitions change only planning; configured ASR
+hints/model/settings join transcription fingerprints. Calendar time alone does not
+refresh snapshots. History and raw evidence remain in the workspace.
 
-```bash
-podcast-process process episode.mp3
+## Import, corrections and source reattachment
+
+```sh
+# Explicit non-destructive import; no transcription or publishing calls.
+podcast-process import legacy/transcript.json --root output/episodes \
+  --show-profile show.json --metadata episode.json
+# Use the workspace printed by import for process/generate.
+podcast-process process output/episodes/PRINTED_WORKSPACE
+
+# Optional exact-base corrections, followed by normal resume.
+podcast-process corrections-template output/episodes/my-episode --output corrections.json
+# Edit corrections.json using supported changes.
+podcast-process correct output/episodes/my-episode corrections.json
+podcast-process process output/episodes/my-episode
+
+# Reattach moved identical bytes; optionally make a verified local copy.
+podcast-process attach-source output/episodes/my-episode /new/location/episode.wav --copy-source
+podcast-process check-source output/episodes/my-episode
 ```
 
-With options:
+Imports preserve the original folder and unknown provenance. Full processing of an
+imported workspace uses its preserved text without implicit transcription; missing
+timing honestly limits precise outputs. Unsupported future schemas fail explicitly.
+Incompatible timed-transcript corrections fail rather than applying to another
+revision. See [imports](docs/workspace-import.md) and [corrections](docs/participant-corrections.md).
+Missing media does not prevent work from saved text/raw responses. A verified copy
+or identical reattachment restores media-dependent work without changing identity.
 
-```bash
-podcast-process process episode.mp3 \
-  --output ./my-output \
-  --whisper-model medium \
-  --chapters 10
+## Recovery and usage
+
+One process owns a workspace across the full run. A concurrent command reports the
+active owner. Process death releases ownership; immutable artifacts and atomically
+switched snapshots prevent partial writes from becoming reusable current output.
+Restart recovers accepted job IDs and saved successful responses before buying work.
+
+Managed transcription permits at most one primary plus one backup accepted or
+possibly accepted job per operation, within the persisted default 900-second deadline
+and $3 admission allowance. `--deadline` and `--allowance` can lower those limits.
+Conservative per-source-hour reservations are configurable in `.env`. A local timeout
+is not cancellation or free usage; later resume can read an already completed remote
+job. Publishing has up to three attempts per failed stage, including invalid-output
+and SDK attempts, and a separate usage ledger. Missing billing remains unknown;
+reservations do not prove an actual dollar cap. See [managed recovery](docs/managed-transcription.md).
+
+## Legacy compatibility
+
+```sh
+podcast-process transcribe old-episode.wav --local -o legacy-output
+podcast-process process old-episode.wav --local -o legacy-output
+podcast-process generate legacy-output/transcript.json
 ```
 
-### Transcribe Only
+Legacy generation writes a new `generated/<id>/` directory beside its input. An
+explicit `--output` must be empty, preserving original transcript and publishing files.
+These explicit local/legacy flows retain the old unversioned format and do not offer
+the v2 guarantees or 15-concept contract. For managed transcription, use `--workspace`
+or confirmed metadata; historical `transcribe file -o directory` with no authority
+options still routes to local Whisper. Import preserved data for versioned generation.
 
-Generate only the transcript (no API calls to Claude):
+## Verification and release evidence
 
-```bash
-podcast-process transcribe episode.mp3 --local
+```sh
+mypy src/podcast_processor
+pytest tests/
 ```
 
-### Generate from Existing Transcript
+Tests use isolated workspaces, generated media, controlled services/clock and actual
+process interruptions; no paid API trials are needed. The
+[deterministic acceptance record](docs/workflow-acceptance.md) maps evidence to A1–A11.
+Real source annotations, precise timing/safe cuts, actual-output human editorial
+review, representative full-operation runtime and account-adjusted billed usage
+remain release gates in [issue 19](https://github.com/jimmyblain/podcast-processing/issues/19).
 
-If you already have a transcript and want to regenerate content:
-
-```bash
-podcast-process generate output/episode/transcript.json
-```
-
-## Options
-
-| Option | Short | Description | Default |
-|--------|-------|-------------|---------|
-| `--output` | `-o` | Output directory | `./output/<filename>` |
-| `--whisper-model` | `-m` | Whisper model size | `medium` |
-| `--chapters` | `-c` | Number of chapters to generate | `10` |
-| `--api-key` | | Anthropic API key | from env |
-
-### Whisper Models
-
-| Model | Size | Speed | Quality |
-|-------|------|-------|---------|
-| `tiny` | 39M | Fastest | Lower |
-| `base` | 74M | Fast | Basic |
-| `small` | 244M | Moderate | Good |
-| `medium` | 769M | Slower | Better |
-| `large-v3` | 1.5G | Slowest | Best |
-
-## Output Files
-
-After processing, you'll find these files in the output directory:
-
-| File | Description |
-|------|-------------|
-| `transcript.json` | Full transcript with word-level timestamps |
-| `transcript.txt` | Plain text transcript |
-| `description.md` | YouTube description with hook, summary, and CTA |
-| `titles.json` | 10 viral title variations with thumbnail text |
-| `chapters.txt` | YouTube-ready chapter format |
-
-### Example Output
-
-**chapters.txt:**
-```
-00:00 Introduction - Welcome and Episode Overview
-02:34 The Problem with Traditional Approaches
-08:15 Solution #1: The New Framework
-15:42 Real-World Case Study
-23:18 Common Mistakes to Avoid
-```
-
-**titles.json:**
-```json
-[
-  {
-    "title": "I Tried This for 30 Days - Here's What Happened",
-    "thumbnail_text": "30 DAYS LATER",
-    "reasoning": "Personal story + curiosity gap"
-  }
-]
-```
-
-## Supported Audio Formats
-
-- MP3
-- WAV
-- M4A
-- FLAC
-- OGG
-- WebM
-
-## License
-
-MIT
-
-## Versioned episode import
-
-Import preserved transcripts without transcription, then inspect and generate from
-recoverable episode workspaces. See [the import workflow and current limitations](docs/workspace-import.md).
+MIT licensed.

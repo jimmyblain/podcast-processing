@@ -39,13 +39,16 @@ def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None
             state.episode_metadata = metadata or state.episode_metadata
             state.input_revision = input_revision(state)
             if old_inputs != state.input_revision:
-                state.artifacts = {n: a for n, a in state.artifacts.items() if n in ('transcript.json', 'transcript.txt')}
+                if 'transcript.json' in state.artifacts and state.show_profile and state.episode_metadata:
+                    from .package import prune_inputs
+                    prune_inputs(state, current_transcript(workspace, state))
         else:
             if source is None:
                 raise WorkspaceError('Supply a recording or an existing episode workspace.')
+            from .authority import approved_show_profile
             state = WorkspaceState(episode_id=identity, name=source_or_workspace.stem,
                 source_revision=source.id, sources=[source], import_hash='', input_revision='',
-                show_profile=show_profile, episode_metadata=metadata)
+                show_profile=show_profile or approved_show_profile(), episode_metadata=metadata)
             state.input_revision = input_revision(state)
         if state.show_profile is None or state.episode_metadata is None:
             raise WorkspaceError('Managed transcription requires an approved --show-profile and confirmed --metadata (guests or solo).')
