@@ -21,7 +21,9 @@ class PreservedPublishingClient:
         context = {'show_profile': self.state.show_profile.model_dump() if self.state.show_profile else None,
                    'episode_metadata': self.state.episode_metadata.model_dump() if self.state.episode_metadata else None}
         prompt += ('\n\nAuthoritative supplied context (use only confirmed facts; anonymous speakers are not '
-                   'identified participants; do not invent missing details):\n' + json.dumps(context, ensure_ascii=False))
+                   'identified participants; use neutral topic-based attribution for anonymous speech. '
+                   'Unclear passages have been excluded: do not reconstruct missing speech, quote it, or make factual '
+                   'promises from it. Do not invent missing details):\n' + json.dumps(context, ensure_ascii=False))
         request = {'model': self.model, 'prompt': prompt, 'max_tokens': max_tokens,
                    'stage_version': 'legacy-publishing-v1', 'returned_model_version': None,
                    'request_id': None, 'usage': {'actual': None, 'estimated': None, 'reserved': None}}

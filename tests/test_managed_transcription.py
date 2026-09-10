@@ -57,7 +57,8 @@ def test_managed_operation_preserves_evidence_and_reuses_completed_artifacts(tmp
     state = inspect(workspace)
     transcript = json.loads((workspace / 'current/transcript.json').read_bytes())
     assert [w['word'] for w in transcript['words']] == ['Well,', 'well.']
-    assert [s['speaker'] for s in transcript['segments']] == ['A', 'B']
+    labels = {s['id']: s['label'] for s in transcript['speakers']}
+    assert [labels[s['speaker']] for s in transcript['segments']] == ['Speaker A', 'Speaker B']
     assert transcript['segments'][0]['start'] == 0.1
     assert transcript['speakers'][0]['participant'] is None
     assert state['runs'][-1]['status'] == 'completed'
@@ -90,7 +91,8 @@ def test_failed_primary_uses_backup_word_labels_and_preserves_overlap(tmp_path, 
     workspace, result = managed(tmp_path)
     assert result.exit_code == 0, (result.output, result.exception)
     transcript = json.loads((workspace / 'current/transcript.json').read_bytes())
-    assert [t['speaker'] for t in transcript['segments']] == ['0', '1']
+    labels = {s['id']: s['label'] for s in transcript['speakers']}
+    assert [labels[t['speaker']] for t in transcript['segments']] == ['Speaker 0', 'Speaker 1']
     assert transcript['segments'][1]['start'] < transcript['segments'][0]['end']
     assert transcript['words'][0]['recognition_confidence'] == 0.7
     assert transcript['words'][0]['speaker_confidence'] == 0.6
@@ -345,7 +347,7 @@ def test_normalization_change_reuses_raw_response_without_source_or_services(tmp
     after = inspect(workspace)
     assert len(service) == 3
     assert after['artifacts']['transcript.json']['id'] != before['artifacts']['transcript.json']['id']
-    assert after['evidence'] == before['evidence']
+    assert all(after['evidence'][name] == artifact for name, artifact in before['evidence'].items())
     assert len(after['transcription_operations']) == 1
 
 
@@ -424,7 +426,8 @@ def test_local_cached_comparison_replays_full_word_evidence(tmp_path, service, m
             assert any(a['evidence_index'] == index for a in transcript['annotations'])
             continue
         result_word = normalized[index]
-        assert result_word['speaker'] == str(word['speaker'])
+        labels = {s['id']: s['label'] for s in transcript['speakers']}
+        assert labels[result_word['speaker']] == f"Speaker {word['speaker']}"
         assert result_word['start'] == word['start'] / scale
         assert result_word['end'] == word['end'] / scale
     if provider == 'assemblyai':
@@ -507,7 +510,7 @@ def test_invalid_primary_shape_is_preserved_and_backup_completes(tmp_path, servi
     workspace, result = managed(tmp_path)
     assert result.exit_code == 0, (result.output, result.exception)
     state = inspect(workspace)
-    assert len(state['evidence']) == 2
+    assert len([a for a in state['evidence'].values() if a['name'].startswith('raw-')]) == 2
     assert state['transcription_operations'][0]['attempts'][0]['status'] == 'unusable'
     assert any(json.loads((workspace / a['path']).read_bytes()) == payload for a in state['evidence'].values())
 

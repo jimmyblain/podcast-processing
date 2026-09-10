@@ -317,6 +317,47 @@ def import_command(
         raise typer.Exit(1)
 
 
+@app.command("map-participants")
+def map_participants_command(workspace: Path) -> None:
+    """Associate supported participant identities using saved episode evidence."""
+    from .participants import map_episode
+    from .workspace import Workspace
+    try:
+        typer.echo(Workspace(workspace).report(map_episode(workspace)))
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f"Error: {error}")
+        raise typer.Exit(1)
+
+
+@app.command("corrections-template")
+def corrections_template_command(workspace: Path, output: Annotated[Optional[Path], typer.Option()] = None) -> None:
+    """Create an optional JSON corrections file pinned to the current source and transcript."""
+    from .corrections import corrections_template
+    try:
+        data = corrections_template(workspace)
+        if output:
+            with output.open('xb') as stream:
+                stream.write(data)
+            typer.echo(str(output))
+        else:
+            typer.echo(data.decode())
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f"Error: {error}")
+        raise typer.Exit(1)
+
+
+@app.command("correct")
+def correct_command(workspace: Path, corrections: Path) -> None:
+    """Apply optional exact-base corrections without retranscription."""
+    from .corrections import correct_episode
+    from .workspace import Workspace
+    try:
+        typer.echo(Workspace(workspace).report(correct_episode(workspace, corrections)))
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f"Error: {error}")
+        raise typer.Exit(1)
+
+
 @app.command("inspect")
 def inspect_command(
     workspace: Path,

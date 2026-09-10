@@ -7,6 +7,7 @@ from pathlib import Path
 import time
 
 from . import normalization
+from .participants import current_transcript, ensure_readable, map_supported, save_mapped
 from .managed_models import ProviderName, TranscriptionAttempt, TranscriptionOperation, TranscriptionPolicy
 from .managed_providers import BASELINES, ManagedProvider, ProviderError, response_object
 from .operations import input_revision, input_snapshot, update_source
@@ -58,14 +59,19 @@ def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None
                                               started_at=started, deadline_at=started + policy.deadline_seconds)
             state.transcription_operations.append(operation)
         expected = {**dependencies, 'operation': operation.id, 'normalization': normalization.NORMALIZATION_VERSION}
-        reusable = all(n in state.artifacts and state.artifacts[n].dependencies == expected
-                       for n in ('transcript.json', 'transcript.txt'))
+        reusable = ('transcript.json' in state.artifacts and all(
+            state.artifacts['transcript.json'].dependencies.get(k) == v for k, v in expected.items()))
         if reusable and operation.status == 'completed':
             state.runs.append(Run(id=identifier(), operation_id=operation.id, operation='transcribe',
                 status='completed', started_at=now(), finished_at=now(),
                 inputs={**input_snapshot(state), 'requests': copy.deepcopy(BASELINES)},
                 limitations=[operation.outcome or 'Reused completed timed transcript.',
                              'Source-audited quality, representative runtime and billed cost remain unevaluated.']))
+            original = current_transcript(workspace, state)
+            mapped = map_supported(original, state.episode_metadata, state.source_revision)
+            if mapped != original:
+                save_mapped(workspace, state, mapped)
+            ensure_readable(workspace, state)
             workspace.commit(state)
             return state
         operation.status = 'running'
@@ -289,6 +295,13 @@ class ManagedSession:
             attempt.error = 'No recoverable episode speech in provider result.'
             self.checkpoint()
             return False
+        normalized_name = f'normalized-{transcript.revision}.json'
+        if normalized_name not in self.state.evidence:
+            self.workspace.add_artifact(self.state, normalized_name, json_bytes(transcript.model_dump()),
+                                        self.expected, normalization.NORMALIZATION_VERSION, exposed=False)
+            self.checkpoint()
+        assert self.state.episode_metadata is not None
+        transcript = map_supported(transcript, self.state.episode_metadata, self.state.source_revision)
         for name, data in [('transcript.json', json_bytes(transcript.model_dump())),
                            ('transcript.txt', transcript.readable().encode())]:
             if name not in self.state.artifacts:
@@ -296,7 +309,7 @@ class ManagedSession:
                 self.checkpoint()
         uncertain = sum(not w.timing_usable for w in transcript.words)
         self.operation.status = 'completed'
-        self.operation.outcome = f'Timed transcript preserved; {uncertain} words unusable for precise cuts. Speaker identities remain anonymous.'
+        self.operation.outcome = f'Timed transcript preserved; {uncertain} words unusable for precise cuts. Supported participants mapped; unresolved identities retain anonymous labels.'
         return True
 
     def start_attempt(self, provider: ManagedProvider) -> TranscriptionAttempt | None:

@@ -166,7 +166,7 @@ def inspect_episode(path: Path) -> WorkspaceState:
 def generate_episode(path: Path, api_key: str, model: str, chapters: int = 10) -> WorkspaceState:
     """Generate solely from committed evidence; checkpoint each successful result."""
     from .generators import generate_chapters, generate_description, generate_titles
-    from .models import TranscriptSegment
+    from .transcript_content import publishing_transcript, transcript_inputs
     from .publishing import PreservedPublishingClient
     from .workspace import PUBLISHING_FILES
     from .workspace_models import PreservedTranscript
@@ -181,11 +181,14 @@ def generate_episode(path: Path, api_key: str, model: str, chapters: int = 10) -
         if artifact is None:
             raise WorkspaceError('No current usable timed transcript. Explicitly import evidence for this source revision.')
         preserved = PreservedTranscript.model_validate_json(workspace.artifact_bytes(artifact))
-        if not any(segment.text.strip() for segment in preserved.segments):
+        chapter_timing_available = preserved.has_timing and bool(publishing_transcript(preserved, timed=True).segments)
+        if not publishing_transcript(preserved).full_text.strip():
             raise WorkspaceError('No usable preserved text for publishing.')
-        dependencies = {'transcript': artifact.sha256, 'input_revision': state.input_revision,
-                        'model': model, 'stage_version': 'legacy-publishing-v1'}
-        expected = {name: {**dependencies, **({'chapter_count': str(chapters)} if name == 'chapters.txt' else {})}
+        consumed = transcript_inputs(preserved)
+        dependencies = {key: consumed[key] for key in ('transcript_text', 'transcript_attribution')}
+        dependencies.update({'input_revision': state.input_revision, 'model': model, 'stage_version': 'speaker-publishing-v1'})
+        expected = {name: {**dependencies, **({'chapter_count': str(chapters), 'transcript_timing': consumed['transcript_timing']}
+                                             if name == 'chapters.txt' else {})}
                     for name in PUBLISHING_FILES}
         reusable = [name for name in PUBLISHING_FILES if name in state.artifacts
                     and state.artifacts[name].dependencies == expected[name]]
@@ -198,23 +201,20 @@ def generate_episode(path: Path, api_key: str, model: str, chapters: int = 10) -
             return state
         run = Run(id=identifier(), operation_id=identifier(), operation='generate', status='running',
                   started_at=now(), inputs={**input_snapshot(state), 'model': model, 'chapter_count': chapters,
-                                           'stage_version': 'legacy-publishing-v1', 'transcript_artifact': artifact.id})
+                                           'stage_version': 'speaker-publishing-v1', 'transcript_artifact': artifact.id})
         state.runs.append(run)
         for name in PUBLISHING_FILES:
             if name not in reusable:
                 state.artifacts.pop(name, None)
-        if not preserved.has_timing:
+        if not chapter_timing_available:
             state.artifacts.pop('chapters.txt', None)
             run.limitations.append('Chapters unavailable: preserved timing is missing or unusable.')
         workspace.commit(state)
-        # Legacy text generators need text segments; sentinel times never reach chapter generation.
-        transcript = Transcript(segments=[TranscriptSegment(start=s.start or 0, end=s.end or 0, text=s.text)
-                                          for s in preserved.segments],
-                                language=preserved.language or 'unknown', duration=preserved.duration or 0)
+        transcript = publishing_transcript(preserved)
         client = PreservedPublishingClient(workspace, state, api_key, model)
         try:
             for name in PUBLISHING_FILES:
-                if name in state.artifacts or (name == 'chapters.txt' and not preserved.has_timing):
+                if name in state.artifacts or (name == 'chapters.txt' and not chapter_timing_available):
                     continue
                 if name == 'description.md':
                     description = generate_description(client, transcript)
@@ -227,11 +227,11 @@ def generate_episode(path: Path, api_key: str, model: str, chapters: int = 10) -
                         raise WorkspaceError('Publishing returned empty titles or thumbnail text.')
                     data = json_bytes([title.model_dump() for title in titles])
                 else:
-                    generated_chapters = generate_chapters(client, transcript, chapters)
+                    generated_chapters = generate_chapters(client, publishing_transcript(preserved, timed=True), chapters)
                     if not generated_chapters:
                         raise WorkspaceError('Publishing returned no chapters.')
                     data = ('\n'.join(chapter.to_youtube_format() for chapter in generated_chapters) + '\n').encode()
-                workspace.add_artifact(state, name, data, expected[name], 'legacy-publishing-v1')
+                workspace.add_artifact(state, name, data, expected[name], 'speaker-publishing-v1')
                 workspace.commit(state)
         except Exception as error:
             run.status = 'partial'

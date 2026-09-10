@@ -145,6 +145,11 @@ class Workspace:
         flush_directory(self.path)
 
     def report(self, state: WorkspaceState) -> str:
+        from .participants import current_transcript, uncertainty_report
+
+        uncertainty = ''
+        if 'transcript.json' in state.artifacts:
+            uncertainty = uncertainty_report(current_transcript(self, state))
         run = state.runs[-1]
         if run.operation == 'transcribe':
             operation = next(op for op in state.transcription_operations if op.id == run.operation_id)
@@ -166,7 +171,7 @@ class Workspace:
                     'Reservations are conservative admission estimates, not verified bills. '
                     'A local timeout does not cancel remote processing or imply zero charge.\n\n'
                     + '\n'.join(attempts) + '\n\n'
-                    + '\n'.join(f'- {item}' for item in run.limitations) + '\n')
+                    + '\n'.join(f'- {item}' for item in run.limitations) + '\n' + uncertainty + '\n')
         missing = [name for name in PUBLISHING_FILES if name not in state.artifacts]
         return ('# Completion report\n\n'
                 f'Episode: {state.episode_id}\nOperation: {run.operation}\nStatus: {run.status}\n\n'
@@ -175,7 +180,7 @@ class Workspace:
                 'This slice uses the legacy publishing format; the v2 publishing package is not implemented.\n'
                 'Imported speaker identity, original settings and timing confidence may be unknown.\n'
                 'Precise section boundaries are unavailable in this slice.\n\n'
-                + '\n'.join(f'- {item}' for item in run.limitations) + '\n')
+                + '\n'.join(f'- {item}' for item in run.limitations) + '\n' + uncertainty + '\n')
 
     def reconcile(self, state: WorkspaceState) -> bool:
         """Preserve edits and stop exposing damaged outputs before any new work."""

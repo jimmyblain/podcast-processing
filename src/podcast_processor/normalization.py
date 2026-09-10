@@ -6,9 +6,9 @@ from typing import Any
 from .managed_models import ProviderName, Transport
 from .workspace import digest, json_bytes
 from .workspace_models import (DetectedSpeaker, ImportProvenance, PreservedSegment,
-                               PreservedTranscript, PreservedWord)
+                               PreservedTranscript, PreservedWord, unclear_wording)
 
-NORMALIZATION_VERSION = 'managed-words-v1'
+NORMALIZATION_VERSION = 'managed-words-v2'
 
 
 def records(value: Any) -> list[dict[str, Any]]:
@@ -46,6 +46,7 @@ def normalize(raw: dict[str, Any], provider: ProviderName, transport: Transport,
     words: list[PreservedWord] = []
     turns: list[PreservedSegment] = []
     annotations: list[dict[str, Any]] = []
+    speakers: dict[str, DetectedSpeaker] = {}
     def number(value: Any) -> float | None:
         if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value):
             return float(value)
@@ -57,7 +58,8 @@ def normalize(raw: dict[str, Any], provider: ProviderName, transport: Transport,
         markup = re.findall(r'\[[^]]*\]|<[^>]*>|♪[^♪]*♪', text)
         for annotation in markup:
             annotations.append({'evidence_index': index, 'text': annotation, 'kind': 'provider-annotation'})
-            text = text.replace(annotation, '').strip()
+            if not unclear_wording(annotation):
+                text = text.replace(annotation, '').strip()
         if not text:
             continue
         start, end = number(native.get('start')), number(native.get('end'))
@@ -73,7 +75,11 @@ def normalize(raw: dict[str, Any], provider: ProviderName, transport: Transport,
         if start is not None and end is not None and end < start:
             start = end = None
         label = native.get('speaker')
-        speaker = str(label) if isinstance(label, (str, int)) else None
+        speaker = None
+        if isinstance(label, (str, int)):
+            if str(label) not in speakers:
+                speakers[str(label)] = DetectedSpeaker(id=f'{revision}:s{len(speakers)}', label=f'Speaker {label}')
+            speaker = speakers[str(label)].id
         if not turns or turns[-1].speaker != speaker:
             turns.append(PreservedSegment(id=f'{revision}:t{len(turns)}', text='', speaker=speaker))
         turn = turns[-1]
@@ -93,10 +99,13 @@ def normalize(raw: dict[str, Any], provider: ProviderName, transport: Transport,
             turn.uncertainty = ['Contains words with unusable timing.']
     for turn in turns:
         turn.timing_usable = turn.start is not None and turn.end is not None and not turn.uncertainty
-    return PreservedTranscript(revision=revision, segments=turns, words=words,
+        turn.quotation_usable = not unclear_wording(turn.text)
+    transcript = PreservedTranscript(revision=revision, segments=turns, words=words,
         duration=transport.duration, language='en', annotations=annotations,
-        speakers=[DetectedSpeaker(id=s) for s in dict.fromkeys(w.speaker for w in words) if s is not None],
+        speakers=list(speakers.values()),
         provenance=ImportProvenance(source_path=transport.path, original_hash=raw_hash,
             original_schema=provider, source_fingerprint=transport.source_fingerprint,
             settings={'request': request, 'source_revision': source_revision, 'transport': transport.model_dump(),
                       'normalization_version': NORMALIZATION_VERSION, 'operation_id': operation_id}, timing_confidence=None))
+    transcript.refresh_overlaps()
+    return transcript

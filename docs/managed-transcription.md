@@ -1,8 +1,9 @@
 # Managed transcription with bounded recovery
 
 Implements issue #14 (B2 of #12). This slice produces a versioned timed transcript
-and completion report. Participant mapping/corrections, the new publishing package,
-and source-quality/runtime/billed-cost acceptance belong to later slices.
+and completion report. [Participant mapping and optional corrections](participant-corrections.md)
+are implemented by issue #15. The new publishing package and source-quality/runtime/
+billed-cost acceptance belong to later slices.
 
 ## Run and resume
 
@@ -102,12 +103,14 @@ explicit selection outside this workflow.
   model fallback. Request/endpoint privacy settings are recorded; retention/deletion
   and privacy-adjusted pricing are not verified by those settings.
 
-Words retain source order and native speaker labels. Turns derive from consecutive
+Words retain source order; anonymous speakers record native labels separately from
+revision-scoped IDs. Turns derive from consecutive
 word labels and usable word bounds, never from parent utterance labels/bounds.
 Cross-speaker overlaps and backwards starts remain evidence. Missing, nonfinite,
 reversed, out-of-source and zero-duration word timing cannot become precise cuts;
 recoverable wording survives. Invalid bounds remain in raw evidence. Provider
-annotation markup is stored separately. Recognition and speaker confidence are
+non-speech annotation markup is stored separately; unclear speech markers remain
+explicit in the timed transcript. Recognition and speaker confidence are
 separate, nullable native evidence, not inferred timing confidence or identity.
 
 ## Verification and remaining acceptance
