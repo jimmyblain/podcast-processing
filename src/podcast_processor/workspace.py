@@ -146,6 +146,7 @@ class Workspace:
 
     def report(self, state: WorkspaceState) -> str:
         from .participants import current_transcript, uncertainty_report
+        from .planning import planning_report
 
         uncertainty = ''
         if 'transcript.json' in state.artifacts:
@@ -182,7 +183,7 @@ class Workspace:
                 f'Missing publishing results: {", ".join(missing) or "none"}\n\n'
                 'Publishing uses the v2 package contract. Automated checks do not establish human editorial or source-timing acceptance.\n'
                 'Imported speaker identity, original settings and timing confidence may be unknown.\n'
-                'Precise section boundaries are unavailable in this slice.\n\n'
+                + planning_report(self, state) + '\n'
                 + 'Publishing usage (separate from transcription; billing cost unknown):\n' + (usage or 'No requests.') + '\n\n'
                 + '\n'.join(f'- {item}' for item in run.limitations) + '\n' + uncertainty + '\n')
 
@@ -210,6 +211,19 @@ class Workspace:
                 chapters is None or description.dependencies['chapters_version'] != chapters.id):
             state.artifacts.pop('description.md')
             state.runs[-1].limitations.append('Description unavailable because its shared chapter version is unavailable.')
+            changed = True
+        # A plan outcome and its valid proposal form one exposed planning result.
+        # Removing either damaged member must not leave a stale validity claim.
+        planning = state.artifacts.get('section-plan.json')
+        proposal = state.artifacts.get('section-proposal.json')
+        if planning:
+            from .planning_models import PlanningOutcome
+            outcome = PlanningOutcome.model_validate_json(self.artifact_bytes(planning))
+            if outcome.status == 'valid' and proposal is None:
+                state.artifacts.pop('section-plan.json')
+                changed = True
+        elif proposal:
+            state.artifacts.pop('section-proposal.json')
             changed = True
         if 'transcript.json' not in state.artifacts:
             state.artifacts.clear()

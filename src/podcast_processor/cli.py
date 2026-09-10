@@ -365,6 +365,19 @@ def correct_command(workspace: Path, corrections: Path) -> None:
         raise typer.Exit(1)
 
 
+@app.command("plan")
+def plan_command(workspace: Path, evidence: Annotated[Path, typer.Option(help="Source, prepared transitions and natural-cut evidence JSON")]) -> None:
+    """Propose three source-relative episode parts, or explain unavailability."""
+    from .planning import plan_episode, planning_report
+    from .workspace import Workspace
+    try:
+        state = plan_episode(workspace, evidence)
+        typer.echo(planning_report(Workspace(workspace), state))
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f"Error: {error}")
+        raise typer.Exit(1)
+
+
 @app.command("inspect")
 def inspect_command(
     workspace: Path,
