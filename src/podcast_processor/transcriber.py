@@ -1,8 +1,12 @@
 """Audio transcription using faster-whisper."""
 
-from pathlib import Path
+from __future__ import annotations
 
-from faster_whisper import WhisperModel
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from faster_whisper import WhisperModel
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
@@ -44,6 +48,10 @@ class WhisperLocalTranscriber:
     def _load_model(self) -> WhisperModel:
         """Load the Whisper model lazily."""
         if self._model is None:
+            try:
+                from faster_whisper import WhisperModel
+            except ImportError as error:
+                raise TranscriptionError('Local transcription requires the optional local extra: pip install "podcast-processor[local]".') from error
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),

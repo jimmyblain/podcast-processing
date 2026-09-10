@@ -153,50 +153,47 @@ def process(
 
 @app.command()
 def transcribe(
-    audio_file: Annotated[
-        Path, typer.Argument(help="Path to the podcast audio file")
-    ],
-    output: Annotated[
-        Optional[Path],
-        typer.Option("-o", "--output", help="Output directory"),
-    ] = None,
-    whisper_model: Annotated[
-        WhisperModel,
-        typer.Option("--whisper-model", "-m", help="Whisper model to use"),
-    ] = "medium",
+    audio_file: Annotated[Path, typer.Argument(help="Recording or managed episode workspace")],
+    output: Annotated[Optional[Path], typer.Option("-o", "--output")] = None,
+    whisper_model: Annotated[WhisperModel, typer.Option("--whisper-model", "-m")] = "medium",
+    workspace: Annotated[Optional[Path], typer.Option()] = None,
+    show_profile: Annotated[Optional[Path], typer.Option()] = None,
+    metadata: Annotated[Optional[Path], typer.Option()] = None,
+    fresh: Annotated[bool, typer.Option()] = False,
+    local: Annotated[bool, typer.Option(help="Explicit legacy local transcription")] = False,
+    allowance: Annotated[float, typer.Option(help="Transcription allowance in USD, at most 3")] = 3,
+    deadline: Annotated[float, typer.Option(help="Seconds from operation start, at most 900")] = 900,
 ) -> None:
-    """Transcribe a podcast audio file (no LLM calls).
+    """Transcribe an English episode with managed services; never generate publishing text.
 
-    Only generates transcript files, skips content generation.
+    Resume by passing its workspace. Use --fresh for a new recorded allowance.
+    Legacy -o/-m usage remains available; new managed recordings require authority files.
     """
     settings = get_settings()
-
-    # Resolve output directory
-    output_dir = output or settings.default_output_dir / audio_file.stem
-
-    console.print(
-        Panel(
-            f"[bold]Audio:[/] {audio_file}\n"
-            f"[bold]Output:[/] {output_dir}\n"
-            f"[bold]Whisper Model:[/] {whisper_model}",
-            title="Transcribe Only",
-            border_style="blue",
-        )
-    )
-
     try:
-        # Transcribe
-        transcript = transcribe_legacy(audio_file, output_dir, whisper_model)
-
-        # Display summary
-        _display_summary(transcript, content=None)
-
-        console.print(
-            f"\n[bold green]Done![/] Transcript saved to: {output_dir}"
-        )
-
-    except TranscriptionError as e:
-        console.print(f"[bold red]Transcription error:[/] {e}")
+        if local or (output is not None and workspace is None and show_profile is None and metadata is None):
+            transcript = transcribe_legacy(audio_file, output or settings.default_output_dir / audio_file.stem, whisper_model)
+            _display_summary(transcript, None)
+            return
+        from .managed import transcribe_episode
+        from .managed_models import TranscriptionPolicy
+        from .workspace_models import ShowProfile, EpisodeMetadata
+        state = transcribe_episode(audio_file, workspace_path=workspace or output,
+            show_profile=ShowProfile.model_validate_json(show_profile.read_bytes()) if show_profile else None,
+            metadata=EpisodeMetadata.model_validate_json(metadata.read_bytes()) if metadata else None,
+            primary_key=settings.assemblyai_api_key, backup_key=settings.deepgram_api_key,
+            policy=TranscriptionPolicy(allowance_usd=allowance, deadline_seconds=deadline,
+                primary_reservation_per_hour=settings.transcription_primary_reservation_per_hour,
+                backup_reservation_per_hour=settings.transcription_backup_reservation_per_hour), fresh=fresh)
+        destination = workspace or output or (audio_file if audio_file.is_dir() else
+                      Path('output/episodes') / f'episode-{state.episode_id}')
+        typer.echo(f"Workspace: {destination.resolve()}")
+        typer.echo(f"Episode {state.episode_id}: {state.runs[-1].status}")
+        typer.echo(state.transcription_operations[-1].outcome or '')
+        if state.runs[-1].status != 'completed':
+            raise typer.Exit(1)
+    except (WorkspaceError, OSError, ValueError, TranscriptionError) as error:
+        typer.echo(f"Error: {error}")
         raise typer.Exit(1)
 
 

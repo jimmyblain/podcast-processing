@@ -25,6 +25,11 @@ class Settings(BaseSettings):
         description="Anthropic API key for Claude",
     )
 
+    assemblyai_api_key: str = ""
+    deepgram_api_key: str = ""
+    transcription_primary_reservation_per_hour: float = Field(default=1.50, gt=0)
+    transcription_backup_reservation_per_hour: float = Field(default=1.50, gt=0)
+
     # Whisper settings
     whisper_model: WhisperModel = Field(
         default="medium",

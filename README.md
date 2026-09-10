@@ -1,3 +1,9 @@
+> **Managed transcription (v2):** `transcribe` supports AssemblyAI primary and bounded
+> Deepgram backup, a versioned workspace, and crash-safe resume. See
+> [managed transcription](docs/managed-transcription.md) for required authority inputs,
+> credentials and recovery behavior. The `process` examples below remain the legacy
+> full pipeline; use `--local` for explicit legacy transcription-only behavior.
+
 # Podcast Processor
 
 A CLI tool that processes podcast audio files to generate YouTube-ready content: transcription, description, viral titles with thumbnail text, and chapters.
@@ -23,12 +29,12 @@ git clone https://github.com/jimmyblain/podcast-processing.git
 cd podcast-processing
 
 # Create virtual environment and install
-uv venv && uv pip install -e .
+uv venv && uv pip install -e ".[local]"
 
 # Or with pip
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[local]"
 ```
 
 ## Configuration
@@ -77,7 +83,7 @@ podcast-process process episode.mp3 \
 Generate only the transcript (no API calls to Claude):
 
 ```bash
-podcast-process transcribe episode.mp3
+podcast-process transcribe episode.mp3 --local
 ```
 
 ### Generate from Existing Transcript

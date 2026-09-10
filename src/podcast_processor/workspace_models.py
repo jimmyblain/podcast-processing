@@ -3,6 +3,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .managed_models import TranscriptionOperation
+
 
 class Record(BaseModel):
     model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
@@ -54,6 +56,10 @@ class PreservedSegment(Record):
     end: float | None = Field(default=None, ge=0)
     text: str
     speaker: str | None = None
+    id: str | None = None
+    word_ids: list[str] = Field(default_factory=list)
+    timing_usable: bool = False
+    uncertainty: list[str] = Field(default_factory=list)
 
     @model_validator(mode='after')
     def bounds(self) -> 'PreservedSegment':
@@ -67,6 +73,15 @@ class PreservedWord(Record):
     start: float | None = Field(default=None, ge=0)
     end: float | None = Field(default=None, ge=0)
     probability: float | None = None
+    id: str | None = None
+    turn_id: str | None = None
+    speaker: str | None = None
+    timing_usable: bool = False
+    timing_uncertainty: list[str] = Field(default_factory=list)
+    recognition_confidence: float | None = None
+    speaker_confidence: float | None = None
+    confidence_source: str | None = None
+    evidence_index: int | None = None
 
 
 class ImportProvenance(Record):
@@ -78,6 +93,12 @@ class ImportProvenance(Record):
     timing_confidence: str | None = None
 
 
+class DetectedSpeaker(Record):
+    id: str
+    participant: str | None = None
+    identity_status: Literal['unresolved'] = 'unresolved'
+
+
 class PreservedTranscript(Record):
     schema_version: Literal[2] = 2
     segments: list[PreservedSegment]
@@ -85,6 +106,9 @@ class PreservedTranscript(Record):
     language: str | None = None
     duration: float | None = Field(default=None, ge=0)
     provenance: ImportProvenance
+    revision: str | None = None
+    speakers: list[DetectedSpeaker] = Field(default_factory=list)
+    annotations: list[dict[str, Any]] = Field(default_factory=list)
 
     @property
     def has_timing(self) -> bool:
@@ -152,3 +176,4 @@ class WorkspaceState(Record):
     evidence: dict[str, Artifact] = Field(default_factory=dict)
     history: list[Artifact] = Field(default_factory=list)
     runs: list[Run] = Field(default_factory=list)
+    transcription_operations: list[TranscriptionOperation] = Field(default_factory=list)

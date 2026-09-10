@@ -146,6 +146,27 @@ class Workspace:
 
     def report(self, state: WorkspaceState) -> str:
         run = state.runs[-1]
+        if run.operation == 'transcribe':
+            operation = next(op for op in state.transcription_operations if op.id == run.operation_id)
+            attempts = []
+            for attempt in operation.attempts:
+                role = 'primary' if attempt.provider == 'assemblyai' else 'backup'
+                actual = 'unknown' if attempt.actual_usd is None else f'${attempt.actual_usd:.4f}'
+                attempts.append(f'- {role} {attempt.provider}: {attempt.status}; job {attempt.job_id or "unknown"}; '
+                                f'submissions {attempt.submissions}, reads {attempt.reads}; '
+                                f'estimated ${attempt.estimated_usd:.4f}, reserved ${attempt.reserved_usd:.4f}, actual {actual}. '
+                                f'{attempt.error or ""}')
+            return ('# Completion report\n\n'
+                    f'Episode: {state.episode_id}\nOperation: transcribe\nStatus: {run.status}\n'
+                    f'Operation ledger: {operation.id}\n\n'
+                    f'Usable outputs: {", ".join(state.artifacts) or "none"}\n'
+                    'Publishing text was not requested.\n\n'
+                    f'Allowance: ${operation.policy.allowance_usd:.2f}; elapsed {operation.elapsed_seconds:.1f}s; '
+                    f'deadline (Unix seconds): {operation.deadline_at:.3f}.\n'
+                    'Reservations are conservative admission estimates, not verified bills. '
+                    'A local timeout does not cancel remote processing or imply zero charge.\n\n'
+                    + '\n'.join(attempts) + '\n\n'
+                    + '\n'.join(f'- {item}' for item in run.limitations) + '\n')
         missing = [name for name in PUBLISHING_FILES if name not in state.artifacts]
         return ('# Completion report\n\n'
                 f'Episode: {state.episode_id}\nOperation: {run.operation}\nStatus: {run.status}\n\n'
