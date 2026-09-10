@@ -1,0 +1,1924 @@
+{
+  "baseline_commit": "edbd5a3def7274f382ea5b1ab661d315917c3ec8",
+  "environment": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.12.9",
+  "manifest_sha256": "5ff1ad47a96f96dbebb65b0a3ed8c567e762932a2dbdb8fbd4d09892c0f6f84c",
+  "sources": [
+    {
+      "id": "communication-solo",
+      "expected_sha256": "6169e359350d60b36f748b84b4d69f21183d94319a9b8812fcd5f91476b3d787",
+      "observed_sha256": "6169e359350d60b36f748b84b4d69f21183d94319a9b8812fcd5f91476b3d787",
+      "sha256_matches": true,
+      "expected_duration_seconds": 2306.182676,
+      "observed_probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 2,
+            "duration": "2306.182676"
+          }
+        ],
+        "format": {
+          "duration": "2306.182676",
+          "size": "406810668"
+        }
+      },
+      "duration_matches": true
+    },
+    {
+      "id": "erica-interview",
+      "expected_sha256": "48889a5fe1e5aade91c433244aceb0da8ced86435f713db1bf533f20b2637e13",
+      "observed_sha256": "48889a5fe1e5aade91c433244aceb0da8ced86435f713db1bf533f20b2637e13",
+      "sha256_matches": true,
+      "expected_duration_seconds": 3369.842358,
+      "observed_probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 2,
+            "duration": "3369.842358"
+          }
+        ],
+        "format": {
+          "duration": "3369.842358",
+          "size": "594440236"
+        }
+      },
+      "duration_matches": true
+    }
+  ],
+  "verified_date": "2026-09-10",
+  "ffmpeg_version": "8.0.1",
+  "reviewer": {
+    "identity": "Codex",
+    "scope": "Automated byte/probe/PCM verification only; no human source or editorial review"
+  },
+  "local_preparation": [
+    {
+      "id": "communication-solo",
+      "source_revision": "130ef7e5b8b441efbf2d214021411829",
+      "source_sha256": "6169e359350d60b36f748b84b4d69f21183d94319a9b8812fcd5f91476b3d787",
+      "inspection_seconds": 0.4894344590138644,
+      "transport_preparation_seconds": 9.53068537497893,
+      "local_total_seconds": 10.020119833992794,
+      "transport": {
+        "source_fingerprint": "6169e359350d60b36f748b84b4d69f21183d94319a9b8812fcd5f91476b3d787",
+        "submitted_fingerprint": "9d565a4467ac7c28e182f731c8dedba05de22aa31a44658ec4a2b9fe52fdb91d",
+        "path": "media/9d565a4467ac7c28e182f731c8dedba05de22aa31a44658ec4a2b9fe52fdb91d.flac",
+        "duration": 2306.182676,
+        "decoded_sha256": "0a182456af8efd9c0c96d14f748ce2c4bf5c7a4600b8b5a23c447e1b225b5b24",
+        "transformation": "FLAC, first audio stream; no trimming, resampling or channel changes",
+        "equivalence": "verified",
+        "timeline_offset_seconds": 0
+      },
+      "scope": "Local preparation only; excludes upload, provider processing, normalization, recovery and publishing. No full-operation runtime acceptance."
+    },
+    {
+      "id": "erica-interview",
+      "source_revision": "5343d33e0bc34a54b21ff7bc2f354989",
+      "source_sha256": "48889a5fe1e5aade91c433244aceb0da8ced86435f713db1bf533f20b2637e13",
+      "inspection_seconds": 0.6970598329789937,
+      "transport_preparation_seconds": 13.849348249961622,
+      "local_total_seconds": 14.546408082940616,
+      "transport": {
+        "source_fingerprint": "48889a5fe1e5aade91c433244aceb0da8ced86435f713db1bf533f20b2637e13",
+        "submitted_fingerprint": "fb09a4d87cc2f6ddc15ba2e4239ea7df30a9f15e2bcee81900d0c6edd35eb088",
+        "path": "media/fb09a4d87cc2f6ddc15ba2e4239ea7df30a9f15e2bcee81900d0c6edd35eb088.flac",
+        "duration": 3369.842358,
+        "decoded_sha256": "f441fb6d65b2e37ae2825f6c547c74d6a1cff0624ffc0e35222164ca3eead774",
+        "transformation": "FLAC, first audio stream; no trimming, resampling or channel changes",
+        "equivalence": "verified",
+        "timeline_offset_seconds": 0
+      },
+      "scope": "Local preparation only; excludes upload, provider processing, normalization, recovery and publishing. No full-operation runtime acceptance."
+    }
+  ],
+  "decoded_pcm_format": "pcm_s32le via ffmpeg -f hash -hash sha256; source and generated transport independently decoded",
+  "new_live_asr_trials": 3,
+  "actual_billed_usd": null,
+  "release_acceptance": "Scoped source/editorial/runtime checks accepted; actual-cost A14 evidence remains incomplete. Issue closure is authorized by explicit user exception, not a claim that every original release gate passed.",
+  "private_evidence": [
+    {
+      "path": "output/evaluation-corpus/manifest.json",
+      "sha256": "5ff1ad47a96f96dbebb65b0a3ed8c567e762932a2dbdb8fbd4d09892c0f6f84c"
+    },
+    {
+      "path": "output/provider-comparison-erica-campbell/manifest.json",
+      "sha256": "9d5d7dc89c01976e6aa18893407ccb631405fbdcffda6bcec914686cd9ad7fb9"
+    },
+    {
+      "path": "output/provider-comparison-erica-campbell/listening-check/user-annotations.json",
+      "sha256": "8d19e4b33e59b56830d0c1dccd73961287899ccc8c36cbfd0a2902530f3fcc5a"
+    },
+    {
+      "path": "output/provider-comparison-erica-campbell/listening-check/manifest.json",
+      "sha256": "d4693e9860901ac5c84d6e7571b3a1aa9d3dfb0397ca213972f30415562036c7"
+    },
+    {
+      "path": "output/provider-comparison-erica-campbell/assemblyai-run.json",
+      "sha256": "d0588de5261d09fdcc112abe2c829351a4be776511dc1261a7461ae36b475dd0"
+    },
+    {
+      "path": "output/provider-comparison-erica-campbell/deepgram-run.json",
+      "sha256": "f77ba4bcd856cce6372c745b526b88e26e58fc89055a1b72f475a0d5c1c57593"
+    },
+    {
+      "path": "output/provider-comparison-erica-campbell/deepgram-balance-before.json",
+      "sha256": "7e5eec4737ffcaa695129b116decdbee5c9c672af2fcb3de3e19e00e876749e3"
+    },
+    {
+      "path": "output/provider-comparison-erica-campbell/deepgram-usage.json",
+      "sha256": "1c00764018c8fafd507cbdc76841c9e63ab3abf2c1ef3e1fb7221afd65099542"
+    },
+    {
+      "path": "output/0710/transcript.json",
+      "sha256": "96a868d6d1dcb7e8bc1e0b8a0bc0f649699c89259e9d84e562a4b5f4081b479c"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/pending-annotations.json",
+      "sha256": "30b2df95bdfa9b20cef41edc405e2eca657f10a67b7842d978cd82f7425f1040"
+    }
+  ],
+  "verification": {
+    "mypy": {
+      "command": ".venv/bin/mypy src/podcast_processor",
+      "status": "pass",
+      "source_files": 31
+    },
+    "focused_pytest": {
+      "command": ".venv/bin/pytest tests/test_managed_transcription.py tests/test_managed_recovery.py tests/test_episode_workflow.py tests/test_section_planning.py -q",
+      "passed": 136,
+      "duration_seconds": 34.91
+    },
+    "full_pytest": {
+      "command": ".venv/bin/pytest tests/ -q",
+      "passed": 253,
+      "skipped": 0,
+      "duration_seconds": 70.99,
+      "log": "output/acceptance-issue-19-2026-09-10/full-suite.txt",
+      "log_sha256": "72491e0382f2d64ec43f63d6b39c36a72e785e08b696ac8054b82667854eee91"
+    }
+  },
+  "subsequent_user_feedback": {
+    "path": "output/acceptance-issue-19-2026-09-10/user-feedback-01.json",
+    "sha256": "51cbb4d59dc7d94fa5e009be5feab0833190dc3c47b52288a63186100a348037",
+    "status": "partial; no numeric anchors or safe intervals",
+    "assembly_correction": "D3 = I + P3; no added closing pause or transition-out"
+  },
+  "final_section_correction_verification": {
+    "planner_version": "section-planner-v2",
+    "proposal_schema_version": 2,
+    "mypy_source_files": 31,
+    "focused_tests_passed": 100,
+    "focused_seconds": 21.35,
+    "full_tests_passed": 255,
+    "full_seconds": 72.76,
+    "skipped": 0,
+    "review_findings_remaining": 0,
+    "logs": [
+      {
+        "path": "output/acceptance-issue-19-2026-09-10/ending-rule-mypy.txt",
+        "sha256": "9161fdbf6e938dc0ff27d5d15bbad888b3e60ce4592d74a684cd5ae4231d8a4b"
+      },
+      {
+        "path": "output/acceptance-issue-19-2026-09-10/ending-rule-full-suite.txt",
+        "sha256": "e4fc2f98c2f3ddbef4babb995c99eba3ac291adb0d7af442f7e7d0b6a72d66cf"
+      }
+    ]
+  },
+  "additional_user_feedback": [
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/user-feedback-02.json",
+      "sha256": "7c22a1b9cb12bc1b95abeb0541490095661651ad08174ee0afdd78dfefbab835",
+      "scope": "Speaker/phrase observations only; exact timing, overlap endpoints, complete wording accuracy and actual v2 output acceptance remain incomplete"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/user-feedback-03.json",
+      "sha256": "a4948775ca69f644a53e8685269e6c5790039eb053e1a0d705b2d1b4a122e174",
+      "scope": "Exact contiguous source-part arithmetic from human-selected cut points; final prepared asset durations, safe-cut intervals and comparison to actual v2 output remain pending. No finished-section acceptance claimed."
+    }
+  ],
+  "communication_selected_source_parts": [
+    {
+      "number": 1,
+      "source_start": "0",
+      "source_end": "753.684",
+      "part_duration_seconds": "753.684",
+      "maximum_remaining_transition_overhead_seconds": "326.316"
+    },
+    {
+      "number": 2,
+      "source_start": "753.684",
+      "source_end": "1506.209",
+      "part_duration_seconds": "752.525",
+      "maximum_remaining_transition_overhead_seconds": "327.475"
+    },
+    {
+      "number": 3,
+      "source_start": "1506.209",
+      "source_end": "2306.182676",
+      "part_duration_seconds": "799.973676",
+      "maximum_remaining_transition_overhead_seconds": "280.026324"
+    }
+  ],
+  "new_live_publishing_requests": 10,
+  "live_authorization": {
+    "recorded_at": "2026-09-10T18:35:02.703564+00:00",
+    "asr_total_allowance_usd": 6,
+    "publishing_total_allowance_usd": 5,
+    "per_transcription_operation_allowance_usd": 3,
+    "asr_reservation_per_source_hour_usd": 1.5,
+    "publishing_input_rate_per_million_usd": 5,
+    "publishing_output_rate_per_million_usd": 25,
+    "publishing_reservation_multiplier": 1.25,
+    "scope": "Both corpus episodes plus one controlled fallback; recoveries share totals. No recurring spending. Estimated reservations are not observed bills."
+  },
+  "live_accounting": {
+    "asr": {
+      "requests": 4,
+      "original_admission_reservations_usd": 4.2868293275,
+      "retained_reservations_usd": 4.2868293275,
+      "returned_usage_price_estimate_usd": null,
+      "actual_billed_usd": null,
+      "assemblyai_actual_current_day_aggregate_usd": 0.51009
+    },
+    "publishing": {
+      "requests": 10,
+      "original_admission_reservations_usd": 6.322175,
+      "retained_reservations_usd": 4.1811125,
+      "returned_usage_price_estimate_usd": 3.34489,
+      "actual_billed_usd": null
+    },
+    "method": "Original admission reservations retained in history. Completed publishing responses reconcile retained reservation from actual returned token counts at published rates plus 25% margin; no actual billed-dollar claim. Accepted ASR attempts retain full reservations."
+  },
+  "live_operations": [
+    {
+      "trial": "normal",
+      "source_revision": "b0babbd6ff6c45f9b90ef98614da6bd0",
+      "invocations": [
+        {
+          "started_at": "2026-09-10T18:36:53.611475+00:00",
+          "runner_sha256": "413887c1d4f643ed10a6d9229551717b8478832627389a53aae045b8cbb09d59",
+          "phases": [
+            {
+              "at": "2026-09-10T18:36:54.256901+00:00",
+              "phase": "source-inspection-end",
+              "elapsed_seconds": 0.6331348749808967
+            },
+            {
+              "at": "2026-09-10T18:37:03.785627+00:00",
+              "phase": "local-preparation-end",
+              "elapsed_seconds": 9.526228667004034
+            },
+            {
+              "at": "2026-09-10T18:38:35.483496+00:00",
+              "phase": "upload-end",
+              "elapsed_seconds": 91.69903100002557
+            },
+            {
+              "at": "2026-09-10T18:38:36.439345+00:00",
+              "phase": "submission-end",
+              "provider": "assemblyai",
+              "elapsed_seconds": 0.8652437080163509
+            },
+            {
+              "at": "2026-09-10T18:38:37.285605+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8400674579897895
+            },
+            {
+              "at": "2026-09-10T18:38:41.069441+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7804629999445751
+            },
+            {
+              "at": "2026-09-10T18:38:44.743708+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6673274580389261
+            },
+            {
+              "at": "2026-09-10T18:38:48.431200+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6787272080546245
+            },
+            {
+              "at": "2026-09-10T18:38:52.222460+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7778175000566989
+            },
+            {
+              "at": "2026-09-10T18:38:55.805306+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.576361709041521
+            },
+            {
+              "at": "2026-09-10T18:38:59.487148+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6758320409571752
+            },
+            {
+              "at": "2026-09-10T18:39:03.369758+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8754917919868603
+            },
+            {
+              "at": "2026-09-10T18:39:06.993225+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6162069159327075
+            },
+            {
+              "at": "2026-09-10T18:39:10.686100+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6883992089424282
+            },
+            {
+              "at": "2026-09-10T18:39:14.591028+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8972004160750657
+            },
+            {
+              "at": "2026-09-10T18:39:19.400524+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 1.801154707907699
+            },
+            {
+              "at": "2026-09-10T18:39:20.572466+00:00",
+              "phase": "normalization-mapping-persistence-end",
+              "elapsed_seconds": 1.1263465419178829
+            },
+            {
+              "at": "2026-09-10T18:39:20.829189+00:00",
+              "phase": "full-transcription-operation-end",
+              "elapsed_seconds": 147.21104624995496
+            },
+            {
+              "at": "2026-09-10T18:39:36.945179+00:00",
+              "phase": "publishing-request-end",
+              "stage": "body",
+              "elapsed_seconds": 15.279061874956824
+            },
+            {
+              "at": "2026-09-10T18:40:12.211075+00:00",
+              "phase": "publishing-request-end",
+              "stage": "titles",
+              "elapsed_seconds": 33.94634308305103
+            },
+            {
+              "at": "2026-09-10T18:40:27.980953+00:00",
+              "phase": "publishing-request-end",
+              "stage": "chapters",
+              "elapsed_seconds": 14.432529542013071
+            },
+            {
+              "at": "2026-09-10T18:40:43.010172+00:00",
+              "phase": "publishing-request-end",
+              "stage": "chapters",
+              "elapsed_seconds": 13.962279916042462
+            },
+            {
+              "at": "2026-09-10T18:40:56.347248+00:00",
+              "phase": "publishing-request-end",
+              "stage": "chapters",
+              "elapsed_seconds": 12.27657983393874
+            },
+            {
+              "at": "2026-09-10T18:40:58.712137+00:00",
+              "phase": "integrated-workflow-end",
+              "elapsed_seconds": 245.14241945801768,
+              "status": "partial",
+              "missing": [
+                "description.md",
+                "chapters.txt"
+              ],
+              "artifacts": {
+                "titles.json": {
+                  "id": "8b4548e7124b4dcf822217e7712fe9dc",
+                  "sha256": "578932f229475a51948b13c985f958e4a48e8184629cdfa10b271e1b10024b81"
+                },
+                "transcript.json": {
+                  "id": "fc521154c41c44a18494e445827fd37e",
+                  "sha256": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0"
+                },
+                "transcript.txt": {
+                  "id": "1ed0bbe79a374bb18b92f5e5f9b17c93",
+                  "sha256": "6db61d4560300b104815da87e79aa00e117b03c4ee07d248a5811b183e81d8ad"
+                },
+                "section-plan.json": {
+                  "id": "fe09f43d01694f399321d14254087c2a",
+                  "sha256": "fb2f24af74852217869c9fcacd5dc0d6d979b336b84268e501b67e6426e41b29"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "started_at": "2026-09-10T18:49:02.487034+00:00",
+          "runner_sha256": "216e3699f553896fdb42306a406fcceb2285233c53107301fa8bd1fe2cd668e8",
+          "phases": [
+            {
+              "at": "2026-09-10T18:49:03.050723+00:00",
+              "phase": "full-transcription-operation-end",
+              "elapsed_seconds": 0.535130292060785
+            },
+            {
+              "at": "2026-09-10T18:49:17.152270+00:00",
+              "phase": "publishing-request-end",
+              "stage": "chapters",
+              "elapsed_seconds": 13.183919582981616
+            },
+            {
+              "at": "2026-09-10T18:49:29.802411+00:00",
+              "phase": "publishing-request-end",
+              "stage": "chapters",
+              "elapsed_seconds": 11.555368083063513
+            },
+            {
+              "at": "2026-09-10T18:49:33.152983+00:00",
+              "phase": "integrated-workflow-end",
+              "elapsed_seconds": 30.686891249963082,
+              "status": "completed",
+              "missing": [],
+              "artifacts": {
+                "chapters.txt": {
+                  "id": "85df8d9522a6461180bab45dfd710304",
+                  "sha256": "1b4719a47b49509ef15f1bfff60c4c2c11a19749965583d569b35f135ed54550"
+                },
+                "description.md": {
+                  "id": "e51fec5a07f64758aa1bce0fba7347e9",
+                  "sha256": "0463edc04229043d2908a872185791a9c918db17390f5564d2047675909a94d7"
+                },
+                "section-boundaries.json": {
+                  "id": "cba8294b402e4888abce4822b329e6d5",
+                  "sha256": "90cab249414455b20b2a8507697cf10373989cc1b1fe25462f727c9ef2f1afd0"
+                },
+                "section-plan.json": {
+                  "id": "52d548919fab4c2cb2f57fe52979b403",
+                  "sha256": "1f290011809562feedb957d0ff08136f5670746b53076be296bc5fcd9ceed5d5"
+                },
+                "titles.json": {
+                  "id": "8b4548e7124b4dcf822217e7712fe9dc",
+                  "sha256": "578932f229475a51948b13c985f958e4a48e8184629cdfa10b271e1b10024b81"
+                },
+                "transcript.json": {
+                  "id": "fc521154c41c44a18494e445827fd37e",
+                  "sha256": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0"
+                },
+                "transcript.txt": {
+                  "id": "1ed0bbe79a374bb18b92f5e5f9b17c93",
+                  "sha256": "6db61d4560300b104815da87e79aa00e117b03c4ee07d248a5811b183e81d8ad"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "transcription_operations": [
+        {
+          "deadline_at": 1789066313.623382,
+          "dependencies": {
+            "requests": "0a00eb99b7dd63efa073e6dc86fba8725f57ca8c3bf1fe7191bc53be55452942",
+            "source_revision": "b0babbd6ff6c45f9b90ef98614da6bd0",
+            "transport_version": "lossless-flac-v1"
+          },
+          "elapsed_seconds": 146.94933795928955,
+          "id": "113cebcfcfcd416c902a97ef721c39c7",
+          "outcome": "Timed transcript preserved; 0 words unusable for precise cuts. Supported participants mapped; unresolved identities retain anonymous labels.",
+          "policy": {
+            "allowance_usd": 3.0,
+            "backup_reservation_per_hour": 1.5,
+            "deadline_seconds": 900.0,
+            "primary_reservation_per_hour": 1.5,
+            "read_attempts": 4,
+            "submission_attempts": 2
+          },
+          "started_at": 1789065413.623382,
+          "status": "completed",
+          "transport": {
+            "decoded_sha256": "0a182456af8efd9c0c96d14f748ce2c4bf5c7a4600b8b5a23c447e1b225b5b24",
+            "duration": 2306.182676,
+            "equivalence": "verified",
+            "path": "media/9d565a4467ac7c28e182f731c8dedba05de22aa31a44658ec4a2b9fe52fdb91d.flac",
+            "source_fingerprint": "6169e359350d60b36f748b84b4d69f21183d94319a9b8812fcd5f91476b3d787",
+            "submitted_fingerprint": "9d565a4467ac7c28e182f731c8dedba05de22aa31a44658ec4a2b9fe52fdb91d",
+            "timeline_offset_seconds": 0,
+            "transformation": "FLAC, first audio stream; no trimming, resampling or channel changes"
+          },
+          "attempts": [
+            {
+              "actual_usd": null,
+              "error": null,
+              "estimated_usd": 0.9609094483333334,
+              "id": "24fa8ef32ff649a28eae001d7748b564",
+              "provider": "assemblyai",
+              "raw_artifact": "raw-24fa8ef32ff649a28eae001d7748b564.json",
+              "reads": 12,
+              "reconciliations": 0,
+              "request": {
+                "endpoint": "https://api.eu.assemblyai.com",
+                "privacy": {
+                  "deletion_verified": false,
+                  "retention_verified": false,
+                  "training": "EU exclusion requested via endpoint"
+                },
+                "region": "EU",
+                "settings": {
+                  "disfluencies": true,
+                  "format_text": false,
+                  "language_code": "en",
+                  "punctuate": true,
+                  "speaker_labels": true,
+                  "speech_models": [
+                    "universal-3-5-pro"
+                  ]
+                }
+              },
+              "reserved_usd": 0.9609094483333334,
+              "status": "completed",
+              "submissions": 1,
+              "submitted_at": 1789065515.493202,
+              "transient_reads": 0,
+              "updated_at": 1789065515.569259,
+              "job_id_sha256": "505bfd896ce558bd2bc12324a87a92eef4ee1edca75981a70280f902f325f6b3"
+            }
+          ]
+        }
+      ],
+      "current_artifacts": {
+        "chapters.txt": {
+          "id": "85df8d9522a6461180bab45dfd710304",
+          "sha256": "1b4719a47b49509ef15f1bfff60c4c2c11a19749965583d569b35f135ed54550",
+          "component": null
+        },
+        "description.md": {
+          "id": "e51fec5a07f64758aa1bce0fba7347e9",
+          "sha256": "0463edc04229043d2908a872185791a9c918db17390f5564d2047675909a94d7",
+          "component": null
+        },
+        "section-boundaries.json": {
+          "id": "5a100a512a9048a8a0fbed5bf8550432",
+          "sha256": "0240ee4c2b12cfcbbdec03f0246e732d0ac2fe808cd3186c58df5d975183a091",
+          "component": null
+        },
+        "section-plan.json": {
+          "id": "d682c218bd2c430fa992d32d5f73dd4f",
+          "sha256": "dd0cd540ae05c30c3001016de1f76f4f2df440f638396d462a827eb0909825f2",
+          "component": null
+        },
+        "titles.json": {
+          "id": "8b4548e7124b4dcf822217e7712fe9dc",
+          "sha256": "578932f229475a51948b13c985f958e4a48e8184629cdfa10b271e1b10024b81",
+          "component": null
+        },
+        "transcript.json": {
+          "id": "fc521154c41c44a18494e445827fd37e",
+          "sha256": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0",
+          "component": null
+        },
+        "transcript.txt": {
+          "id": "1ed0bbe79a374bb18b92f5e5f9b17c93",
+          "sha256": "6db61d4560300b104815da87e79aa00e117b03c4ee07d248a5811b183e81d8ad",
+          "component": null
+        }
+      },
+      "last_operation_status": "completed",
+      "limitation": "Source-reviewed cuts and scoped point timing pass; prepared transition durations are explicit fixtures. Publishing remains human approved. Overall acceptance still requires remaining billing evidence."
+    },
+    {
+      "trial": "fallback",
+      "source_revision": "ef1bc27f326c43378ef01b80f7b76473",
+      "invocations": [
+        {
+          "started_at": "2026-09-10T18:45:06.599068+00:00",
+          "runner_sha256": "f79d0ab1b8af1ac6fdf569db2a63af926db1606ea0251b036bee53250ecb9c03",
+          "phases": [
+            {
+              "at": "2026-09-10T18:45:07.185314+00:00",
+              "phase": "source-inspection-end",
+              "elapsed_seconds": 0.5749042499810457
+            },
+            {
+              "at": "2026-09-10T18:45:16.762838+00:00",
+              "phase": "local-preparation-end",
+              "elapsed_seconds": 9.574133166926913
+            },
+            {
+              "at": "2026-09-10T18:46:44.998948+00:00",
+              "phase": "upload-end",
+              "elapsed_seconds": 88.23647479200736
+            },
+            {
+              "at": "2026-09-10T18:46:45.793009+00:00",
+              "phase": "submission-end",
+              "provider": "assemblyai",
+              "elapsed_seconds": 0.7175050409277901
+            },
+            {
+              "at": "2026-09-10T18:46:46.633167+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8357444159919396
+            },
+            {
+              "at": "2026-09-10T18:46:50.445415+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8092394580598921
+            },
+            {
+              "at": "2026-09-10T18:46:54.312662+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8624908750643954
+            },
+            {
+              "at": "2026-09-10T18:46:58.115108+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7978687499416992
+            },
+            {
+              "at": "2026-09-10T18:47:01.920741+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7951700410339981
+            },
+            {
+              "at": "2026-09-10T18:47:05.541006+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6159071669680998
+            },
+            {
+              "at": "2026-09-10T18:47:09.106505+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.5603958331048489
+            },
+            {
+              "at": "2026-09-10T18:47:12.904874+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7928541250294074
+            },
+            {
+              "at": "2026-09-10T18:47:16.628547+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7201515829656273
+            },
+            {
+              "at": "2026-09-10T18:47:20.500163+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8679047089535743
+            },
+            {
+              "at": "2026-09-10T18:47:24.213579+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7058015000075102
+            },
+            {
+              "at": "2026-09-10T18:47:28.128376+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.907051874906756
+            },
+            {
+              "at": "2026-09-10T18:47:31.781490+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6482554590329528
+            },
+            {
+              "at": "2026-09-10T18:47:36.532143+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 1.7465382079826668
+            },
+            {
+              "at": "2026-09-10T18:47:36.878100+00:00",
+              "phase": "controlled-fallback-injection",
+              "reason": "Reject completed live primary normalization; original raw response retained and primary reservation remains charged/unknown."
+            },
+            {
+              "at": "2026-09-10T18:47:36.883097+00:00",
+              "phase": "normalization-mapping-persistence-end",
+              "elapsed_seconds": 0.30726304196286947
+            },
+            {
+              "at": "2026-09-10T18:48:10.020186+00:00",
+              "phase": "submission-end",
+              "provider": "deepgram",
+              "elapsed_seconds": 33.04880841693375
+            },
+            {
+              "at": "2026-09-10T18:48:10.755051+00:00",
+              "phase": "normalization-mapping-persistence-end",
+              "elapsed_seconds": 0.6759575000032783
+            },
+            {
+              "at": "2026-09-10T18:48:10.967778+00:00",
+              "phase": "full-transcription-operation-end",
+              "elapsed_seconds": 184.36395366699435
+            },
+            {
+              "at": "2026-09-10T18:48:11.882606+00:00",
+              "phase": "integrated-workflow-end",
+              "elapsed_seconds": 185.31149295798969,
+              "status": "partial",
+              "missing": [
+                "description.md",
+                "titles.json",
+                "chapters.txt"
+              ],
+              "artifacts": {
+                "transcript.json": {
+                  "id": "70b43367f4554d47beb02711e1a7be9b",
+                  "sha256": "2b043955327cd8668c065355fc920389abfdfd4ef3d3072239082729970a9e11"
+                },
+                "transcript.txt": {
+                  "id": "9ebbc368acab4380a5d32c9bf5f55237",
+                  "sha256": "b59b33d384691d155be7e9311687727d26b2a77ccf5a06c8fd9a2558c46147c1"
+                },
+                "section-plan.json": {
+                  "id": "6fb9b1e594d14ea29978fed7390bf2c3",
+                  "sha256": "661595cca530a36ad3d82cd05f9d9e57c49aa5d808f586fac0ff889665f21b69"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "transcription_operations": [
+        {
+          "deadline_at": 1789066806.610384,
+          "dependencies": {
+            "requests": "0a00eb99b7dd63efa073e6dc86fba8725f57ca8c3bf1fe7191bc53be55452942",
+            "source_revision": "ef1bc27f326c43378ef01b80f7b76473",
+            "transport_version": "lossless-flac-v1"
+          },
+          "elapsed_seconds": 184.14492106437683,
+          "id": "83eb14661c8d46a1b4e91fd2f1945f9f",
+          "outcome": "Timed transcript preserved; 0 words unusable for precise cuts. Supported participants mapped; unresolved identities retain anonymous labels.",
+          "policy": {
+            "allowance_usd": 3.0,
+            "backup_reservation_per_hour": 1.5,
+            "deadline_seconds": 900.0,
+            "primary_reservation_per_hour": 1.5,
+            "read_attempts": 4,
+            "submission_attempts": 2
+          },
+          "started_at": 1789065906.610384,
+          "status": "completed",
+          "transport": {
+            "decoded_sha256": "0a182456af8efd9c0c96d14f748ce2c4bf5c7a4600b8b5a23c447e1b225b5b24",
+            "duration": 2306.182676,
+            "equivalence": "verified",
+            "path": "media/9d565a4467ac7c28e182f731c8dedba05de22aa31a44658ec4a2b9fe52fdb91d.flac",
+            "source_fingerprint": "6169e359350d60b36f748b84b4d69f21183d94319a9b8812fcd5f91476b3d787",
+            "submitted_fingerprint": "9d565a4467ac7c28e182f731c8dedba05de22aa31a44658ec4a2b9fe52fdb91d",
+            "timeline_offset_seconds": 0,
+            "transformation": "FLAC, first audio stream; no trimming, resampling or channel changes"
+          },
+          "attempts": [
+            {
+              "actual_usd": null,
+              "error": "Provider result has an unsupported speech schema; raw evidence retained.",
+              "estimated_usd": 0.9609094483333334,
+              "id": "e559d56d1bcc4cb3beaa1338a430fc53",
+              "provider": "assemblyai",
+              "raw_artifact": "raw-e559d56d1bcc4cb3beaa1338a430fc53.json",
+              "reads": 14,
+              "reconciliations": 0,
+              "request": {
+                "endpoint": "https://api.eu.assemblyai.com",
+                "privacy": {
+                  "deletion_verified": false,
+                  "retention_verified": false,
+                  "training": "EU exclusion requested via endpoint"
+                },
+                "region": "EU",
+                "settings": {
+                  "disfluencies": true,
+                  "format_text": false,
+                  "language_code": "en",
+                  "punctuate": true,
+                  "speaker_labels": true,
+                  "speech_models": [
+                    "universal-3-5-pro"
+                  ]
+                }
+              },
+              "reserved_usd": 0.9609094483333334,
+              "status": "unusable",
+              "submissions": 1,
+              "submitted_at": 1789066005.003134,
+              "transient_reads": 0,
+              "updated_at": 1789066005.070987,
+              "job_id_sha256": "467830f8a20648451509d921763b0b8c9ea43e88db83dbe1a077b5478276288a"
+            },
+            {
+              "actual_usd": null,
+              "error": null,
+              "estimated_usd": 0.9609094483333334,
+              "id": "df2c497e1cd642a79a37813a1c58deff",
+              "provider": "deepgram",
+              "raw_artifact": "raw-df2c497e1cd642a79a37813a1c58deff.json",
+              "reads": 0,
+              "reconciliations": 0,
+              "request": {
+                "endpoint": "https://api.deepgram.com",
+                "privacy": {
+                  "deletion_verified": false,
+                  "mip_opt_out": true,
+                  "retention_verified": false
+                },
+                "region": "US",
+                "settings": {
+                  "diarize_model": "v2",
+                  "filler_words": true,
+                  "language": "en",
+                  "mip_opt_out": true,
+                  "model": "nova-3",
+                  "multichannel": false,
+                  "punctuate": true,
+                  "smart_format": false,
+                  "utterances": true
+                }
+              },
+              "reserved_usd": 0.9609094483333334,
+              "status": "completed",
+              "submissions": 1,
+              "submitted_at": 1789066056.883438,
+              "transient_reads": 0,
+              "updated_at": 1789066056.969398,
+              "job_id_sha256": "a29cdc25a2766a52d6a92a9a16eb93ec2334bd0e4e40520ec94094e22f27ba86"
+            }
+          ]
+        }
+      ],
+      "current_artifacts": {
+        "section-plan.json": {
+          "id": "6fb9b1e594d14ea29978fed7390bf2c3",
+          "sha256": "661595cca530a36ad3d82cd05f9d9e57c49aa5d808f586fac0ff889665f21b69",
+          "component": null
+        },
+        "transcript.json": {
+          "id": "70b43367f4554d47beb02711e1a7be9b",
+          "sha256": "2b043955327cd8668c065355fc920389abfdfd4ef3d3072239082729970a9e11",
+          "component": null
+        },
+        "transcript.txt": {
+          "id": "9ebbc368acab4380a5d32c9bf5f55237",
+          "sha256": "b59b33d384691d155be7e9311687727d26b2a77ccf5a06c8fd9a2558c46147c1",
+          "component": null
+        }
+      },
+      "last_operation_status": "partial",
+      "limitation": "One observation, not SLA. Fallback has an injected primary normalization failure; publishing deliberately disabled."
+    },
+    {
+      "trial": "erica",
+      "source_revision": "6a00a8fc1bc0404fbdf8e9743e21ed7a",
+      "invocations": [
+        {
+          "started_at": "2026-09-10T18:49:53.151968+00:00",
+          "runner_sha256": "4077d2b15d41258c97e4883104ee5141beac9a0e57af24314119975a12470c1a",
+          "phases": [
+            {
+              "at": "2026-09-10T18:49:53.929227+00:00",
+              "phase": "source-inspection-end",
+              "elapsed_seconds": 0.7651987080462277
+            },
+            {
+              "at": "2026-09-10T18:50:07.923126+00:00",
+              "phase": "local-preparation-end",
+              "elapsed_seconds": 13.9916431249585
+            },
+            {
+              "at": "2026-09-10T18:52:10.512072+00:00",
+              "phase": "upload-end",
+              "elapsed_seconds": 122.59063649992459
+            },
+            {
+              "at": "2026-09-10T18:52:11.486365+00:00",
+              "phase": "submission-end",
+              "provider": "assemblyai",
+              "elapsed_seconds": 0.852603291044943
+            },
+            {
+              "at": "2026-09-10T18:52:12.039464+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.5482832919806242
+            },
+            {
+              "at": "2026-09-10T18:52:15.828568+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7847618329105899
+            },
+            {
+              "at": "2026-09-10T18:52:19.371090+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.5358445829479024
+            },
+            {
+              "at": "2026-09-10T18:52:23.019157+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6401849160902202
+            },
+            {
+              "at": "2026-09-10T18:52:26.733360+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7044429590459913
+            },
+            {
+              "at": "2026-09-10T18:52:30.475712+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.7303200419992208
+            },
+            {
+              "at": "2026-09-10T18:52:33.776021+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.2879004159476608
+            },
+            {
+              "at": "2026-09-10T18:52:37.073523+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.28539862495381385
+            },
+            {
+              "at": "2026-09-10T18:52:40.905291+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8188869589939713
+            },
+            {
+              "at": "2026-09-10T18:52:44.532844+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6142497500404716
+            },
+            {
+              "at": "2026-09-10T18:52:48.181011+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6412235419265926
+            },
+            {
+              "at": "2026-09-10T18:52:51.846957+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6631094580516219
+            },
+            {
+              "at": "2026-09-10T18:52:55.520409+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.6610007080016658
+            },
+            {
+              "at": "2026-09-10T18:52:59.355068+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.8300512919668108
+            },
+            {
+              "at": "2026-09-10T18:53:02.928777+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.5629399580648169
+            },
+            {
+              "at": "2026-09-10T18:53:06.310164+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.3752860000822693
+            },
+            {
+              "at": "2026-09-10T18:53:09.677935+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 0.3560202909866348
+            },
+            {
+              "at": "2026-09-10T18:53:15.759710+00:00",
+              "phase": "status-read-end",
+              "elapsed_seconds": 3.076259042019956
+            },
+            {
+              "at": "2026-09-10T18:53:16.635525+00:00",
+              "phase": "normalization-mapping-persistence-end",
+              "elapsed_seconds": 0.800181542057544
+            },
+            {
+              "at": "2026-09-10T18:53:16.714969+00:00",
+              "phase": "full-transcription-operation-end",
+              "elapsed_seconds": 203.55818537506275
+            },
+            {
+              "at": "2026-09-10T18:53:17.395030+00:00",
+              "phase": "integrated-workflow-end",
+              "elapsed_seconds": 204.2688944999827,
+              "status": "partial",
+              "missing": [
+                "description.md",
+                "titles.json",
+                "chapters.txt"
+              ],
+              "artifacts": {
+                "transcript.json": {
+                  "id": "73507bc958c648bf83435b176dde8f92",
+                  "sha256": "383053a01d35d1e04fe18e239d326bf87b7201734b04c90a16006d20412223dc"
+                },
+                "transcript.txt": {
+                  "id": "c11fc79053f645d7be7901c48aa77f42",
+                  "sha256": "0dd2a9b5555b6c583989f187b65743543226b1f88f8587ce5ecd9356f7483fef"
+                },
+                "section-plan.json": {
+                  "id": "fdabdd9ad2bc4eef8d9585e6a36651c5",
+                  "sha256": "e03a134f5785f894a5c89853b1da9e427a01c11c1d82b5f16fae6b57c856a53f"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "started_at": "2026-09-10T18:56:28.267535+00:00",
+          "runner_sha256": "4077d2b15d41258c97e4883104ee5141beac9a0e57af24314119975a12470c1a",
+          "phases": [
+            {
+              "at": "2026-09-10T18:56:28.456592+00:00",
+              "phase": "full-transcription-operation-end",
+              "elapsed_seconds": 0.16065687499940395
+            },
+            {
+              "at": "2026-09-10T18:56:43.354251+00:00",
+              "phase": "publishing-request-end",
+              "stage": "body",
+              "elapsed_seconds": 14.572906833025627
+            },
+            {
+              "at": "2026-09-10T18:57:17.306051+00:00",
+              "phase": "publishing-request-end",
+              "stage": "titles",
+              "elapsed_seconds": 33.50512033305131
+            },
+            {
+              "at": "2026-09-10T18:57:30.958527+00:00",
+              "phase": "publishing-request-end",
+              "stage": "chapters",
+              "elapsed_seconds": 13.167383208987303
+            },
+            {
+              "at": "2026-09-10T18:57:32.194466+00:00",
+              "phase": "integrated-workflow-end",
+              "elapsed_seconds": 63.949078124947846,
+              "status": "completed",
+              "missing": [],
+              "artifacts": {
+                "chapters.txt": {
+                  "id": "9cf7ee8314d24aa48741b1376d4034a4",
+                  "sha256": "e6d058471808c5f86986261d81e22e85831834bd7b0992cc16bc637e9c6e780b"
+                },
+                "description.md": {
+                  "id": "0f88577bc3214ee18d8070b71e15c41c",
+                  "sha256": "d0d383445e5acd09277e36cc3d60329e843e1a618d8be4e25c17d6f0863c6d6b"
+                },
+                "titles.json": {
+                  "id": "ca424a3054b44c3891682e78c08a30d9",
+                  "sha256": "eac59367739278544a6cb5803daf48d82363470598a30a31443b09c2d210c638"
+                },
+                "transcript.json": {
+                  "id": "f936927979c745b9bbf789af1464a1bd",
+                  "sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279"
+                },
+                "transcript.txt": {
+                  "id": "7bc84c74414441d183d5a054d320f14f",
+                  "sha256": "ac9306a2948d22719634ad0f59db673e791d41e9a808707da1ce8241112cf89c"
+                },
+                "section-plan.json": {
+                  "id": "70824275210b44c09d90b0c66946c7ac",
+                  "sha256": "014b3156e743b5a5440b7e0a19ff29dd21885b60d77db356380a613201172662"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "transcription_operations": [
+        {
+          "deadline_at": 1789067093.1640031,
+          "dependencies": {
+            "requests": "0a00eb99b7dd63efa073e6dc86fba8725f57ca8c3bf1fe7191bc53be55452942",
+            "source_revision": "6a00a8fc1bc0404fbdf8e9743e21ed7a",
+            "transport_version": "lossless-flac-v1"
+          },
+          "elapsed_seconds": 203.47178602218628,
+          "id": "13ef041e62534453ada203f5ab328095",
+          "outcome": "Timed transcript preserved; 101 words unusable for precise cuts. Supported participants mapped; unresolved identities retain anonymous labels.",
+          "policy": {
+            "allowance_usd": 3.0,
+            "backup_reservation_per_hour": 1.5,
+            "deadline_seconds": 900.0,
+            "primary_reservation_per_hour": 1.5,
+            "read_attempts": 4,
+            "submission_attempts": 2
+          },
+          "started_at": 1789066193.1640031,
+          "status": "completed",
+          "transport": {
+            "decoded_sha256": "f441fb6d65b2e37ae2825f6c547c74d6a1cff0624ffc0e35222164ca3eead774",
+            "duration": 3369.842358,
+            "equivalence": "verified",
+            "path": "media/fb09a4d87cc2f6ddc15ba2e4239ea7df30a9f15e2bcee81900d0c6edd35eb088.flac",
+            "source_fingerprint": "48889a5fe1e5aade91c433244aceb0da8ced86435f713db1bf533f20b2637e13",
+            "submitted_fingerprint": "fb09a4d87cc2f6ddc15ba2e4239ea7df30a9f15e2bcee81900d0c6edd35eb088",
+            "timeline_offset_seconds": 0,
+            "transformation": "FLAC, first audio stream; no trimming, resampling or channel changes"
+          },
+          "attempts": [
+            {
+              "actual_usd": null,
+              "error": null,
+              "estimated_usd": 1.4041009825,
+              "id": "b04dc1a0fb2f4e2b95b18a4b11e74251",
+              "provider": "assemblyai",
+              "raw_artifact": "raw-b04dc1a0fb2f4e2b95b18a4b11e74251.json",
+              "reads": 18,
+              "reconciliations": 0,
+              "request": {
+                "endpoint": "https://api.eu.assemblyai.com",
+                "privacy": {
+                  "deletion_verified": false,
+                  "retention_verified": false,
+                  "training": "EU exclusion requested via endpoint"
+                },
+                "region": "EU",
+                "settings": {
+                  "disfluencies": true,
+                  "format_text": false,
+                  "language_code": "en",
+                  "punctuate": true,
+                  "speaker_labels": true,
+                  "speech_models": [
+                    "universal-3-5-pro"
+                  ]
+                }
+              },
+              "reserved_usd": 1.4041009825,
+              "status": "completed",
+              "submissions": 1,
+              "submitted_at": 1789066330.516639,
+              "transient_reads": 0,
+              "updated_at": 1789066330.6280808,
+              "job_id_sha256": "d117713d27d0f37c6020829fcff14690728d90e9747e6ec517f475c34e90a38e"
+            }
+          ]
+        }
+      ],
+      "current_artifacts": {
+        "chapters.txt": {
+          "id": "9cf7ee8314d24aa48741b1376d4034a4",
+          "sha256": "e6d058471808c5f86986261d81e22e85831834bd7b0992cc16bc637e9c6e780b",
+          "component": null
+        },
+        "description.md": {
+          "id": "0f88577bc3214ee18d8070b71e15c41c",
+          "sha256": "d0d383445e5acd09277e36cc3d60329e843e1a618d8be4e25c17d6f0863c6d6b",
+          "component": null
+        },
+        "section-plan.json": {
+          "id": "e242ccf3c7f04cacabf25e696c186488",
+          "sha256": "040eae17f2469538ada013e6cfbdfc8bf7398a8dab97f7caed434c0dec0561cd",
+          "component": null
+        },
+        "titles.json": {
+          "id": "ca424a3054b44c3891682e78c08a30d9",
+          "sha256": "eac59367739278544a6cb5803daf48d82363470598a30a31443b09c2d210c638",
+          "component": null
+        },
+        "transcript.json": {
+          "id": "f936927979c745b9bbf789af1464a1bd",
+          "sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+          "component": null
+        },
+        "transcript.txt": {
+          "id": "7bc84c74414441d183d5a054d320f14f",
+          "sha256": "ac9306a2948d22719634ad0f59db673e791d41e9a808707da1ce8241112cf89c",
+          "component": null
+        }
+      },
+      "last_operation_status": "completed",
+      "limitation": "Human editorial approval recorded; six selected independent source anchors pass timing checks across the corpus. Safe-cut and overlap evidence is recorded separately; complete actual billing remains incomplete."
+    }
+  ],
+  "live_billing_status": {
+    "assemblyai": "Current-day aggregate actual spend $0.51009, including EU model $0.46573 and diarization $0.04436. No individual-request allocation observed.",
+    "deepgram": "Dashboard sign-in works; historical comparison cost $0.24339 visible. New fallback request lookup finds no record and current-day spend has no activity; actual new cost remains unknown.",
+    "actual_cost_gate": "incomplete: new Deepgram fallback billed charge missing",
+    "assemblyai_actual_aggregate_usd": 0.51009,
+    "normal_cost_bound": "The entire current-day AssemblyAI aggregate is below $3; no exact individual-request cost inferred.",
+    "management_api_diagnostic": "Existing configured key successfully lists the same project as the signed-in dashboard (HTTP 200), but GET for the exact fallback request returns HTTP 403. This rules out a different listed project; it does not establish the specific authorization cause or the actual charge.",
+    "signed_in_recheck": "Exact lookup, unfiltered history extended through September 11, and September 10-11 Spend still omit the successful fallback request. Older September 8 actual spend remains visible. Support draft prepared locally, not sent.",
+    "closure_effect": "User explicitly authorized closure without this billed charge in user-feedback-08. A14 remains incomplete; delay is possible, not established."
+  },
+  "communication_planning_observation": {
+    "status": "valid",
+    "source_cut_seconds": [
+      "753.684",
+      "1506.209"
+    ],
+    "boundary_basis": "source-reviewed; user supplied preceding word ends and following word starts",
+    "transition_basis": "Explicit hypothetical prepared durations E=55, I=50, O=50 seconds including 2.5-second ending silence each; no verified trims",
+    "finished_duration_seconds": [
+      "860.184",
+      "854.025",
+      "849.973676"
+    ],
+    "final_section_rule": "No added closing pause or transition-out",
+    "safe_intervals_seconds": [
+      [
+        "753.684",
+        "753.936"
+      ],
+      [
+        "1506.209",
+        "1506.789"
+      ]
+    ],
+    "both_cuts_inside_safe_intervals": true
+  },
+  "live_private_evidence": [
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/authorization.json",
+      "sha256": "3dd9be0c336f809f2eb8534b9073dd4a5dabd243541ed8ea335cc772cb83e533"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/reservations.json",
+      "sha256": "19d8f9db7ec24e56112ff3534b917d93b9593ad1ce643e04d804e5e58b8a4921"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/code-and-settings.json",
+      "sha256": "d701eb528805b3ff4e5f2bd12172f7d29817fe3034e8f1ad924673ab9a1d4098"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/chapter-repair-code.json",
+      "sha256": "e07b5089b62468a554a4f302902ad5dbd6e231cde8d1bc0a7ef0d588161379f8"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/run_trial.py",
+      "sha256": "4077d2b15d41258c97e4883104ee5141beac9a0e57af24314119975a12470c1a"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/production-code.diff",
+      "sha256": "ee442fb3429b5fb2484f9b5e20eca0691293801d31521bf693e9c958c1e9ea40"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/assemblyai-dashboard-initial.json",
+      "sha256": "a9709044d2a06825719692cdf46392b45e5234a0295e0649171bfa87f3877f44"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/assemblyai-dashboard-today.json",
+      "sha256": "d8aa299ee3422d74399057620a37a9c13a0008f0b3eb9bcbe2e8557f075eee43"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/deepgram-balance-before.json",
+      "sha256": "b231eee340465a50ebe16d4e9ad7ff812ee9afa9890628b3d491003ade61c60d"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/normal/events.jsonl",
+      "sha256": "da7719c27e4489a392b815e80d3feb0ac75e43d86460771da6d453ec9b4da3d5"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/fallback/events.jsonl",
+      "sha256": "738c8286bd7e0583112e159c8b79851c950166e52f941c025f3d86081e371d17"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/erica/events.jsonl",
+      "sha256": "f0ca3b3432cdb28475409a41f49c0f543fc8c9c3a343666f75ebb3009c7e95e9"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/normal/planning-evidence.json",
+      "sha256": "fe98100e90565af812cfe6b28c9648b829804f38afb956dcfe2ad7d2402e1a41"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/normal/review-artifact-hashes.json",
+      "sha256": "bc25eae4f497a14eea004697ed2be9ed1476b0a1f004214737ae456a6957d5c0"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/erica/planning-evidence.json",
+      "sha256": "7e4f8620b1023a9f1ddbcfaafe5173354178b4c2c3db57d1ed9e54deb44805f4"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/erica/review-artifact-hashes.json",
+      "sha256": "c67a5d35c39cbb1dc79c0370cb9b5c2c2fe184ad301b9149943abbc3d67ec895"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/erica/speech-diagnostics.json",
+      "sha256": "6fa97da8359cd8e2edaa0f858f3153b8329e0e33ce5f752cdbf35fefa74cea78"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/erica/correction-provenance.json",
+      "sha256": "d226f90e2516e5964a4009efcedda199e37f417908919c295de1fd22523297ac"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/final-full-suite.txt",
+      "sha256": "481c07af011114d0a620e40d48469d5907d8642d1efe0f06568e61b52e129e69"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/assemblyai-dashboard-final.json",
+      "sha256": "35c91822ffa9f7d5e642f61c4a2ee3f71cadc8c645ee514ff7120fee51c7ca8e"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/billing-after-editorial-approval.json",
+      "sha256": "8ad1c6a031d82cd602eb75631dd98e9d0398617bee2e6ed4826ba313de89f367"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/user-feedback-05.json",
+      "sha256": "70efc800e348d9c7015629020e24513e837a3220f9772e28bc050e6a7d091927"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/timing-comparison-v1.json",
+      "sha256": "b1de3489eb5a5aca752a202330e3bf8df669fa8eb88f29758ba8cda6ea420e5d"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/timing-consumers-v1.json",
+      "sha256": "4468e9755e64d437bbcfc4aa79a80705ccc05c6f2227c501b2441248901211bb"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/user-feedback-06.json",
+      "sha256": "a5abc9de2234fbe8cf342e2d4a33f6f9b220abdeced3ae8e1b4e9012f4c4a474"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/normal/planning-evidence-source-reviewed.json",
+      "sha256": "da20d6f3aae2ba30fe09ed27f2ceb3debe46257c4273e99a250e9bfd30e65b6d"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/boundary-and-handoff-checks-v1.json",
+      "sha256": "fa9e5c2ca50ef1ea81305b6da58f800ddb60df8ea390c2a907323ae48a4307d9"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/historical-source-correspondence.json",
+      "sha256": "930a76da1b64974e41aa92d7087e09f87cf949adf10b1dff0595fbc5db9af12c"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/user-feedback-07.json",
+      "sha256": "511a22d760c92c6076c0f8c7a9e7d2316caab102e5b68e13df82dc4a7f1e85a1"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/overlap-checks-v1.json",
+      "sha256": "c1e3915d42b7381e635848e6e978d2094a6d7dbec0ca17e77dc79a2bbbb1d4cb"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/billing-recheck-after-feedback-07.json",
+      "sha256": "75a7760a459cc4683eaf7fb9fd92ff8b4a064d0b2c5b9af1cffd606fa474fec1"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/deepgram-management-diagnostic.json",
+      "sha256": "22eded913e5ac4d84719720f1b5358a495a6f9f490ff7e85c63dd44c6e9b858d"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/live/deepgram-signed-in-dashboard-recheck.json",
+      "sha256": "dce0475c17b2037a2af1727ef9ec0cad144edbe3e1f407d9753633fdb243a66d"
+    },
+    {
+      "path": "output/acceptance-issue-19-2026-09-10/user-feedback-08.json",
+      "sha256": "c205df2b1767f16e477f7b59658565658090491582c07915014ac4ddd7bb0ca2"
+    }
+  ],
+  "chapter_repair_verification": {
+    "public_seam": "CLI generate on isolated workspace, controlled publishing response",
+    "red_before_green": true,
+    "focused_passed": 50,
+    "mypy_source_files": 31,
+    "full_passed": 256,
+    "full_seconds": 79.81,
+    "skipped": 0,
+    "log": "output/acceptance-issue-19-2026-09-10/live/final-full-suite.txt",
+    "log_sha256": "481c07af011114d0a620e40d48469d5907d8642d1efe0f06568e61b52e129e69",
+    "standards_findings": 0,
+    "spec_review": "No blocking findings; clarified earlier dashboard snapshot provenance."
+  },
+  "human_production_review": {
+    "status": "approved",
+    "reviewer": "User in this conversation",
+    "approval_record": "output/acceptance-issue-19-2026-09-10/user-feedback-04.json",
+    "approval_record_sha256": "14a31270d421e23031141c35b0ed4fb0556a2b4095f9dacd5ae361df5eed6384",
+    "packets": [
+      {
+        "episode": "normal",
+        "review_path": "output/acceptance-issue-19-2026-09-10/live/normal/REVIEW.md",
+        "review_sha256": "0d8d92b8da13947e60740e4723f13174ae563220bd073183bc66eaaeadcf3a89",
+        "approved_artifacts": {
+          "description.md": "0463edc04229043d2908a872185791a9c918db17390f5564d2047675909a94d7",
+          "titles.json": "578932f229475a51948b13c985f958e4a48e8184629cdfa10b271e1b10024b81",
+          "chapters.txt": "1b4719a47b49509ef15f1bfff60c4c2c11a19749965583d569b35f135ed54550",
+          "transcript.json": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0",
+          "section-boundaries.json": "90cab249414455b20b2a8507697cf10373989cc1b1fe25462f727c9ef2f1afd0",
+          "completion-report.md": "20e26125589e0e6d732dceb0aa01ae60a0a66000836678ae53a3e7bfca483d87"
+        }
+      },
+      {
+        "episode": "erica",
+        "review_path": "output/acceptance-issue-19-2026-09-10/live/erica/REVIEW.md",
+        "review_sha256": "a0fd699cba4141d6c556f4cb0564a34f959fd4edf719fe2cfd4047ca9254fa97",
+        "approved_artifacts": {
+          "description.md": "d0d383445e5acd09277e36cc3d60329e843e1a618d8be4e25c17d6f0863c6d6b",
+          "titles.json": "eac59367739278544a6cb5803daf48d82363470598a30a31443b09c2d210c638",
+          "chapters.txt": "e6d058471808c5f86986261d81e22e85831834bd7b0992cc16bc637e9c6e780b",
+          "transcript.json": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+          "section-plan.json": "040eae17f2469538ada013e6cfbdfc8bf7398a8dab97f7caed434c0dec0561cd",
+          "completion-report.md": "0b66190dde9b6c2026dc199eb9a222a0918804e0496bf6b98ac59f7241637465"
+        }
+      }
+    ],
+    "erica_long_episode_outcome": "Accepted explained impossibility under current three-section limits; expanded long-episode handling deferred.",
+    "scope_limitations": "No new numerical speech-onset anchors, safe interval endpoints, overlap bounds or actual billed amounts supplied.",
+    "subsequent_evidence_only_update": "Normal plan/report refreshed to retain subsequently supplied human safe intervals. Original approval hashes retained; transcript, description, titles and chapters unchanged. User-selected cuts and finished durations unchanged."
+  },
+  "source_point_timing": {
+    "reference": {
+      "path": "output/acceptance-issue-19-2026-09-10/user-feedback-05.json",
+      "sha256": "70efc800e348d9c7015629020e24513e837a3220f9772e28bc050e6a7d091927"
+    },
+    "method": "Absolute difference between each independent human source word-start estimate and unchanged versioned production word start. Same three Communication references also score the saved live fallback output. No retiming to fit references.",
+    "independent_source_points": 6,
+    "primary_observations": 6,
+    "fallback_observations": 3,
+    "all_pass": true,
+    "maximum_primary_error_seconds": "0.077",
+    "maximum_fallback_error_seconds": "0.0889",
+    "maximum_all_error_seconds": "0.0889",
+    "coverage": "Six selected source points: Communication middle, second topic transition, and late episode; Erica introduction after opening material, speaker-corrected mid-episode phrase, and late episode. Not full-episode timing or a fully annotated time duration.",
+    "remaining": "No further targeted source timing or overlap annotation needed. See source_overlap_checks for approximate overlap and the output limitation.",
+    "observations": [
+      {
+        "reference_number": 1,
+        "trial": "normal",
+        "phrase": "You know, when we talk about this idea of clarity",
+        "word_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:w2218",
+        "turn_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:t0",
+        "source_revision": "b0babbd6ff6c45f9b90ef98614da6bd0",
+        "transcript_revision": "058faebc5fea20e6fd65e14420cbc2f6049ea8a8417a249f1e0a22e89058085b",
+        "artifact_id": "fc521154c41c44a18494e445827fd37e",
+        "artifact_sha256": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0",
+        "reference_seconds": "753.936",
+        "output_seconds": "754.013",
+        "signed_error_seconds": "0.077",
+        "absolute_error_seconds": "0.077",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "12:33:936",
+        "output_timestamp": "12:34:013",
+        "absolute_error_timestamp": "00:00:077"
+      },
+      {
+        "reference_number": 1,
+        "trial": "fallback",
+        "phrase": "You know, when we talk about this idea of clarity",
+        "word_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:w2203",
+        "turn_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:t0",
+        "source_revision": "ef1bc27f326c43378ef01b80f7b76473",
+        "transcript_revision": "d623c548e80505aca4db37b8ab90e705a82f983e56446ca4075e21a27b188630",
+        "artifact_id": "70b43367f4554d47beb02711e1a7be9b",
+        "artifact_sha256": "2b043955327cd8668c065355fc920389abfdfd4ef3d3072239082729970a9e11",
+        "reference_seconds": "753.936",
+        "output_seconds": "753.955",
+        "signed_error_seconds": "0.019",
+        "absolute_error_seconds": "0.019",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "12:33:936",
+        "output_timestamp": "12:33:955",
+        "absolute_error_timestamp": "00:00:019"
+      },
+      {
+        "reference_number": 2,
+        "trial": "normal",
+        "phrase": "The next one is relevance",
+        "word_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:w4584",
+        "turn_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:t0",
+        "source_revision": "b0babbd6ff6c45f9b90ef98614da6bd0",
+        "transcript_revision": "058faebc5fea20e6fd65e14420cbc2f6049ea8a8417a249f1e0a22e89058085b",
+        "artifact_id": "fc521154c41c44a18494e445827fd37e",
+        "artifact_sha256": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0",
+        "reference_seconds": "1506.789",
+        "output_seconds": "1506.843",
+        "signed_error_seconds": "0.054",
+        "absolute_error_seconds": "0.054",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "25:06:789",
+        "output_timestamp": "25:06:843",
+        "absolute_error_timestamp": "00:00:054"
+      },
+      {
+        "reference_number": 2,
+        "trial": "fallback",
+        "phrase": "The next one is relevance",
+        "word_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:w4565",
+        "turn_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:t4",
+        "source_revision": "ef1bc27f326c43378ef01b80f7b76473",
+        "transcript_revision": "d623c548e80505aca4db37b8ab90e705a82f983e56446ca4075e21a27b188630",
+        "artifact_id": "70b43367f4554d47beb02711e1a7be9b",
+        "artifact_sha256": "2b043955327cd8668c065355fc920389abfdfd4ef3d3072239082729970a9e11",
+        "reference_seconds": "1506.789",
+        "output_seconds": "1506.7001",
+        "signed_error_seconds": "-0.0889",
+        "absolute_error_seconds": "0.0889",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "25:06:789",
+        "output_timestamp": "25:06:700",
+        "absolute_error_timestamp": "00:00:089"
+      },
+      {
+        "reference_number": 3,
+        "trial": "normal",
+        "phrase": "I hope that this helps",
+        "word_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:w6983",
+        "turn_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:t0",
+        "source_revision": "b0babbd6ff6c45f9b90ef98614da6bd0",
+        "transcript_revision": "058faebc5fea20e6fd65e14420cbc2f6049ea8a8417a249f1e0a22e89058085b",
+        "artifact_id": "fc521154c41c44a18494e445827fd37e",
+        "artifact_sha256": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0",
+        "reference_seconds": "2235.675",
+        "output_seconds": "2235.742",
+        "signed_error_seconds": "0.067",
+        "absolute_error_seconds": "0.067",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "37:15:675",
+        "output_timestamp": "37:15:742",
+        "absolute_error_timestamp": "00:00:067"
+      },
+      {
+        "reference_number": 3,
+        "trial": "fallback",
+        "phrase": "I hope that this helps",
+        "word_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:w6952",
+        "turn_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:t6",
+        "source_revision": "ef1bc27f326c43378ef01b80f7b76473",
+        "transcript_revision": "d623c548e80505aca4db37b8ab90e705a82f983e56446ca4075e21a27b188630",
+        "artifact_id": "70b43367f4554d47beb02711e1a7be9b",
+        "artifact_sha256": "2b043955327cd8668c065355fc920389abfdfd4ef3d3072239082729970a9e11",
+        "reference_seconds": "2235.675",
+        "output_seconds": "2235.665",
+        "signed_error_seconds": "-0.010",
+        "absolute_error_seconds": "0.010",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "37:15:675",
+        "output_timestamp": "37:15:665",
+        "absolute_error_timestamp": "00:00:010"
+      },
+      {
+        "reference_number": 4,
+        "trial": "erica",
+        "phrase": "What's up everybody?",
+        "word_id": "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w220",
+        "turn_id": "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:t6",
+        "source_revision": "6a00a8fc1bc0404fbdf8e9743e21ed7a",
+        "transcript_revision": "660e156d9402b4a014ea3a883e13c6a1c29858b17ace53ff2603c2cc07f7fba4",
+        "artifact_id": "f936927979c745b9bbf789af1464a1bd",
+        "artifact_sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+        "reference_seconds": "72.559",
+        "output_seconds": "72.535",
+        "signed_error_seconds": "-0.024",
+        "absolute_error_seconds": "0.024",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "01:12:559",
+        "output_timestamp": "01:12:535",
+        "absolute_error_timestamp": "00:00:024"
+      },
+      {
+        "reference_number": 5,
+        "trial": "erica",
+        "phrase": "You have?",
+        "word_id": "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w8344",
+        "turn_id": "660083a39fc37b91dfe9c781b56b843f7030c47bee7fb965da15eb80f5dd01b5:t0",
+        "source_revision": "6a00a8fc1bc0404fbdf8e9743e21ed7a",
+        "transcript_revision": "660e156d9402b4a014ea3a883e13c6a1c29858b17ace53ff2603c2cc07f7fba4",
+        "artifact_id": "f936927979c745b9bbf789af1464a1bd",
+        "artifact_sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+        "reference_seconds": "2399.671",
+        "output_seconds": "2399.721",
+        "signed_error_seconds": "0.050",
+        "absolute_error_seconds": "0.050",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "39:59:671",
+        "output_timestamp": "39:59:721",
+        "absolute_error_timestamp": "00:00:050"
+      },
+      {
+        "reference_number": 6,
+        "trial": "erica",
+        "phrase": "I don't think it will",
+        "word_id": "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w11643",
+        "turn_id": "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:t485",
+        "source_revision": "6a00a8fc1bc0404fbdf8e9743e21ed7a",
+        "transcript_revision": "660e156d9402b4a014ea3a883e13c6a1c29858b17ace53ff2603c2cc07f7fba4",
+        "artifact_id": "f936927979c745b9bbf789af1464a1bd",
+        "artifact_sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+        "reference_seconds": "3302.344",
+        "output_seconds": "3302.37",
+        "signed_error_seconds": "0.026",
+        "absolute_error_seconds": "0.026",
+        "pass": true,
+        "threshold_seconds": "1.0",
+        "reference_timestamp": "55:02:344",
+        "output_timestamp": "55:02:370",
+        "absolute_error_timestamp": "00:00:026"
+      }
+    ]
+  },
+  "source_point_consumers": {
+    "method": "Reuse independent source points for matching chapter boundaries and corresponding corrected turn starts. YouTube rendering floors to whole seconds; score that display separately from precise timing. This adds consumer comparisons, not independent source samples.",
+    "observations": [
+      {
+        "reference_number": 1,
+        "consumer": "Communication chapter precise",
+        "chapter_title": "Pillar One: Clarity",
+        "artifact_id": "af119f26fdf74280a9329bfc7b2e6e94",
+        "artifact_sha256": "7fba1686c7e381a2aa82033f8fb4b3bc902e86393aab7354c3719c9972db1eaa",
+        "source_seconds": "753.936",
+        "output_seconds": "754.013",
+        "absolute_error_seconds": "0.077",
+        "pass": true
+      },
+      {
+        "reference_number": 1,
+        "consumer": "Communication chapter rendered",
+        "chapter_title": "Pillar One: Clarity",
+        "artifact_id": "85df8d9522a6461180bab45dfd710304",
+        "artifact_sha256": "1b4719a47b49509ef15f1bfff60c4c2c11a19749965583d569b35f135ed54550",
+        "source_seconds": "753.936",
+        "output_seconds": "754",
+        "absolute_error_seconds": "0.064",
+        "pass": true
+      },
+      {
+        "reference_number": 2,
+        "consumer": "Communication chapter precise",
+        "chapter_title": "Pillar Four: Relevance",
+        "artifact_id": "af119f26fdf74280a9329bfc7b2e6e94",
+        "artifact_sha256": "7fba1686c7e381a2aa82033f8fb4b3bc902e86393aab7354c3719c9972db1eaa",
+        "source_seconds": "1506.789",
+        "output_seconds": "1506.843",
+        "absolute_error_seconds": "0.054",
+        "pass": true
+      },
+      {
+        "reference_number": 2,
+        "consumer": "Communication chapter rendered",
+        "chapter_title": "Pillar Four: Relevance",
+        "artifact_id": "85df8d9522a6461180bab45dfd710304",
+        "artifact_sha256": "1b4719a47b49509ef15f1bfff60c4c2c11a19749965583d569b35f135ed54550",
+        "source_seconds": "1506.789",
+        "output_seconds": "1506",
+        "absolute_error_seconds": "0.789",
+        "pass": true
+      },
+      {
+        "reference_number": 5,
+        "consumer": "Erica turn start in corrected transcript",
+        "turn_id": "660083a39fc37b91dfe9c781b56b843f7030c47bee7fb965da15eb80f5dd01b5:t0",
+        "artifact_id": "f936927979c745b9bbf789af1464a1bd",
+        "artifact_sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+        "source_seconds": "2399.671",
+        "output_seconds": "2399.721",
+        "absolute_error_seconds": "0.050",
+        "pass": true
+      },
+      {
+        "reference_number": 6,
+        "consumer": "Erica turn start in corrected transcript",
+        "turn_id": "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:t485",
+        "artifact_id": "f936927979c745b9bbf789af1464a1bd",
+        "artifact_sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+        "source_seconds": "3302.344",
+        "output_seconds": "3302.37",
+        "absolute_error_seconds": "0.026",
+        "pass": true
+      }
+    ],
+    "all_pass": true,
+    "maximum_consumer_error_seconds": "0.789"
+  },
+  "source_boundary_and_handoff_checks": {
+    "reference_path": "output/acceptance-issue-19-2026-09-10/user-feedback-06.json",
+    "reference_sha256": "a5abc9de2234fbe8cf342e2d4a33f6f9b220abdeced3ae8e1b4e9012f4c4a474",
+    "cut_checks": [
+      {
+        "id": "user-cut-1",
+        "source_cut_seconds": "753.684",
+        "safe_start_seconds": "753.684",
+        "safe_end_seconds": "753.936",
+        "interval_width_seconds": "0.252",
+        "pass": true
+      },
+      {
+        "id": "user-cut-2",
+        "source_cut_seconds": "1506.209",
+        "safe_start_seconds": "1506.209",
+        "safe_end_seconds": "1506.789",
+        "interval_width_seconds": "0.580",
+        "pass": true
+      }
+    ],
+    "point_checks": [
+      {
+        "reference_number": 7,
+        "trial": "normal",
+        "point_type": "word end",
+        "candidate_word": "them.",
+        "word_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:w2217",
+        "turn_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:t0",
+        "artifact_id": "fc521154c41c44a18494e445827fd37e",
+        "artifact_sha256": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0",
+        "human_seconds": "753.684",
+        "output_seconds": "753.66",
+        "absolute_error_seconds": "0.024",
+        "pass": true,
+        "limitation": null
+      },
+      {
+        "reference_number": 8,
+        "trial": "normal",
+        "point_type": "word end",
+        "candidate_word": "proceed.",
+        "word_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:w4583",
+        "turn_id": "8c07020a14ea708f8da07b5e5062bb25cd4c918a106ad4c1c8253303866e77e9:t0",
+        "artifact_id": "fc521154c41c44a18494e445827fd37e",
+        "artifact_sha256": "4af001918398845638830ee5666c801e7b02ef193028118ecda908e04932eef0",
+        "human_seconds": "1506.209",
+        "output_seconds": "1505.928",
+        "absolute_error_seconds": "0.281",
+        "pass": true,
+        "limitation": null
+      },
+      {
+        "reference_number": 7,
+        "trial": "fallback",
+        "point_type": "word end",
+        "candidate_word": "them.",
+        "word_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:w2202",
+        "turn_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:t0",
+        "artifact_id": "70b43367f4554d47beb02711e1a7be9b",
+        "artifact_sha256": "2b043955327cd8668c065355fc920389abfdfd4ef3d3072239082729970a9e11",
+        "human_seconds": "753.684",
+        "output_seconds": "753.955",
+        "absolute_error_seconds": "0.271",
+        "pass": true,
+        "limitation": null
+      },
+      {
+        "reference_number": 8,
+        "trial": "fallback",
+        "point_type": "word end",
+        "candidate_word": "proceed.",
+        "word_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:w4564",
+        "turn_id": "561f5fe7b0f57c614fcd723d7e63d99918058a639c93bc59be344238cd6b4a32:t4",
+        "artifact_id": "70b43367f4554d47beb02711e1a7be9b",
+        "artifact_sha256": "2b043955327cd8668c065355fc920389abfdfd4ef3d3072239082729970a9e11",
+        "human_seconds": "1506.209",
+        "output_seconds": "1506.2999",
+        "absolute_error_seconds": "0.0909",
+        "pass": true,
+        "limitation": null
+      },
+      {
+        "reference_number": 9,
+        "trial": "erica",
+        "point_type": "speaker turn onset",
+        "candidate_word": "Amen.",
+        "word_id": "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w8541",
+        "turn_id": "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:t380",
+        "artifact_id": "f936927979c745b9bbf789af1464a1bd",
+        "artifact_sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+        "human_seconds": "2446.521",
+        "output_seconds": "2446.84",
+        "absolute_error_seconds": "0.319",
+        "pass": true,
+        "limitation": "First-word identity and approximate overlap interval subsequently confirmed in user-feedback-07; see source_overlap_checks."
+      }
+    ],
+    "all_point_checks_pass": true,
+    "all_cuts_pass": true,
+    "finished_duration_seconds": [
+      "860.184",
+      "854.025",
+      "849.973676"
+    ],
+    "transition_basis": "Labeled prepared-duration fixtures E=55/I=50/O=50 seconds, each including 2.5-second ending silence; no prepared media claim.",
+    "planning_artifacts": {
+      "section-plan.json": {
+        "id": "d682c218bd2c430fa992d32d5f73dd4f",
+        "sha256": "dd0cd540ae05c30c3001016de1f76f4f2df440f638396d462a827eb0909825f2"
+      },
+      "section-boundaries.json": {
+        "id": "5a100a512a9048a8a0fbed5bf8550432",
+        "sha256": "0240ee4c2b12cfcbbdec03f0246e732d0ac2fe808cd3186c58df5d975183a091"
+      }
+    },
+    "approved_publishing_and_transcript_unchanged": true,
+    "remaining": "First words and approximate overlap endpoint supplied in user-feedback-07; see source_overlap_checks. Original feedback-06 observation remains preserved in its immutable private record."
+  },
+  "historical_source_correspondence": {
+    "historical_path": "output/0710/transcript.json",
+    "historical_sha256": "96a868d6d1dcb7e8bc1e0b8a0bc0f649699c89259e9d84e562a4b5f4081b479c",
+    "source_reference": "output/acceptance-issue-19-2026-09-10/user-feedback-05.json",
+    "observations": [
+      {
+        "source_reference_number": 1,
+        "historical_word_index": 2196,
+        "historical_word": "You",
+        "source_seconds": "753.936",
+        "historical_seconds": "754.0",
+        "absolute_difference_seconds": "0.064"
+      },
+      {
+        "source_reference_number": 2,
+        "historical_word_index": 4526,
+        "historical_word": "The",
+        "source_seconds": "1506.789",
+        "historical_seconds": "1506.84",
+        "absolute_difference_seconds": "0.051"
+      },
+      {
+        "source_reference_number": 3,
+        "historical_word_index": 6910,
+        "historical_word": "I",
+        "source_seconds": "2235.675",
+        "historical_seconds": "2235.67",
+        "absolute_difference_seconds": "0.005"
+      }
+    ],
+    "scope": "Historical Communication content/timeline correspondence at three independently source-reviewed positions, supplementing accepted WAV byte identity. Not full-episode transcript accuracy; historical wording and boundaries are not source truth."
+  },
+  "source_overlap_checks": {
+    "reference_path": "output/acceptance-issue-19-2026-09-10/user-feedback-07.json",
+    "reference_sha256": "511a22d760c92c6076c0f8c7a9e7d2316caab102e5b68e13df82dc4a7f1e85a1",
+    "transcript_artifact_id": "f936927979c745b9bbf789af1464a1bd",
+    "transcript_sha256": "df3c1797311b98d6e02a3dfc32a18c6a601a29c6bb4e5969bb44f40c8aad1279",
+    "source_revision": "6a00a8fc1bc0404fbdf8e9743e21ed7a",
+    "source_sha256": "48889a5fe1e5aade91c433244aceb0da8ced86435f713db1bf533f20b2637e13",
+    "human_overlap_seconds": [
+      "2446.521",
+      "2446.836"
+    ],
+    "approximate_overlap_duration_seconds": "0.315",
+    "lish_phrase": {
+      "human_words": "amen, amen, let me just",
+      "output_words": "Amen. Amen. Let me just",
+      "word_ids": [
+        "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w8541",
+        "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w8542",
+        "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w8543",
+        "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w8544",
+        "413e7b61ed71dd85aa949553bc6a4f33dfb1a8c8031c233fa3e754c72c36950e:w8545"
+      ],
+      "lexical_match": true,
+      "speaker_identity": "Lish",
+      "attribution_matches": true
+    },
+    "timing_checks": [
+      {
+        "point": "Lish onset",
+        "human_seconds": "2446.521",
+        "output_seconds": "2446.84",
+        "absolute_error_seconds": "0.319",
+        "pass_within_one_second": true
+      },
+      {
+        "point": "End of retained God-moment passage versus approximate Erica voice stop",
+        "human_seconds": "2446.836",
+        "output_seconds": "2446.58",
+        "pass_within_one_second": null,
+        "limitation": "Unscored diagnostic time difference: the retained passage ends with moment, while earlier human feedback also mentioned so. Matching final audible events are not established.",
+        "time_difference_seconds": "0.256",
+        "scored": false
+      }
+    ],
+    "output_gap_seconds": "0.26",
+    "overlap_represented_in_output": false,
+    "diagnostic": "The output misses the approximately 315 ms simultaneous speech and instead has a 260 ms gap. Lish phrase identity matches and its confirmed onset error is 319 ms. The 256 ms difference between the retained passage end and approximate Erica voice stop is unscored because matching end events are not established. No aggregate overlap accuracy is inferred from this single interval.",
+    "conservative_handling": "The preceding mixed-speaker passage remains locally anonymous in the already approved corrected package. This new feedback identifies the closing Erica phrase and next Lish phrase; it does not justify attributing that entire mixed passage to Erica. Earlier both-speaker thank-you uncertainty remains unchanged.",
+    "approved_outputs_unchanged": true,
+    "remaining_human_review": "none for the targeted acceptance sample"
+  },
+  "remaining_acceptance": "Deepgram actual fallback charge remains unknown for later reconciliation; user explicitly made it nonblocking for #19 closure. No additional paid run or human review required.",
+  "source_overlap_review": "Spec review: confirmed Lish onset passes; retained passage end versus approximate voice stop is an unscored time difference because matching final audible events are not established. No additional human review required.",
+  "issue_closure": {
+    "status": "authorized_with_explicit_cost_exception",
+    "issue": 19,
+    "user_decision": {
+      "recorded_at": "2026-09-10T21:31:38.639734+00:00",
+      "reviewer": "User in this conversation",
+      "verbatim": "its possible the spend data is just delayed. I don't want this to hold up closure of the ticket",
+      "decision": "Authorize issue #19 closure despite missing actual billed charge for the existing Deepgram fallback request.",
+      "scope": "This overrides the ticket closure dependency on that missing cost observation. It does not turn A14 into a pass, establish a zero charge, prove delayed billing, waive other checks, or authorize new paid trials.",
+      "request_id": "01a08ca5-9681-7dd3-96ea-b618b7365455",
+      "actual_fallback_charge_usd": null,
+      "delay_explanation": "Possible, not verified."
+    },
+    "reference_path": "output/acceptance-issue-19-2026-09-10/user-feedback-08.json",
+    "reference_sha256": "c205df2b1767f16e477f7b59658565658090491582c07915014ac4ddd7bb0ca2",
+    "remaining_blockers": []
+  },
+  "closure_verification": {
+    "recorded_at": "2026-09-10T21:32:49.602777+00:00",
+    "production_source_files_matching_verified_live_versions": 31,
+    "private_evidence_files_hash_verified": 34,
+    "standards_review": "No blocking findings; prior code review unchanged. No credentials or private media in proposed tracked changes.",
+    "spec_review": "No blocking findings; user exception only changes closure dependency on missing actual cost. Scoped limitations and A14 incomplete retained.",
+    "tests": "Existing final full suite: 256 passed in 79.81 seconds; mypy passed 31 files. No production code changes since that verification.",
+    "git_diff_check": "passed"
+  }
+}

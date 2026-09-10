@@ -6,7 +6,7 @@ import re
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from .llm import ClaudeClient
+from .llm import TextClient
 from .models import Chapter, GeneratedContent, Title, Transcript
 from .prompts import CHAPTERS_PROMPT, DESCRIPTION_PROMPT, TITLES_PROMPT
 
@@ -66,7 +66,7 @@ def _truncate_transcript(
     return full_text[:max_chars] + "\n\n[... transcript truncated for length ...]"
 
 
-def generate_description(client: ClaudeClient, transcript: Transcript) -> str:
+def generate_description(client: TextClient, transcript: Transcript) -> str:
     """Generate a YouTube description from the transcript.
 
     Args:
@@ -93,7 +93,7 @@ def generate_description(client: ClaudeClient, transcript: Transcript) -> str:
     return description.strip()
 
 
-def generate_titles(client: ClaudeClient, transcript: Transcript) -> list[Title]:
+def generate_titles(client: TextClient, transcript: Transcript) -> list[Title]:
     """Generate viral title variations from the transcript.
 
     Args:
@@ -137,7 +137,7 @@ def generate_titles(client: ClaudeClient, transcript: Transcript) -> list[Title]
 
 
 def generate_chapters(
-    client: ClaudeClient,
+    client: TextClient,
     transcript: Transcript,
     chapter_count: int = 10,
 ) -> list[Chapter]:
@@ -205,7 +205,7 @@ def generate_chapters(
 
 
 def generate_all_content(
-    client: ClaudeClient,
+    client: TextClient,
     transcript: Transcript,
     chapter_count: int = 10,
 ) -> GeneratedContent:
