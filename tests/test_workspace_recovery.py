@@ -5,6 +5,7 @@ import time
 
 from podcast_processor.cli import app
 from podcast_processor.llm import ClaudeClient
+from publishing_responses import compatible_response
 from test_workspace import FIXTURE, authority, imported, inspect, runner
 
 
@@ -74,7 +75,10 @@ import os
 from pathlib import Path
 from podcast_processor.cli import app
 from podcast_processor.llm import ClaudeClient
-ClaudeClient.generate = lambda *args, **kwargs: 'Preserved description response.'
+import sys
+sys.path.insert(0, str(Path('tests').resolve()))
+from publishing_responses import compatible_response
+ClaudeClient.generate = lambda self, prompt, max_tokens=4096: compatible_response(prompt)
 replace = os.replace
 def interrupted(src, dst):
     if Path(dst).name == 'current' and (Path(src).resolve() / 'description.md').exists():
@@ -88,20 +92,18 @@ app()
     assert result.returncode == 73
     before = inspect(workspace)
     assert 'description.md' not in before['artifacts']
-    assert len(before['evidence']) == 1
+    assert 'description-body.json' in before['evidence']
     calls = []
 
     def publish(self, prompt, max_tokens=4096):
         calls.append(prompt)
-        if 'thumbnail_text' in prompt:
-            return '[{"title":"Start Again","thumbnail_text":"One Step"}]'
-        return '[{"start_time":0,"title":"A beginning"}]'
+        return compatible_response(prompt)
 
     monkeypatch.setattr(ClaudeClient, 'generate', publish)
     result = runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake'])
     assert result.exit_code == 0, result.output
-    assert len(calls) == 2
-    assert (workspace / 'current/description.md').read_text() == 'Preserved description response.'
+    assert len(calls) == 0
+    assert 'Lish Speaks' in (workspace / 'current/description.md').read_text()
     assert inspect(workspace)['artifacts']['transcript.json']['id'] == before['artifacts']['transcript.json']['id']
 
 
@@ -128,12 +130,11 @@ import json, os
 from pathlib import Path
 from podcast_processor.cli import app
 from podcast_processor.llm import ClaudeClient
+import sys
+sys.path.insert(0, str(Path('tests').resolve()))
+from publishing_responses import compatible_response
 def publish(self, prompt, max_tokens=4096):
-    if 'thumbnail_text' in prompt:
-        return '[{"title":"Start Again","thumbnail_text":"One Step"}]'
-    if 'start_time' in prompt:
-        return '[{"start_time":0,"title":"A beginning"}]'
-    return 'A beginning.'
+    return compatible_response(prompt)
 ClaudeClient.generate = publish
 replace = os.replace
 def interrupted(src, dst):
@@ -162,11 +163,7 @@ def test_identical_import_repairs_missing_companions_without_replacing_transcrip
     workspace = imported(tmp_path, *authority(tmp_path))
 
     def publish(self, prompt, max_tokens=4096):
-        if 'thumbnail_text' in prompt:
-            return '[{"title":"Start Again","thumbnail_text":"One Step"}]'
-        if 'start_time' in prompt:
-            return '[{"start_time":0,"title":"A beginning"}]'
-        return 'A beginning.'
+        return compatible_response(prompt)
 
     monkeypatch.setattr(ClaudeClient, 'generate', publish)
     assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0

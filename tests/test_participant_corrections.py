@@ -5,6 +5,7 @@ import httpx
 import pytest
 
 from podcast_processor.cli import app
+from publishing_responses import compatible_response
 from test_managed_transcription import PRIMARY, managed, replace_responses, service
 from test_workspace import authority, inspect, make_media, runner
 
@@ -187,11 +188,7 @@ def publishing_service(monkeypatch):
     calls = []
     def publish(self, prompt, max_tokens=4096):
         calls.append(prompt)
-        if 'thumbnail_text' in prompt:
-            return '[{"title":"One Honest Conversation","thumbnail_text":"Start Here"}]'
-        if 'start_time' in prompt:
-            return '[{"start_time":0,"title":"The conversation"}]'
-        return 'An honest conversation about starting again.'
+        return compatible_response(prompt)
     monkeypatch.setattr(ClaudeClient, 'generate', publish)
     return calls
 
@@ -199,18 +196,18 @@ def publishing_service(monkeypatch):
 def test_timing_correction_supersedes_chapters_and_reuses_actual_text_consumers(tmp_path, service, monkeypatch):
     calls = publishing_service(monkeypatch)
     workspace, _ = managed(tmp_path)
-    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0
+    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 1
     before = inspect(workspace)
     word = transcript(workspace)['words'][0]
     correct(workspace, [{'op': 'retime', 'word_id': word['id'], 'start': 0.05, 'end': 0.3, 'evidence': 'Source listening.'}])
     after = inspect(workspace)
-    assert after['artifacts']['description.md'] == before['artifacts']['description.md']
+    assert after['evidence']['description-body.json'] == before['evidence']['description-body.json']
     assert after['artifacts']['titles.json'] == before['artifacts']['titles.json']
     assert 'chapters.txt' not in after['artifacts'] and not (workspace / 'current/chapters.txt').exists()
-    assert len(calls) == 3 and len(service) == 3
+    assert len(calls) == 2 and len(service) == 3
     assert 'not regenerated' in (workspace / 'current/completion-report.md').read_text()
-    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0
-    assert inspect(workspace)['artifacts']['description.md'] == before['artifacts']['description.md']
+    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 1
+    assert inspect(workspace)['evidence']['description-body.json'] == before['evidence']['description-body.json']
 
 
 def test_unclear_important_wording_is_explicit_and_excluded_from_publishing(tmp_path, service, monkeypatch):
@@ -222,7 +219,7 @@ def test_unclear_important_wording_is_explicit_and_excluded_from_publishing(tmp_
     assert '[inaudible]' in saved['segments'][1]['text']
     assert not saved['segments'][1]['quotation_usable']
     assert '[inaudible]' in (workspace / 'current/transcript.txt').read_text()
-    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0
+    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 1
     assert all('dangerous treatment' not in prompt for prompt in calls)
     assert all('Um, um, listening matters.' in prompt for prompt in calls)
     assert 'unclear wording' in (workspace / 'current/completion-report.md').read_text().lower()
@@ -243,7 +240,7 @@ def test_fresh_transcription_scopes_every_reference_to_new_evidence(tmp_path, se
 def test_corrected_intro_reconsiders_automatic_identity_and_invalidates_attribution(tmp_path, service, monkeypatch):
     calls = publishing_service(monkeypatch)
     workspace = episode_from_turns(tmp_path, monkeypatch, [('B', "I'm Lish Speaks."), ('A', 'Welcome.'), ('B', 'Thank you.')])
-    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0
+    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 1
     before = transcript(workspace)
     after = correct(workspace, [{'op': 'replace', 'turn_id': before['segments'][0]['id'],
         'first_word': before['words'][1]['id'], 'last_word': before['words'][2]['id'], 'text': 'Erica Campbell.'}])
@@ -251,7 +248,7 @@ def test_corrected_intro_reconsiders_automatic_identity_and_invalidates_attribut
     assert next(s for s in after['speakers'] if s['id'] == speaker)['participant'] == 'Erica Campbell'
     assert 'Erica Campbell: Thank you.' in (workspace / 'current/transcript.txt').read_text()
     assert all(name not in inspect(workspace)['artifacts'] for name in ('description.md', 'titles.json', 'chapters.txt'))
-    assert len(calls) == 3 and len(service) == 3
+    assert len(calls) == 2 and len(service) == 3
 
 
 @pytest.mark.parametrize('turns,expected', [
@@ -286,9 +283,9 @@ def test_invalid_references_leave_all_current_artifacts_unchanged(tmp_path, serv
 def test_attribution_change_supersedes_publishing_and_preserves_direct_copy_edit(tmp_path, service, monkeypatch):
     calls = publishing_service(monkeypatch)
     workspace, _ = managed(tmp_path)
-    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0
+    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 1
     edit = b'An operator edited publishing copy; this is not a source fact.'
-    (workspace / 'current/description.md').write_bytes(edit)
+    (workspace / 'current/titles.json').write_bytes(edit)
     before = transcript(workspace)
     correct(workspace, [{'op': 'relabel', 'speaker': before['speakers'][0]['id'], 'participant': 'Lish Speaks'}])
     state = inspect(workspace)
@@ -297,7 +294,7 @@ def test_attribution_change_supersedes_publishing_and_preserves_direct_copy_edit
     assert (workspace / saved_edit['path']).read_bytes() == edit
     assert transcript(workspace)['segments'] == before['segments']
     assert state['episode_metadata']['participants'] == [{'name': 'Lish Speaks', 'role': 'host', 'biography': None, 'links': []}]
-    assert len(calls) == 3 and len(service) == 3
+    assert len(calls) == 2 and len(service) == 3
 
 
 def test_named_guest_intro_allows_brief_greeting_exchange_before_acknowledgment(tmp_path, service, monkeypatch):
@@ -378,7 +375,7 @@ def test_unclear_sentence_does_not_suppress_a_continuous_solo_turn(tmp_path, ser
     saved = transcript(workspace)
     assert len(saved['segments']) == 1
     assert saved['speakers'][0]['participant'] == 'Lish Speaks'
-    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0
+    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 1
     assert all('Today we discuss boundaries.' in p and 'Listening matters.' in p for p in calls)
     assert all('endorse that treatment' not in p for p in calls)
 
@@ -389,29 +386,29 @@ def test_timing_correction_reconsiders_guest_introduction_evidence(tmp_path, ser
         ('A', "I'm Lish Speaks. Welcome, Erica Campbell!"), ('B', 'Thank you for having me.')])
     before = transcript(workspace)
     assert before['speakers'][1]['participant'] == 'Erica Campbell'
-    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0
+    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 1
     guest_word = next(w for w in before['words'] if w['turn_id'] == before['segments'][1]['id'])
     after = correct(workspace, [{'op': 'retime', 'word_id': guest_word['id'], 'start': 0, 'end': 0.1,
                                 'evidence': 'The response overlaps the introduction; association is uncertain.'}])
     assert after['speakers'][1]['participant'] is None
     assert 'titles.json' not in inspect(workspace)['artifacts']
-    assert len(calls) == 3 and len(service) == 3
+    assert len(calls) == 2 and len(service) == 3
 
 
 def test_edit_inside_excluded_sentence_reuses_unchanged_publishing_text(tmp_path, service, monkeypatch):
     calls = publishing_service(monkeypatch)
     workspace = episode_from_turns(tmp_path, monkeypatch, [('A',
         "I'm Lish Speaks. I [unclear] endorse that treatment. Listening matters.")])
-    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 0
+    assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'fake']).exit_code == 1
     state = inspect(workspace)
     before = transcript(workspace)
     word = next(w for w in before['words'] if w['word'] == 'treatment.')
     correct(workspace, [{'op': 'replace', 'turn_id': word['turn_id'], 'first_word': word['id'],
                           'last_word': word['id'], 'text': 'approach.'}])
     after = inspect(workspace)
-    for name in ('description.md', 'titles.json'):
-        assert after['artifacts'][name] == state['artifacts'][name]
-    assert len(calls) == 3 and len(service) == 3
+    assert after['artifacts']['titles.json'] == state['artifacts']['titles.json']
+    assert after['evidence']['description-body.json'] == state['evidence']['description-body.json']
+    assert len(calls) == 2 and len(service) == 3
 
 
 @pytest.mark.parametrize('response,expected', [

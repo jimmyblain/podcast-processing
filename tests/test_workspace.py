@@ -4,6 +4,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from podcast_processor.cli import app
+from publishing_responses import compatible_response
 
 FIXTURE = Path(__file__).parent / 'fixtures/legacy-transcript.json'
 runner = CliRunner()
@@ -102,13 +103,9 @@ def test_generation_from_missing_source_preserves_checkpoints_and_reuses_calls(t
 
     def publish(self, prompt, max_tokens=4096):
         calls.append(prompt)
-        if len(calls) == 1:
-            return 'One honest conversation can be a beginning.'
-        if len(calls) == 2:
+        if 'STAGE: titles' in prompt and len(calls) <= 4:
             raise LLMError('injected late failure')
-        if 'thumbnail_text' in prompt:
-            return '[{"title":"Start With One Honest Conversation","thumbnail_text":"Start Here"}]'
-        return '[{"start_time":0,"title":"A beginning"}]'
+        return compatible_response(prompt)
 
     monkeypatch.setattr(ClaudeClient, 'generate', publish)
     args = ['generate', str(workspace), '--api-key', 'secret-test-token']
@@ -118,16 +115,16 @@ def test_generation_from_missing_source_preserves_checkpoints_and_reuses_calls(t
     assert partial['artifacts']['transcript.json']['id'] == transcript_id
     assert (workspace / 'current/description.md').exists()
     assert partial['runs'][-1]['status'] == 'partial'
-    done = runner.invoke(app, args)
+    done = runner.invoke(app, [*args, '--only', 'titles', '--fresh'])
     assert done.exit_code == 0, done.output
-    assert len(calls) == 4
+    assert len(calls) == 6
     complete = inspect(workspace)
     rerun = runner.invoke(app, args)
     assert rerun.exit_code == 0, rerun.output
-    assert len(calls) == 4
+    assert len(calls) == 6
     assert inspect(workspace)['artifacts'] == complete['artifacts']
     assert all('secret-test-token' not in path.read_text() for path in workspace.rglob('*.json'))
-    assert all('Lish Speaks' in prompt and 'Warm and candid' in prompt for prompt in calls)
+    assert all('Lish Speaks' in prompt and 'Warm and candid' in prompt for prompt in calls if 'STAGE: chapters' not in prompt)
 
 
 def test_metadata_change_keeps_transcript_identity_but_supersedes_publishing(tmp_path, monkeypatch):
@@ -136,11 +133,7 @@ def test_metadata_change_keeps_transcript_identity_but_supersedes_publishing(tmp
     workspace = imported(tmp_path, *options)
 
     def publish(self, prompt, max_tokens=4096):
-        if 'thumbnail_text' in prompt:
-            return '[{"title":"A beginning","thumbnail_text":"Start Here"}]'
-        if 'start_time' in prompt:
-            return '[{"start_time":0,"title":"A beginning"}]'
-        return 'A beginning.'
+        return compatible_response(prompt)
 
     monkeypatch.setattr(ClaudeClient, 'generate', publish)
     assert runner.invoke(app, ['generate', str(workspace), '--api-key', 'test']).exit_code == 0
@@ -192,17 +185,16 @@ def test_missing_timing_allows_text_outputs_but_reports_partial(tmp_path, monkey
 
     def publish(self, prompt, max_tokens=4096):
         calls.append(prompt)
-        if 'thumbnail_text' in prompt:
-            return '[{"title":"Begin Again","thumbnail_text":"One Step"}]'
-        return 'We can start again.'
+        return compatible_response(prompt)
 
     monkeypatch.setattr(ClaudeClient, 'generate', publish)
     result = runner.invoke(app, ['generate', str(workspace), '--api-key', 'test'])
     assert result.exit_code == 1, result.output
     assert len(calls) == 2
     state = inspect(workspace)
-    assert state['runs'][-1]['missing'] == ['chapters.txt']
-    assert (workspace / 'current/description.md').exists()
+    assert state['runs'][-1]['missing'] == ['description.md', 'chapters.txt']
+    assert 'description-body.json' in state['evidence']
+    assert not (workspace / 'current/description.md').exists()
     assert not (workspace / 'current/chapters.txt').exists()
     assert 'unknown time' in (workspace / 'current/transcript.txt').read_text()
     assert 'Chapters unavailable' in (workspace / 'current/completion-report.md').read_text()

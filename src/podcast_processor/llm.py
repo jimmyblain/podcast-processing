@@ -4,7 +4,7 @@ from typing import Protocol
 
 import anthropic
 from rich.console import Console
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, wait_exponential
 
 console = Console()
 
@@ -22,7 +22,7 @@ class LLMError(Exception):
 class ClaudeClient:
     """Client for Anthropic Claude API."""
 
-    def __init__(self, api_key: str, model: str = "claude-opus-4-8"):
+    def __init__(self, api_key: str, model: str = "claude-opus-4-8", max_attempts: int = 3):
         """Initialize the Claude client.
 
         Args:
@@ -35,14 +35,13 @@ class ClaudeClient:
                 "Set ANTHROPIC_API_KEY environment variable or pass --api-key."
             )
 
+        self.max_attempts = max_attempts
         self.model = model
-        self.client = anthropic.Anthropic(api_key=api_key)
+        self.client = anthropic.Anthropic(api_key=api_key, max_retries=0)
+        self.response_metadata: dict = {}
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
-        reraise=True,
-    )
+    @retry(stop=lambda state: state.attempt_number >= state.args[0].max_attempts,
+           wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
     def generate(
         self,
         prompt: str,
@@ -64,6 +63,11 @@ class ClaudeClient:
                 messages=[{"role": "user", "content": prompt}],
             )
 
+            self.response_metadata = {
+                'returned_model': message.model, 'response_id': message.id,
+                'request_id': getattr(message, '_request_id', None),
+                'usage': {'actual': message.usage.model_dump(), 'estimated': None, 'reserved': None},
+            }
             if message.content and isinstance(message.content[0], anthropic.types.TextBlock):
                 return message.content[0].text
 

@@ -243,6 +243,29 @@ class Run(Record):
     limitations: list[str] = Field(default_factory=list)
 
 
+class PublishingAttempt(Record):
+    id: str
+    started_at: str
+    finished_at: str | None = None
+    status: Literal['requested', 'responded', 'invalid', 'failed', 'validated'] = 'requested'
+    request: dict[str, Any]
+    response_path: str
+    response_hash: str | None = None
+    returned_model: str | None = None
+    request_id: str | None = None
+    response_id: str | None = None
+    usage: dict[str, Any] = Field(default_factory=lambda: {'actual': None, 'estimated': None, 'reserved': None})
+    error: str | None = None
+
+
+class PublishingOperation(Record):
+    id: str
+    stage: str
+    dependencies: dict[str, str]
+    created_at: str
+    attempts: list[PublishingAttempt] = Field(default_factory=list)
+
+
 class WorkspaceState(Record):
     schema_version: Literal[2] = 2
     episode_id: str
@@ -257,4 +280,5 @@ class WorkspaceState(Record):
     evidence: dict[str, Artifact] = Field(default_factory=dict)
     history: list[Artifact] = Field(default_factory=list)
     runs: list[Run] = Field(default_factory=list)
+    publishing_operations: list[PublishingOperation] = Field(default_factory=list)
     transcription_operations: list[TranscriptionOperation] = Field(default_factory=list)

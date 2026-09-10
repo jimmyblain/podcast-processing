@@ -172,14 +172,18 @@ class Workspace:
                     'A local timeout does not cancel remote processing or imply zero charge.\n\n'
                     + '\n'.join(attempts) + '\n\n'
                     + '\n'.join(f'- {item}' for item in run.limitations) + '\n' + uncertainty + '\n')
+        usage = '\n'.join(f'- {op.stage} operation {op.id}: {len(op.attempts)}/3 attempts; '
+                          + ', '.join(f'{a.status} (usage {a.usage})' for a in op.attempts)
+                          for op in state.publishing_operations)
         missing = [name for name in PUBLISHING_FILES if name not in state.artifacts]
         return ('# Completion report\n\n'
                 f'Episode: {state.episode_id}\nOperation: {run.operation}\nStatus: {run.status}\n\n'
                 f'Usable outputs: {", ".join(state.artifacts) or "none"}\n\n'
                 f'Missing publishing results: {", ".join(missing) or "none"}\n\n'
-                'This slice uses the legacy publishing format; the v2 publishing package is not implemented.\n'
+                'Publishing uses the v2 package contract. Automated checks do not establish human editorial or source-timing acceptance.\n'
                 'Imported speaker identity, original settings and timing confidence may be unknown.\n'
                 'Precise section boundaries are unavailable in this slice.\n\n'
+                + 'Publishing usage (separate from transcription; billing cost unknown):\n' + (usage or 'No requests.') + '\n\n'
                 + '\n'.join(f'- {item}' for item in run.limitations) + '\n' + uncertainty + '\n')
 
     def reconcile(self, state: WorkspaceState) -> bool:
@@ -200,6 +204,13 @@ class Workspace:
                 state.artifacts.pop(name, None)
                 state.runs[-1].limitations.append(f'{name} failed committed hash verification; unavailable.')
                 changed = True
+        description = state.artifacts.get('description.md')
+        chapters = state.artifacts.get('chapters.txt')
+        if description and 'chapters_version' in description.dependencies and (
+                chapters is None or description.dependencies['chapters_version'] != chapters.id):
+            state.artifacts.pop('description.md')
+            state.runs[-1].limitations.append('Description unavailable because its shared chapter version is unavailable.')
+            changed = True
         if 'transcript.json' not in state.artifacts:
             state.artifacts.clear()
         if state.runs[-1].status == 'running':

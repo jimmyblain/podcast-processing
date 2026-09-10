@@ -214,6 +214,9 @@ def generate(
         Optional[str],
         typer.Option("--api-key", envvar="ANTHROPIC_API_KEY", help="Anthropic API key"),
     ] = None,
+    only: Annotated[Optional[str], typer.Option(help="Generate only titles, description or chapters")] = None,
+    fresh: Annotated[bool, typer.Option(help="Start a new publishing allowance for selected artifacts")] = False,
+    chapter_labels: Annotated[Optional[Path], typer.Option(help="JSON chapter labels; reassemble locally")] = None,
 ) -> None:
     """Generate content from an existing transcript.
 
@@ -229,7 +232,7 @@ def generate(
         settings = get_settings()
         try:
             state = generate_episode(transcript_file, api_key or settings.anthropic_api_key,
-                                     settings.claude_model, chapters)
+                                     settings.claude_model, chapters, only, fresh, chapter_labels)
             typer.echo(Workspace(transcript_file).report(state))
             if state.runs[-1].status != 'completed':
                 raise typer.Exit(1)
@@ -237,6 +240,10 @@ def generate(
         except (WorkspaceError, OSError, ValueError) as error:
             typer.echo(f"Error: {error}")
             raise typer.Exit(1)
+
+    if only is not None or fresh or chapter_labels is not None:
+        typer.echo('Error: --only, --fresh and --chapter-labels require a versioned workspace directory.')
+        raise typer.Exit(1)
 
     settings = get_settings()
 

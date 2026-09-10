@@ -76,8 +76,9 @@ def import_episode(transcript_file: Path, root: Path, source_path: Path | None =
                 state.show_profile, state.episode_metadata = profile, metadata
                 state.import_hash = original_hash
                 if preserve_transcript and metadata_changed:
-                    state.artifacts = {name: artifact for name, artifact in state.artifacts.items()
-                                       if name in ('transcript.json', 'transcript.txt', 'import-original.json')}
+                    from .package import prune_inputs
+                    from .participants import current_transcript
+                    prune_inputs(state, current_transcript(workspace, state))
                 elif not preserve_transcript:
                     state.artifacts.clear()
             else:
@@ -163,88 +164,11 @@ def inspect_episode(path: Path) -> WorkspaceState:
         return state
 
 
-def generate_episode(path: Path, api_key: str, model: str, chapters: int = 10) -> WorkspaceState:
-    """Generate solely from committed evidence; checkpoint each successful result."""
-    from .generators import generate_chapters, generate_description, generate_titles
-    from .transcript_content import publishing_transcript, transcript_inputs
-    from .publishing import PreservedPublishingClient
-    from .workspace import PUBLISHING_FILES
-    from .workspace_models import PreservedTranscript
-
-    workspace = Workspace(path)
-    with ownership(workspace.path, 'generate publishing from preserved text'):
-        state = workspace.read()
-        workspace.reconcile(state)
-        if state.show_profile is None or state.episode_metadata is None:
-            raise WorkspaceError('Generation requires an approved show profile and confirmed guest names or explicit solo metadata. Reimport with --show-profile and --metadata.')
-        artifact = state.artifacts.get('transcript.json')
-        if artifact is None:
-            raise WorkspaceError('No current usable timed transcript. Explicitly import evidence for this source revision.')
-        preserved = PreservedTranscript.model_validate_json(workspace.artifact_bytes(artifact))
-        chapter_timing_available = preserved.has_timing and bool(publishing_transcript(preserved, timed=True).segments)
-        if not publishing_transcript(preserved).full_text.strip():
-            raise WorkspaceError('No usable preserved text for publishing.')
-        consumed = transcript_inputs(preserved)
-        dependencies = {key: consumed[key] for key in ('transcript_text', 'transcript_attribution')}
-        dependencies.update({'input_revision': state.input_revision, 'model': model, 'stage_version': 'speaker-publishing-v1'})
-        expected = {name: {**dependencies, **({'chapter_count': str(chapters), 'transcript_timing': consumed['transcript_timing']}
-                                             if name == 'chapters.txt' else {})}
-                    for name in PUBLISHING_FILES}
-        reusable = [name for name in PUBLISHING_FILES if name in state.artifacts
-                    and state.artifacts[name].dependencies == expected[name]]
-        if len(reusable) == 3:
-            if state.runs[-1].operation == 'generate' and state.runs[-1].status != 'completed':
-                state.runs[-1].status = 'completed'
-                state.runs[-1].finished_at = now()
-                state.runs[-1].missing = []
-                workspace.commit(state)
-            return state
-        run = Run(id=identifier(), operation_id=identifier(), operation='generate', status='running',
-                  started_at=now(), inputs={**input_snapshot(state), 'model': model, 'chapter_count': chapters,
-                                           'stage_version': 'speaker-publishing-v1', 'transcript_artifact': artifact.id})
-        state.runs.append(run)
-        for name in PUBLISHING_FILES:
-            if name not in reusable:
-                state.artifacts.pop(name, None)
-        if not chapter_timing_available:
-            state.artifacts.pop('chapters.txt', None)
-            run.limitations.append('Chapters unavailable: preserved timing is missing or unusable.')
-        workspace.commit(state)
-        transcript = publishing_transcript(preserved)
-        client = PreservedPublishingClient(workspace, state, api_key, model)
-        try:
-            for name in PUBLISHING_FILES:
-                if name in state.artifacts or (name == 'chapters.txt' and not chapter_timing_available):
-                    continue
-                if name == 'description.md':
-                    description = generate_description(client, transcript)
-                    if not description.strip():
-                        raise WorkspaceError('Publishing returned an empty description.')
-                    data = description.encode()
-                elif name == 'titles.json':
-                    titles = generate_titles(client, transcript)
-                    if not titles or any(not t.title.strip() or not t.thumbnail_text.strip() for t in titles):
-                        raise WorkspaceError('Publishing returned empty titles or thumbnail text.')
-                    data = json_bytes([title.model_dump() for title in titles])
-                else:
-                    generated_chapters = generate_chapters(client, publishing_transcript(preserved, timed=True), chapters)
-                    if not generated_chapters:
-                        raise WorkspaceError('Publishing returned no chapters.')
-                    data = ('\n'.join(chapter.to_youtube_format() for chapter in generated_chapters) + '\n').encode()
-                workspace.add_artifact(state, name, data, expected[name], 'speaker-publishing-v1')
-                workspace.commit(state)
-        except Exception as error:
-            run.status = 'partial'
-            run.finished_at = now()
-            run.missing = [name for name in PUBLISHING_FILES if name not in state.artifacts]
-            run.limitations.append(f'Publishing stopped ({type(error).__name__}); preserved results remain usable.')
-            workspace.commit(state)
-            raise WorkspaceError('Publishing failed; successful checkpoints and the timed transcript are preserved. See completion-report.md.') from error
-        run.missing = [name for name in PUBLISHING_FILES if name not in state.artifacts]
-        run.status = 'partial' if run.missing else 'completed'
-        run.finished_at = now()
-        workspace.commit(state)
-        return state
+def generate_episode(path: Path, api_key: str, model: str, chapters: int = 10,
+                     only: str | None = None, fresh: bool = False,
+                     chapter_labels: Path | None = None) -> WorkspaceState:
+    from .package import generate_package
+    return generate_package(path, api_key, model, chapters, only, fresh, chapter_labels)
 
 
 def load_legacy_transcript(path: Path) -> Transcript:
