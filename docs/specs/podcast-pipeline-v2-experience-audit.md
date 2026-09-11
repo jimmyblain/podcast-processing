@@ -97,6 +97,27 @@ See [workflow acceptance](../workflow-acceptance.md),
   proof of automatic candidate discovery. No tracker status was changed by this
   interview's initial evidence pass.
 
+## Approved corrective ticket handoff
+
+The user confirmed the consolidated contract before these tickets were published.
+All implementation tickets are labeled `ready-for-agent`; blocking edges use
+GitHub's native dependencies as well as the issue bodies.
+
+| Ticket | Delivers | Blocked by |
+| --- | --- | --- |
+| [#23](https://github.com/jimmyblain/podcast-processing/issues/23) | One-time prepared/approved transitions and reusable editorial setup | None |
+| [#24](https://github.com/jimmyblain/podcast-processing/issues/24) | Automatic natural-cut discovery in the new-episode operation | #23 |
+| [#25](https://github.com/jimmyblain/podcast-processing/issues/25) | Useful supported participant mapping and conservative publishing attribution | None |
+| [#26](https://github.com/jimmyblain/podcast-processing/issues/26) | Readable title/thumbnail and section-proposal documents | None |
+| [#27](https://github.com/jimmyblain/podcast-processing/issues/27) | Publishing edits preserved in place through inspection/resume | None |
+| [#22](https://github.com/jimmyblain/podcast-processing/issues/22) | Live progress, concise completion, and missing-setup/partial status semantics | None |
+| [#28](https://github.com/jimmyblain/podcast-processing/issues/28) | Actual ordinary new-episode acceptance after the corrective work | #22–#27 |
+
+The initial implementation/specification issues retain their historical status;
+the linked corrective work records what remains incomplete. The local specification
+and acceptance summary now qualify their earlier broad completion claims. No
+duplicate terminal ticket or new billing blocker was introduced.
+
 ## Design tree and interview record
 
 Already settled: unattended normal processing; conservative uncertainty;
