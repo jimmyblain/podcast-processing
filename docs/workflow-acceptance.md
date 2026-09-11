@@ -1,5 +1,15 @@
 # Integrated workflow acceptance evidence — issue #18
 
+## Post-merge new-episode audit
+
+The [user-approved experience audit](specs/podcast-pipeline-v2-experience-audit.md)
+qualifies the initial completion claim: automatic candidate discovery and reusable
+transition setup are missing, and a fresh interview exposed participant-mapping
+and publishing-attribution concerns. The passing tests below prove their stated
+mechanics; manually supplied boundary candidates and corrected participant inputs
+did not prove the intended normal new-episode workflow. Corrective acceptance must
+exercise those production stages before the workflow is declared complete.
+
 ## Parent specification reconciliation — issue #12
 
 On 2026-09-10, the completed #13–#19 tickets were reconciled against the

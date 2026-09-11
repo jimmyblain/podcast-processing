@@ -186,8 +186,11 @@ pytest tests/
 Tests use isolated workspaces, generated media, controlled services/clock and actual
 process interruptions; no paid API trials are needed. The
 [deterministic acceptance record](docs/workflow-acceptance.md) maps evidence to A1–A11.
-The [v2 specification outcome](docs/specs/podcast-pipeline-v2.md#implementation-and-acceptance-outcome)
-reconciles the completed build tickets and acceptance gates. The
+The [post-merge experience audit](docs/specs/podcast-pipeline-v2-experience-audit.md)
+records gaps in the intended new-episode workflow and the user-approved corrective
+contract, including automatic cut discovery and reusable transition setup. The
+[initial v2 specification outcome](docs/specs/podcast-pipeline-v2.md#implementation-and-acceptance-outcome)
+retains the earlier build and scoped acceptance record. The
 [source acceptance record](docs/source-acceptance.md) documents passing sampled
 timing/safe-cut checks, human approval of both production publishing packages and
 measured normal/fallback runtime, with coverage and overlap limitations.

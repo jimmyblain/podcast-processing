@@ -1,6 +1,14 @@
 # Speaker-aware podcast pipeline v2 — implementation specification
 
-Status on 2026-09-10: **Implemented through #13–#19. Scoped source, editorial and runtime acceptance is complete; A14 actual-cost evidence remains incomplete under the accepted nonblocking closure exception, tracked in #20.**
+Status on 2026-09-10 after the first new-episode run: **Initial implementation merged, but the intended automatic new-episode workflow is incomplete. The user-approved experience audit identifies corrective work. A14 remains incomplete under the nonblocking exception tracked in #20.**
+
+The [experience audit and agreed corrective contract](podcast-pipeline-v2-experience-audit.md)
+supersede the broad completion claim below. Missing automatic cut discovery,
+reusable transition setup and shortcomings in participant attribution were not
+established by the original fixture/corrected-input acceptance. The audit also
+records approved terminal, readable-output and edit-preservation improvements.
+The earlier build and scoped evidence record is retained for traceability; it is
+not proof that an ordinary new episode receives all intended outputs automatically.
 
 ## Implementation and acceptance outcome
 
