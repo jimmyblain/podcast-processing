@@ -51,6 +51,28 @@ paid request is part of deterministic tests. Final verification passed mypy for 
 33 source files and **290 tests in 114.55 seconds**; both independent review axes
 have zero remaining findings after the timing regression fix.
 
+## Participant identification corrective work — issue #25
+
+The [participant evidence record](participant-identification-acceptance.md) separates
+automatic transcript-context mapping from real source/editorial acceptance. The
+public full operation now handles a fresh two-voice interview with a host-role
+opening, guest introduction/acknowledgment and recognition-spelling variation.
+An isolated copy of the actual saved interview acquired supported associations
+before corrections, preserving original words, timing, IDs and exact historical
+base hashes; local repeat reused the result without service requests.
+
+Publishing now validates personal attribution independently of prompt instructions.
+Approved presence names remain available, while personal copy requires an exact
+clear quotation from the supported participant's own speech or neutral topic wording.
+Controlled CLI tests cover repair/exhaustion, independent results, corrections,
+punctuated and short names, possessive name mentions, and conflicting evidence that
+invalidates a dependent guest association. Earlier corrected-input approvals retain
+their original scope. Listening and evaluation of automatic publishing remain #28.
+
+Final verification passed mypy for **34 source files** and **315 tests in 119.97
+seconds**. Independent standards and issue-specification reviews have zero remaining
+findings after the four attribution/identity regression fixes.
+
 ## Parent specification reconciliation — issue #12
 
 On 2026-09-10, the completed #13–#19 tickets were reconciled against the

@@ -1,80 +1,156 @@
 """Episode-local participant evidence and nonblocking uncertainty reporting."""
+from difflib import SequenceMatcher
 from pathlib import Path
 import re
 
 from .workspace import Workspace, WorkspaceError, digest, identifier, json_bytes, now, ownership
-from .workspace_models import EpisodeMetadata, PreservedTranscript, Run, TranscriptChange, WorkspaceState, unclear_wording
+from .workspace_models import EpisodeMetadata, ParticipantAssociation, PreservedTranscript, Run, TranscriptChange, WorkspaceState, unclear_wording
 from .transcript_content import supersede_consumers
 from .speech import clear_opening, supported_text
 
-MAPPING_VERSION = 'participant-introductions-v1'
+MAPPING_VERSION = 'participant-dialogue-v2'
+
+
+def recognized_participants(text: str, names: list[str]) -> list[tuple[str, str]]:
+    """Resolve a name only inside an introduction, requiring a unique close match.
+
+    Full-name spelling variation is recognition evidence, never a transcript edit.
+    Short first names must match exactly and uniquely in the approved roster.
+    """
+    tokens = re.findall(r"[\w'-]+", text)
+    matches = []
+    for name in names:
+        official = re.findall(r"[\w'-]+", name)
+        if not official:
+            continue
+        if any(token.casefold().endswith("'s") or token.endswith("'") for token in tokens[:len(official)]):
+            continue  # “I'm Erica Campbell's friend” names somebody else.
+        spoken = ' '.join(tokens[:len(official)])
+        ratios = [SequenceMatcher(None, a.casefold(), b.casefold()).ratio()
+                  for a, b in zip(tokens, official)]
+        if (len(official) > 1 and len(tokens) >= len(official) and all(r >= .72 for r in ratios[:len(official)])
+                and SequenceMatcher(None, spoken.casefold(), name.casefold()).ratio() >= .8):
+            matches.append((name, spoken))
+        elif tokens and tokens[0].casefold() == official[0].casefold() and (
+                len(tokens) == 1 or text[len(tokens[0]):].lstrip().startswith(('.', ',', '!', '?'))):
+            matches.append((name, tokens[0]))
+    return matches
 
 
 def map_supported(transcript: PreservedTranscript, metadata: EpisodeMetadata,
                   source_revision: str) -> PreservedTranscript:
-    """Use explicit introduction evidence; label order and roster size prove no identity."""
+    """Combine introductions and response evidence; keep conflicting voices anonymous."""
     if not transcript.speakers:
         return transcript
     inputs = digest(json_bytes([MAPPING_VERSION, [(p.name, p.role) for p in metadata.participants],
-                               [(t.id, t.speaker, t.text, t.quotation_usable, t.start, t.end) for t in transcript.segments]]))
+                               [(t.id, t.speaker, t.text, t.quotation_usable, t.start, t.end) for t in transcript.segments],
+                               [(s.id, s.participant) for s in transcript.speakers if s.identity_status == 'corrected']]))
     if transcript.mapping_inputs == inputs:
         return transcript
     result = transcript.model_copy(deep=True)
-    candidates: dict[str, dict[str, list[str]]] = {s.id: {} for s in result.speakers}
-    confirmed = {p.name for p in metadata.participants}
+    speakers = {s.id: s for s in result.speakers}
+    confirmed = [p.name for p in metadata.participants]
+    host = next(p.name for p in metadata.participants if p.role == 'host')
     for speaker in result.speakers:
         if speaker.participant is not None and speaker.participant not in confirmed:
             speaker.participant, speaker.identity_status = None, 'uncertain'
         if speaker.identity_status != 'corrected':
             speaker.participant, speaker.identity_status, speaker.identity_evidence = None, 'unresolved', []
+            speaker.associations, speaker.identity_uncertainty = [], []
+
+    def record(speaker_id: str, evidence: ParticipantAssociation) -> None:
+        if speakers[speaker_id].identity_status != 'corrected':
+            speakers[speaker_id].associations.append(evidence)
+
+    def identities(speaker_id: str) -> set[str]:
+        speaker = speakers[speaker_id]
+        if speaker.identity_status == 'corrected':
+            return {speaker.participant} if speaker.participant else set()
+        return {a.participant for a in speaker.associations}
+
     for turn in result.segments:
-        if turn.speaker not in candidates:
+        if turn.speaker not in speakers:
             continue
         text = supported_text(turn).replace('’', "'")
-        for participant in metadata.participants:
-            name = re.escape(participant.name)
-            if re.search(r"(?:^|[.!?]\s+)(?:(?:hi|hello|hey|well)[,!]?\s+)?"
-                         r"(?:(?:I'm|I am)(?: your (?:girl|host))?|my name is|it's your (?:girl|host))[,]?\s+" + name + r'\b', text, re.I):
-                candidates[turn.speaker].setdefault(participant.name, []).append(turn.id or 'unknown turn')
-    # A named welcome from a supported host followed by a guest acknowledging the
-    # invitation is stronger than either a name mention or the roster alone.
+        for self_intro in re.finditer(
+                r"(?:^|[.!?]\s+)(?:(?:hi|hello|hey|well)[,!]?\s+)?"
+                r"(?:(?:I'm|I am)(?: your (?:girl|host))?|my name is|it's your (?:girl|host))[,]?\s+", text, re.I):
+            matches = recognized_participants(text[self_intro.end():], confirmed)
+            for name, recognized in matches:
+                record(turn.speaker, ParticipantAssociation(participant=name, kind='self-introduction',
+                    turn_ids=[turn.id] if turn.id else [], recognized_name=recognized,
+                    reason='First-person introduction matches an approved participant; spelling alone is not identity evidence.'))
+        # A hosting claim is useful even without the host saying their own name.
+        # Restrict it to an opening and the approved show's explicit identity.
+        if (turn.start is not None and turn.start <= 300
+                and re.search(r"\bwelcome\b", text, re.I)
+                and (re.search(r"\bmy podcast\b", text, re.I)
+                     or re.search(r"\b(?:I'm|I am) your host\b", text, re.I))
+                and re.search(r"\bI'll Just Let Myself In\b", text, re.I)):
+            record(turn.speaker, ParticipantAssociation(participant=host, kind='host-role',
+                turn_ids=[turn.id] if turn.id else [],
+                reason='Opening welcomes the audience to the approved show and explicitly claims the hosting role.'))
+
+    # Resolve host support before considering a guest response. A conflicting host
+    # introduction must not become evidence for somebody else's confident label.
+    supported_hosts = {speaker_id for speaker_id in speakers if identities(speaker_id) == {host}}
     for position, introduction in enumerate(result.segments):
-        if (introduction.speaker not in candidates
-                or set(candidates[introduction.speaker]) != {'Lish Speaks'} or introduction.end is None):
+        if (introduction.speaker not in supported_hosts
+                or introduction.end is None):
             continue
-        guests = [p.name for p in metadata.participants if p.role == 'guest' and re.search(
-            r"(?:welcome[,!]?\s+|(?:my guest|joining me|here with me)(?: today)?(?: is)?\s+|I'm sitting with\s+)"
-            + re.escape(p.name) + r'\b', supported_text(introduction).replace('’', "'"), re.I)]
-        if len(guests) != 1:
+        text = supported_text(introduction).replace('’', "'")
+        guest_matches = []
+        for welcome in re.finditer(
+                r"(?:\bwelcome[,!]?\s+|\b(?:my guest|joining me|here with me)(?: today)?(?: is)?\s+|"
+                r"\bI'm sitting with\s+|\bwithout further ado[,]?\s+|\bplease welcome\s+)", text, re.I):
+            guest_matches.extend(recognized_participants(text[welcome.end():],
+                                 [p.name for p in metadata.participants if p.role == 'guest']))
+        if len({name for name, _ in guest_matches}) != 1:
             continue
+        guest, recognized = guest_matches[0]
         responding_speaker = None
-        for turn in result.segments[position + 1:position + 5]:
+        for offset, turn in enumerate(result.segments[position + 1:position + 5], start=1):
             opening = clear_opening(turn)
             if (not opening or turn.start is None or turn.start < introduction.end
-                    or turn.start - introduction.end > 15 or turn.speaker not in candidates):
+                    or turn.start - introduction.end > 15 or turn.speaker not in speakers):
                 break
             if turn.speaker != introduction.speaker:
                 if responding_speaker is not None and responding_speaker != turn.speaker:
                     break
                 responding_speaker = turn.speaker
-                if re.match(r'(?:(?:well|hi|hello)[,.!]?\s+)?thank(?:s| you)\b.*\b(?:having|inviting) me\b', opening, re.I):
-                    candidates[turn.speaker].setdefault(guests[0], []).extend([
-                        introduction.id or 'unknown turn', turn.id or 'unknown turn'])
+                if re.search(r"(?:^|[.!?]\s+)(?:(?:well|hi|hello)[,.!]?\s+)?"
+                             r"thank(?:s| you)(?: so much)?\s+for (?:having|inviting) me\b", opening, re.I):
+                    host_evidence = speakers[introduction.speaker].associations
+                    refs = [ref for evidence in host_evidence for ref in evidence.turn_ids]
+                    refs.extend(t.id for t in result.segments[position:position + offset + 1] if t.id)
+                    record(turn.speaker, ParticipantAssociation(participant=guest, kind='guest-response',
+                        turn_ids=list(dict.fromkeys(refs)), recognized_name=recognized,
+                        host_speaker_id=introduction.speaker,
+                        reason='Supported host introduces one guest; the other voice acknowledges the invitation '
+                               'within four turns and fifteen source seconds. Later turns retain that voice identity.'))
                     break
-            if not re.fullmatch(r'(?:hi|hello|welcome|thank you|thanks)[.,! ]*', turn.text.strip(), re.I):
+            if not re.fullmatch(r'(?:(?:hi|hello|welcome|thank you|thanks|sweetheart|dear|friend)[.,! ]*)+', turn.text.strip(), re.I):
                 break
+
     changes = []
     for speaker in result.speakers:
         if speaker.identity_status == 'corrected':
             continue
-        evidence = candidates[speaker.id]
-        if len(evidence) == 1:
-            speaker.participant = next(iter(evidence))
+        names = identities(speaker.id)
+        for association in speaker.associations:
+            if association.host_speaker_id and identities(association.host_speaker_id) != {host}:
+                association.uncertainty = 'The introducing host has conflicting identity evidence; this response cannot establish identity.'
+        speaker.identity_evidence = list(dict.fromkeys(ref for a in speaker.associations for ref in a.turn_ids))
+        if len(names) == 1 and any(a.uncertainty is None for a in speaker.associations):
+            speaker.participant = next(iter(names))
             speaker.identity_status = 'supported'
-            speaker.identity_evidence = evidence[speaker.participant]
-        elif evidence:
+            speaker.identity_uncertainty = ['Transcript-context support, not independent voice verification; '
+                                            'subsequent attribution relies on consistent episode-local diarization.']
+        elif names:
             speaker.identity_status = 'uncertain'
-            speaker.identity_evidence = [ref for refs in evidence.values() for ref in refs]
+            speaker.identity_uncertainty = ['Conflicting participant or introducing-host evidence; keep this voice anonymous.']
+        else:
+            speaker.identity_uncertainty = ['No sufficient introduction/response evidence; roster and vendor label order prove no identity.']
         changes.append(speaker.model_dump())
     result.mapping_inputs = inputs
     result.revision = digest(json_bytes([transcript.revision, inputs, changes]))
@@ -121,6 +197,9 @@ def ensure_readable(workspace: Workspace, state: WorkspaceState) -> bool:
 
 
 def save_mapped(workspace: Workspace, state: WorkspaceState, mapped: PreservedTranscript) -> None:
+    # Older schema-v2 bytes omit newly optional evidence fields. Their exact saved
+    # hash, rather than a reserialization with defaults, identifies this base.
+    mapped.lineage[-1].base_sha256 = state.artifacts['transcript.json'].sha256
     dependencies = {**state.artifacts['transcript.json'].dependencies, 'mapping': mapped.mapping_inputs or ''}
     superseded = supersede_consumers(state, current_transcript(workspace, state), mapped)
     state.runs[-1].limitations.append(f'Superseded: {", ".join(superseded) or "none"}. Publishing artifacts were not regenerated.')
@@ -131,6 +210,12 @@ def save_mapped(workspace: Workspace, state: WorkspaceState, mapped: PreservedTr
 
 def uncertainty_report(transcript: PreservedTranscript) -> str:
     lines = []
+    for speaker in transcript.speakers:
+        if speaker.identity_uncertainty:
+            lines.append(f'- Participant evidence for {speaker.label or speaker.id}: '
+                         f'{speaker.participant or "anonymous"} ({speaker.identity_status}). '
+                         + ' '.join(speaker.identity_uncertainty)
+                         + (f' Evidence turns: {", ".join(speaker.identity_evidence)}.' if speaker.associations else ''))
     participants = {s.id: s.participant for s in transcript.speakers}
     words = {w.id: w for w in transcript.words}
     seen = set()

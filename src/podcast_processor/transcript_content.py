@@ -1,12 +1,13 @@
 """Publishing evidence views and hashes of the inputs each consumer actually uses."""
 from .models import Transcript, TranscriptSegment
+from .attribution import supported_quotes
 from .speech import supported_passages, supported_text
 from .workspace import digest, json_bytes
 from .workspace_models import PreservedTranscript, WorkspaceState
 
 
 def publishing_transcript(preserved: PreservedTranscript, *, timed: bool = False) -> Transcript:
-    names = {s.id: s.participant for s in preserved.speakers}
+    names = {s.id: s.participant for s in preserved.speakers if s.identity_status in ('supported', 'corrected')}
     labels = {s.id: s.label or s.id for s in preserved.speakers}
     segments: list[TranscriptSegment] = []
     previous_label = None
@@ -30,7 +31,11 @@ def transcript_inputs(transcript: PreservedTranscript) -> dict[str, str]:
     """Keep attribution/text consumers independent of source timing and artifact IDs."""
     return {
         'transcript_text': digest(json_bytes(' '.join(text for t in transcript.segments if (text := supported_text(t))))),
-        'transcript_attribution': digest(json_bytes(publishing_transcript(transcript).full_text)),
+        'transcript_attribution': digest(json_bytes({
+            'conversation': publishing_transcript(transcript).full_text,
+            'supported_quotes': supported_quotes(transcript),
+            'recognized_names': sorted({a.recognized_name for s in transcript.speakers
+                                        for a in s.associations if a.recognized_name})})),
         'transcript_timing': digest(json_bytes({
             'duration': transcript.duration,
             'turns': [(t.start, t.end, t.timing_usable, t.word_ids) for t in transcript.segments],

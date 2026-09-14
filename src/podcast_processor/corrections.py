@@ -182,6 +182,8 @@ def correct_episode(path: Path, corrections_path: Path) -> WorkspaceState:
                     target.participant = source.participant
                 target.identity_status = 'corrected'
                 target.identity_evidence += source.identity_evidence + [f'operator merge {revision}']
+                target.associations = []
+                target.identity_uncertainty = ['Operator merge supersedes automatic associations; original evidence remains in history.']
                 for turn in result.segments:
                     if turn.speaker == source.id:
                         turn.speaker = target.id
@@ -197,6 +199,8 @@ def correct_episode(path: Path, corrections_path: Path) -> WorkspaceState:
             speaker.participant = change.participant
             speaker.identity_status = 'corrected'
             speaker.identity_evidence = [f'operator correction {revision}']
+            speaker.associations = []
+            speaker.identity_uncertainty = ['Operator relabel supersedes automatic associations; original evidence remains in history.']
         result.refresh_overlaps()
         result = PreservedTranscript.model_validate(result.model_dump())
         result.revision = revision

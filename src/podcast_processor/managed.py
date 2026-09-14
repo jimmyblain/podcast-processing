@@ -310,6 +310,8 @@ class ManagedSession:
             self.checkpoint()
         assert self.state.episode_metadata is not None
         transcript = map_supported(transcript, self.state.episode_metadata, self.state.source_revision)
+        if transcript.lineage:
+            transcript.lineage[-1].base_sha256 = self.state.evidence[normalized_name].sha256
         for name, data in [('transcript.json', json_bytes(transcript.model_dump())),
                            ('transcript.txt', transcript.readable().encode())]:
             if name not in self.state.artifacts:

@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import TypeAdapter
 
+from .attribution import ATTRIBUTION_VERSION, attribution_context, validate_attribution
 from .publishing import PreservedPublishingClient
 from .publishing_models import DescriptionBody, PublishingChapter, TitleConcept, timestamp
 from .publishing_prompts import VERSIONS, request_prompt
@@ -64,17 +65,21 @@ def stage_inputs(state: WorkspaceState, transcript: PreservedTranscript, model: 
     profile, metadata = state.show_profile, state.episode_metadata
     # Links, biographies, sponsors and recurring promotion are assembled from exact
     # supplied bytes locally, so they never enter title/body/chapter requests.
+    attribution = attribution_context(transcript, metadata)
     editorial = {'show': {'name': profile.name, 'host': profile.host, 'audience': profile.audience, 'voice': profile.voice},
                  'episode': {'solo': metadata.solo, 'participants': [{'name': p.name, 'role': p.role} for p in metadata.participants],
                              'angle': metadata.angle, 'current_context': metadata.current_context},
-                 'conversation': publishing_transcript(transcript).full_text}
+                 'conversation': publishing_transcript(transcript).full_text,
+                 'attribution': attribution}
     consumed = transcript_inputs(transcript)
     result = {}
     for stage in STAGE_FILES:
-        context = {**chapter_context(transcript), 'chapter_limit': chapters} if stage == 'chapters' else editorial
+        context = {**chapter_context(transcript), 'chapter_limit': chapters,
+                   'attribution': {'supported_participants': attribution['supported_participants']}} if stage == 'chapters' else editorial
         prompt = request_prompt(stage, context)
         dependencies = {'transcript_text': consumed['transcript_text'], 'transcript_attribution': consumed['transcript_attribution'],
-                        'request': digest(prompt.encode()), 'model': model, 'template': VERSIONS[stage]}
+                        'request': digest(prompt.encode()), 'model': model, 'template': VERSIONS[stage],
+                        'attribution_policy': ATTRIBUTION_VERSION}
         if stage == 'chapters':
             dependencies['transcript_timing'] = consumed['transcript_timing']
             dependencies['source_revision'] = state.source_revision
@@ -114,8 +119,17 @@ def validate_chapters(raw: str, transcript: PreservedTranscript, limit: int) -> 
 
 
 def validate_copy(stage: str, raw: str, state: WorkspaceState, transcript: PreservedTranscript, limit: int) -> Any:
+    assert state.episode_metadata
+    metadata = state.episode_metadata
+    def check(text: str, **options: bool) -> None:
+        validate_attribution(text, transcript, metadata, **options)
+
     if stage == 'chapters':
-        return validate_chapters(raw, transcript, limit)
+        chapters = validate_chapters(raw, transcript, limit)
+        for chapter in chapters:
+            check(chapter['title'])
+            check(chapter['reason'])
+        return chapters
     if stage == 'titles':
         titles = TypeAdapter(list[TitleConcept]).validate_json(raw)
         if len(titles) != 15:
@@ -123,6 +137,11 @@ def validate_copy(stage: str, raw: str, state: WorkspaceState, transcript: Prese
         normalized = [re.sub(r'[^\w]', '', t.title.casefold()) for t in titles]
         if len(set(normalized)) != 15:
             raise ValueError('Title concepts must be distinct, including case/punctuation variants.')
+        for title in titles:
+            for field in ('title', 'category', 'thumbnail_text', 'reasoning'):
+                check(getattr(title, field))
+            for field in ('subject', 'expression', 'composition'):
+                check(getattr(title.visual_direction, field), portrait=field == 'subject')
         return [t.model_dump() for t in titles]
     body = DescriptionBody.model_validate_json(raw)
     rendered = body.render()
@@ -135,6 +154,9 @@ def validate_copy(stage: str, raw: str, state: WorkspaceState, transcript: Prese
         raise ValueError('Body cannot include links, hashtags or chapter timestamps; assembly supplies extras.')
     if len(rendered) > 5000:
         raise ValueError('Description body exceeds the 5,000-character complete-description limit.')
+    check(body.overview, overview=True)
+    for field in [body.hook, *body.takeaways, body.question, body.invitation]:
+        check(field)
     return body.model_dump()
 
 
@@ -212,6 +234,9 @@ def generate_package(path: Path, api_key: str, model: str, chapters: int = 10,
                           'selected': sorted(selected), 'fresh': fresh, 'stage_version': 'publishing-package-v2'},
                   limitations=preserved_edits)
         state.runs.append(run)
+        run.limitations.append('Attribution policy: participant presence does not establish story ownership; '
+                               'copy uses neutral topics or exact clear quotations from supported voices. '
+                               'Unsupported personal references require bounded repair; other stages remain independent.')
         # Supersede only actual changed consumers. Independent current outputs survive.
         for stage, (dependencies, _) in inputs.items():
             file = STAGE_FILES[stage]

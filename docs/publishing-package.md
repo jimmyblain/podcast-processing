@@ -91,6 +91,40 @@ Credentials and authorization headers are not saved in these records.
 
 ## Validation and acceptance evidence
 
+### Conservative attribution — issue #25
+
+Publishing validation now enforces a conservative attribution policy independently
+of the prompt. The overview begins with a supplied presence sentence naming the
+approved participants. That sentence establishes episode membership only.
+The remaining generated copy uses neutral topics addressed to the listener.
+Participant names and recognition variants, first/third-person personal pronouns,
+host/guest references and quotation marks trigger validation unless the entire
+field is an exact named quotation of a clear complete sentence from that participant's
+supported or explicitly corrected voice. An approved name can also identify a
+portrait subject, optionally followed by “in close-up.”
+
+For example, `Erica Campbell: "I learned to ask for help."` is allowed only if that
+complete clear sentence belongs to her supported voice. Naming Erica in the overview,
+mapping her in an unrelated passage, or finding the sentence in an anonymous or
+different participant's speech cannot authorize it. Named personal paraphrases are
+conservatively excluded even when they might be true: these checks do not establish
+semantic equivalence. Useful neutral themes and listener-directed takeaways remain
+available. This rule applies to generated description fields, title/thumbnail
+concepts, visual directions and chapter labels/reasons. Supplied biographies and
+operator-authored edits retain their separate authority contracts.
+
+Invalid attribution is repaired within the existing three-attempt stage allowance;
+exhaustion leaves that stage unavailable while successful independent outputs survive.
+Raw responses, repair feedback, immutable source-transcript references and the policy version
+are checkpointed. Unchanged resume grants no new attempts. Corrections reconsider
+ownership and invalidate its actual consumers; timing-only changes continue to
+preserve copy when its wording and attribution evidence are unchanged.
+
+This is a deliberately restrictive reference/quotation validator, not a general
+semantic fact checker. New aliases and unusual indirect references may require
+further coverage. Final source fidelity and editorial usefulness must be evaluated
+on automatic outputs under #28, separately from earlier corrected-input approvals.
+
 Automated validation enforces 15 distinct titles, required concept fields, 2–4-word overlays,
 100-character titles without angle brackets, and 5,000 characters for the complete description
 including chapters and supplied extras. This is the Studio-oriented contract; a future Data

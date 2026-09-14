@@ -10,15 +10,34 @@ podcast-process map-participants output/episodes/my-episode
 podcast-process inspect output/episodes/my-episode
 ```
 
-Explicit self-introductions identify confirmed participants. A supported host's
+Issue #25 broadens mapping with a versioned, local dialogue-evidence pass. An opening
+that welcomes listeners to the approved show and claims the hosting role can identify
+the host without a self-name phrase. First-person introductions and a supported host's
 named guest introduction followed by acknowledgment of the invitation can identify
 the guest, including up to four turns of brief greetings within fifteen source
-seconds. Assignments then follow the same episode-local voice through subsequent
-speech. Conflicting introductions retain uncertain identity. A name mention,
+seconds. This includes “without further ado,” affectionate greetings and
+“thank you so much for having me.” A unique close full-name spelling match can resolve
+recognition spelling to the approved roster inside this context; short first names
+require an exact, unique match. Assignments follow the same episode-local voice
+through earlier and subsequent speech. Conflicting introductions retain uncertain
+identity for the affected voice. A name mention,
 vendor label order, roster size, or recognition confidence alone proves no identity.
 These conservative local rules cover explicit introductions; other identity evidence
 can be supplied with an optional correction. No voice enrollment or model call is
 required. Participant records support multiple guests.
+
+Each automatic speaker association records its kind, supporting turn references,
+recognized spelling and reasoning in `associations`. `identity_evidence` retains
+the references and `identity_uncertainty` explains unresolved/conflicting evidence
+or the limits of a supported association. Transcript-based support is not independent
+voice verification; it relies on episode-local diarization staying consistent.
+Original recognition text, timestamps, IDs and raw evidence remain unchanged.
+The mapping version and actual evidence inputs are checkpointed; unchanged mapping
+reuses the exact artifact. Optional relabels remain authoritative, with superseded
+automatic evidence retained in history.
+
+See [issue #25 evidence](participant-identification-acceptance.md) for the automatic
+saved-interview result and the separate, still-pending source/editorial acceptance.
 
 `current/transcript.txt` uses source timestamps and supported names or anonymous
 labels, with paragraphs at speaker changes and lines wrapped to 100 columns.

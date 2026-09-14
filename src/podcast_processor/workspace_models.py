@@ -103,12 +103,24 @@ class ImportProvenance(Record):
     timing_confidence: str | None = None
 
 
+class ParticipantAssociation(Record):
+    participant: str
+    kind: Literal['self-introduction', 'host-role', 'guest-response']
+    turn_ids: list[str]
+    recognized_name: str | None = None
+    reason: str
+    host_speaker_id: str | None = None
+    uncertainty: str | None = None
+
+
 class DetectedSpeaker(Record):
     id: str
     label: str | None = None
     participant: str | None = None
     identity_status: Literal['unresolved', 'supported', 'corrected', 'uncertain'] = 'unresolved'
     identity_evidence: list[str] = Field(default_factory=list)
+    associations: list[ParticipantAssociation] = Field(default_factory=list)
+    identity_uncertainty: list[str] = Field(default_factory=list)
 
 
 class TranscriptChange(Record):

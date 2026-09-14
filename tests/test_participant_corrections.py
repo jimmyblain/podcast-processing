@@ -32,10 +32,10 @@ def correct(workspace, changes):
     return transcript(workspace)
 
 
-def episode_from_turns(tmp_path, monkeypatch, turns):
+def episode_from_turns(tmp_path, monkeypatch, turns, *, guests=('Erica Campbell',)):
     options = authority(tmp_path)
     (tmp_path / 'episode.json').write_text(json.dumps({'solo': False, 'participants': [
-        {'name': 'Lish Speaks', 'role': 'host'}, {'name': 'Erica Campbell', 'role': 'guest'}]}))
+        {'name': 'Lish Speaks', 'role': 'host'}, *[{'name': name, 'role': 'guest'} for name in guests]]}))
     tokens = [(speaker, word) for speaker, text in turns for word in text.split()]
     words = [{'text': word, 'speaker': speaker, 'start': 10 + i * 900 / len(tokens),
               'end': 10 + (i + 0.8) * 900 / len(tokens)} for i, (speaker, word) in enumerate(tokens)]
