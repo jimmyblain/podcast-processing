@@ -49,6 +49,20 @@ class PlanningSettings(Record):
         return self
 
 
+class BoundarySupport(Record):
+    before_word_ids: list[str]
+    after_word_ids: list[str]
+    before_text: str
+    after_text: str
+
+
+class DiscoveryOutcome(Record):
+    status: Literal['not-run', 'completed', 'failed'] = 'not-run'
+    summary: str = 'Automatic discovery was not requested; supplied evidence is evaluated.'
+    operation_id: str | None = None
+    candidates_sha256: str | None = None
+
+
 class NaturalBoundary(Record):
     id: str = Field(min_length=1)
     time: Decimal = Field(gt=0)
@@ -58,6 +72,7 @@ class NaturalBoundary(Record):
     natural_topic_boundary: bool
     reason: str = Field(min_length=1, pattern=r'\S')
     basis: Literal['transcript-supported', 'source-reviewed', 'fixture']
+    support: BoundarySupport | None = None
     # Editorial strength is considered before duration similarity.
     strength: int = Field(default=1, ge=1, le=3)
     safe_start: Decimal | None = Field(default=None, ge=0)
@@ -131,6 +146,10 @@ class SectionProposal(Record):
         return self
 
 
+PlanningReason = Literal['missing-setup', 'discovery-failed', 'insufficient-boundaries',
+                         'duration-impossible', 'source-unavailable', 'invalid-evidence']
+
+
 class PlanningOutcome(Record):
     schema_version: Literal[1, 2] = 2
     status: Literal['valid', 'unavailable', 'needs-setup']
@@ -142,6 +161,8 @@ class PlanningOutcome(Record):
     rejected_boundaries: dict[str, str]
     limitations: list[str]
     proposal: SectionProposal | None = None
+    reason_code: PlanningReason | None = None
+    discovery: DiscoveryOutcome = Field(default_factory=DiscoveryOutcome)
 
     @model_validator(mode='after')
     def consistent(self) -> 'PlanningOutcome':

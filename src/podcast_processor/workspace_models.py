@@ -243,7 +243,7 @@ class Run(Record):
     limitations: list[str] = Field(default_factory=list)
 
 
-class PublishingAttempt(Record):
+class GenerationAttempt(Record):
     id: str
     started_at: str
     finished_at: str | None = None
@@ -258,12 +258,17 @@ class PublishingAttempt(Record):
     error: str | None = None
 
 
-class PublishingOperation(Record):
+class GenerationOperation(Record):
     id: str
     stage: str
     dependencies: dict[str, str]
     created_at: str
-    attempts: list[PublishingAttempt] = Field(default_factory=list)
+    attempts: list[GenerationAttempt] = Field(default_factory=list)
+
+
+# Preserve the publishing API and existing workspace schema.
+PublishingAttempt = GenerationAttempt
+PublishingOperation = GenerationOperation
 
 
 class WorkspaceState(Record):
@@ -282,4 +287,5 @@ class WorkspaceState(Record):
     history: list[Artifact] = Field(default_factory=list)
     runs: list[Run] = Field(default_factory=list)
     publishing_operations: list[PublishingOperation] = Field(default_factory=list)
+    discovery_operations: list[GenerationOperation] = Field(default_factory=list)
     transcription_operations: list[TranscriptionOperation] = Field(default_factory=list)

@@ -1,20 +1,20 @@
-"""Deterministic planning from explicit natural-cut and prepared-duration evidence."""
+"""Discover or consume natural-cut evidence, then validate exact section durations."""
 from decimal import Decimal
 from itertools import combinations
 from pathlib import Path
 
 from .participants import current_transcript
 from .planning_models import (
-    FinishedSection, NaturalBoundary, PlanningEvidence, PlanningOutcome, SectionProposal,
+    DiscoveryOutcome, FinishedSection, NaturalBoundary, PlanningEvidence, PlanningOutcome, PlanningReason, SectionProposal,
 )
 from .workspace import Workspace, digest, identifier, now, ownership
 from .workspace_models import PreservedSegment, PreservedTranscript, PreservedWord, Run, WorkspaceState
 
-VERSION = 'section-planner-v3'
+VERSION = 'section-planner-v4'
 PLAN_FILES = ('section-plan.json', 'section-boundaries.json')
 LIMITATIONS = [
     'Section planning performs no media cutting, stitching or export.',
-    'Natural-boundary assertions are supplied evidence, not inferred from punctuation or waveform silence.',
+    'Transcript-supported suggestions include semantic judgments and checked word gaps, not independently reviewed source safety. Punctuation, silence or model assertions alone do not verify safe audio cuts.',
     'Source-audited point error <=1.0 second and cuts inside independently reviewed safe intervals remain pending evaluation.',
 ]
 
@@ -47,9 +47,46 @@ def boundary_problem(boundary: NaturalBoundary, transcript: PreservedTranscript,
                 return 'Cut crosses overlapping or out-of-order word evidence.'
         else:
             turn = turns.get(word.turn_id)
-            if (turn is None or turn.start is None or turn.end is None
-                    or (index <= before_index and Decimal(str(turn.end)) > boundary.time)
-                    or (index >= after_index and Decimal(str(turn.start)) < boundary.time)):
+            lower, upper = (turn.start, turn.end) if turn else (None, None)
+            # A containing turn can be very long. Same-turn reliable neighbors
+            # bound an isolated unknown word without assigning it precise timing.
+            # Include the entire anchor word, so no inferred gap becomes a cut.
+            for direction in (-1, 1):
+                neighbor_index = index + direction
+                while 0 <= neighbor_index < len(words):
+                    neighbor = words[neighbor_index]
+                    if not word.turn_id or neighbor.turn_id != word.turn_id:
+                        break
+                    if (neighbor.timing_usable and not neighbor.timing_uncertainty
+                            and neighbor.start is not None and neighbor.end is not None):
+                        if direction == -1:
+                            lower = max(lower, neighbor.start) if lower is not None else neighbor.start
+                        else:
+                            upper = min(upper, neighbor.end) if upper is not None else neighbor.end
+                        break
+                    neighbor_index += direction
+            # A zero-length provider word can occupy its own unbounded turn.
+            # Its retained coarse position, bracketed by two reliable words,
+            # localizes uncertainty without making that word a precise cut anchor.
+            if (word.start is not None and word.end is not None and 0 < index < len(words) - 1):
+                left, right = words[index - 1], words[index + 1]
+                if (left.timing_usable and right.timing_usable and not left.timing_uncertainty
+                        and not right.timing_uncertainty and left.start is not None and left.end is not None
+                        and right.start is not None and right.end is not None
+                        and left.start <= word.start <= word.end <= right.end
+                        and left.end <= right.start):
+                    lower = max(lower, left.start) if lower is not None else left.start
+                    upper = min(upper, right.end) if upper is not None else right.end
+            # Retained uncertain positions may contradict word order or nearby
+            # anchors. Never narrow them out of the possible source interval.
+            for position in (word.start, word.end):
+                if position is not None:
+                    if lower is not None:
+                        lower = min(lower, position)
+                    if upper is not None:
+                        upper = max(upper, position)
+            if ((index <= before_index and (upper is None or Decimal(str(upper)) > boundary.time))
+                    or (index >= after_index and (lower is None or Decimal(str(lower)) < boundary.time))):
                 return 'Uncertain word timing cannot be bounded away from this cut.'
     for turn in transcript.segments:
         if not turn.word_ids and (turn.start is None or turn.end is None
@@ -86,6 +123,7 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
         reasons.append('Timed transcript evidence extends outside the original-source duration.')
     if source.basis == 'fixture':
         limitations.append('Source identity/duration use labeled fixture assumptions; this is not verified real audio quality.')
+    reason_code: PlanningReason | None = 'source-unavailable' if reasons else None
     assets = {'episode_start': evidence.episode_start, 'transition_in': evidence.transition_in, 'transition_out': evidence.transition_out}
     needs_setup = False
     for name, asset in assets.items():
@@ -110,6 +148,7 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
         limits.append((settings.minimum - budget, settings.maximum - budget) if budget is not None else None)
     duration = source.duration
     if duration is not None and not needs_setup:
+        before_duration_reasons = len(reasons)
         excess = duration - 3 * settings.maximum
         if excess > 0:
             reasons.append(f'Source alone exceeds three {settings.maximum}-second finished sections by {excess} seconds before overhead.')
@@ -119,11 +158,22 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
                 reasons.append(f'Source plus transition/pause overhead totals {total} seconds, exceeding capacity {3 * settings.maximum} by {total - 3 * settings.maximum}.')
             if total < 3 * settings.minimum:
                 reasons.append(f'Source plus transition/pause overhead totals {total} seconds, below required {3 * settings.minimum} by {3 * settings.minimum - total}.')
+        for index, budget in enumerate(overhead, 1):
+            if budget is not None and budget >= settings.maximum:
+                reasons.append(f'Section {index} transition/pause overhead {budget} leaves no positive source-part budget.')
+        if all(bounds is not None for bounds in limits):
+            minimum_source = sum(max(Decimal(0), bounds[0]) for bounds in limits if bounds is not None)
+            strict_minimum = any(bounds is not None and bounds[0] <= 0 for bounds in limits)
+            if duration < minimum_source or duration == minimum_source and strict_minimum:
+                reasons.append(f'Source duration {duration} cannot supply three positive parts within their individual minimum budgets ({minimum_source} seconds).')
+        if len(reasons) > before_duration_reasons and reason_code is None:
+            reason_code = 'duration-impossible'
     supported = []
     rejected = {}
     seen = set()
     for boundary in evidence.boundaries:
         if boundary.id in seen:
+            reason_code = reason_code or 'invalid-evidence'
             reasons.append(f'Duplicate boundary identity: {boundary.id}.')
         seen.add(boundary.id)
         problem = boundary_problem(boundary, transcript, duration) if duration is not None else 'Unknown source duration.'
@@ -161,16 +211,19 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
                     selected_limits.append('Selected natural cuts are synthetic fixture assumptions; arithmetic success does not establish real audio quality.')
                 proposal = SectionProposal(evidence=evidence, boundaries=[first, second], sections=sections, limitations=selected_limits)
         if proposal is None:
+            reason_code = 'insufficient-boundaries'
             reasons.append(f'No pair among {len(supported)} supported natural boundaries meets all three source-part duration budgets. No cut was forced.')
     if needs_setup:
+        reason_code = 'missing-setup'
         from .show_setup import NEEDS_SETUP
         reasons.insert(0, NEEDS_SETUP)
-    return PlanningOutcome(status='valid' if proposal else 'needs-setup' if needs_setup else 'unavailable', evidence=evidence, dependencies=dependencies,
+    return PlanningOutcome(reason_code=reason_code, status='valid' if proposal else 'needs-setup' if needs_setup else 'unavailable', evidence=evidence, dependencies=dependencies,
         overhead=overhead, source_part_limits=limits, reasons=reasons, rejected_boundaries=rejected,
         limitations=proposal.limitations if proposal else limitations, proposal=proposal)
 
 
-def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceState:
+def plan_episode(path: Path, evidence_path: Path | None = None, *, api_key: str = '',
+                 model: str = 'claude-opus-4-8', fresh: bool = False) -> WorkspaceState:
     workspace = Workspace(path)
     with ownership(workspace.path, 'plan episode sections'):
         state = workspace.read()
@@ -184,7 +237,7 @@ def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceStat
             setup = episode_setup(workspace, state)
             previous_run = next((run for run in reversed(state.runs)
                              if run.operation == 'plan' and 'evidence' in run.inputs), None)
-            if previous_run:
+            if previous_run and previous_run.inputs.get('explicit_evidence', True):
                 evidence = PlanningEvidence.model_validate(previous_run.inputs['evidence'])
                 explicit_evidence = previous_run.inputs.get('explicit_evidence', any(
                     asset is not None for asset in (evidence.episode_start, evidence.transition_in, evidence.transition_out)))
@@ -205,8 +258,18 @@ def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceStat
                 # Explicit evidence files still support historical fixture studies.
                 evidence = evidence.model_copy(update=planning_transitions(setup))
                 evidence.settings.transition_ending_silence = setup.ending_silence
+        discovery = DiscoveryOutcome()
+        if not explicit_evidence:
+            preliminary = propose(evidence, transcript, state, {})
+            if preliminary.reason_code == 'insufficient-boundaries':
+                from .discovery import discover
+                boundaries, discovery = discover(workspace, state, transcript, evidence.source, api_key, model, fresh)
+                evidence = evidence.model_copy(update={'boundaries': boundaries})
+            else:
+                discovery = DiscoveryOutcome(summary='Discovery not run: ' + ' '.join(preliminary.reasons))
         dependencies = {'source_revision': state.source_revision, 'transcript': state.artifacts['transcript.json'].sha256,
-                        'planning_evidence': digest(evidence.model_dump_json().encode()), 'planner': VERSION}
+                        'planning_evidence': digest(evidence.model_dump_json().encode()), 'planner': VERSION,
+                        'discovery': digest(discovery.model_dump_json().encode())}
         prior = state.artifacts.get('section-plan.json')
         if prior and prior.dependencies == dependencies:
             outcome = PlanningOutcome.model_validate_json(workspace.artifact_bytes(prior))
@@ -220,10 +283,15 @@ def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceStat
             state.artifacts.pop(name, None)
         workspace.commit(state)
         outcome = propose(evidence, transcript, state, dependencies)
+        outcome.discovery = discovery
+        if discovery.status == 'failed':
+            outcome.status, outcome.reason_code = 'unavailable', 'discovery-failed'
+            outcome.reasons = [discovery.summary]
+            outcome.proposal = None
         workspace.add_artifact(state, 'section-plan.json', outcome.model_dump_json(indent=2).encode(), dependencies, VERSION)
         if outcome.proposal:
             workspace.add_artifact(state, 'section-boundaries.json', outcome.proposal.model_dump_json(indent=2).encode(), dependencies, VERSION)
-        run.status, run.finished_at = ('partial' if outcome.status == 'needs-setup' else 'completed'), now()
+        run.status, run.finished_at = ('partial' if outcome.status == 'needs-setup' or discovery.status == 'failed' else 'completed'), now()
         run.limitations = outcome.limitations + outcome.reasons
         workspace.commit(state)
         return state
@@ -249,6 +317,7 @@ def planning_report(workspace: Workspace, state: WorkspaceState) -> str:
         for part in result.proposal.sections:
             lines.append(f'Section {part.number}: source [{part.source_start}, {part.source_end}]; '
                          f'D{part.number} = {part.opening_duration} + {part.part_duration} + {part.pause} + {part.closing_duration} = {part.finished_duration} seconds.')
+    lines.append(f'Candidate discovery: {result.discovery.status}. {result.discovery.summary}')
     lines.extend(result.reasons)
     lines.extend(f'Boundary {key}: {value}' for key, value in result.rejected_boundaries.items())
     lines.extend(result.limitations)

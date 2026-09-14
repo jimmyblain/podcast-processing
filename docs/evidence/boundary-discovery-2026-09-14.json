@@ -1,0 +1,82 @@
+{
+  "date": "2026-09-14",
+  "issue": 24,
+  "scope": "Production discovery on an isolated copy of the previously unplanned Ashlee episode; source listening deferred to issue #28.",
+  "workspace": "output/acceptance-issue-24-2026-09-14/episode",
+  "source_revision": "7516502cc72f4449b371626ff317bd08",
+  "source_fingerprint": "fb0dedd5aad329bcd1bf829ad38e304342f831f596bb29acdabd8dc8e95ce69f",
+  "source_duration": "2389.008254",
+  "transcript_sha256": "df7f3589cb8eb7b623816874fa63fe7d4eb3e6708207e1157e850eaad7324096",
+  "show_setup_revision": "5e4a229e86074bdab9115ba9f29d040c",
+  "discovery_version": "section-discovery-v1",
+  "planner_version": "section-planner-v4",
+  "initial_candidates_sha256": "13c4c6616be8258b0e64a7ccc23ca7467130f46cc7ea6c7badc15c211505754c",
+  "proposal_sha256": "e9252eb476ea4d51b26c936a3a3fa0db740f59e0dfe16cc921955ed69d65766e",
+  "candidate_count": 12,
+  "cut_times": [
+    "831.09",
+    "1683.667"
+  ],
+  "finished_durations": [
+    "853.6566213151927437641723356",
+    "868.7436439909297052154195011",
+    "711.6745873333333333333333333"
+  ],
+  "prepared_durations": {
+    "episode_start": "12.73331065759637188208616780",
+    "transition_in": "6.333333333333333333333333333",
+    "transition_out": "8.333310657596371882086167800"
+  },
+  "ending_silence": "2.0",
+  "closing_pause": "1.5",
+  "elapsed_seconds": 56.477,
+  "provider_requests": 1,
+  "model": "claude-opus-4-8",
+  "request_id": "req_011Cf4BRmA3fvxR8TQZmzJDT",
+  "response_id": "msg_011Cf4BRmi36SwcQyCy1dfMw",
+  "response_sha256": "24b5214d28a769e0ece97d52b7527fe2e1add303b1d2fdb58114f2a5bbb026fa",
+  "usage": {
+    "actual": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 218322,
+      "output_tokens": 3351,
+      "output_tokens_details": {
+        "thinking_tokens": 0
+      },
+      "server_tool_use": null,
+      "service_tier": "standard"
+    },
+    "estimated": null,
+    "reserved": null
+  },
+  "actual_usd": null,
+  "source_review_status": "Not performed; generated transcript-supported suggestions only.",
+  "resume_without_api_key": {
+    "same_artifacts": true,
+    "same_discovery_ledger": true,
+    "same_transcription_ledger": true,
+    "same_publishing_ledger": true,
+    "status": "completed"
+  },
+  "local_verification": {
+    "selected_support_text_matches_word_references": true,
+    "selected_cuts_pass_timing_checks": true,
+    "exact_source_coverage": true,
+    "inclusive_duration_limits": true,
+    "original_recording_fingerprint_verified": true,
+    "original_transcript_and_ledgers_unchanged": true
+  },
+  "verification": {
+    "mypy_source_files": 33,
+    "pytest_passed": 290,
+    "pytest_seconds": 114.55,
+    "standards_remaining_findings": 0,
+    "spec_remaining_findings": 0
+  }
+}

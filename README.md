@@ -92,15 +92,24 @@ or an input, service or local stage failed. Successful independent work remains 
 saved description body remains a checkpoint in `state.json`'s `evidence` and the
 immutable artifact store; it is not exposed as a complete `description.md`.
 
-Section planning automatically consumes the episode's saved approved transitions.
+Section planning automatically discovers natural topic cuts from the current corrected
+timed transcript and consumes the episode's saved approved transitions. The operator
+supplies no candidate timestamps or word IDs.
 Optional `--evidence planning.json` supplies advanced planning evidence; explicit
 evidence persists on resume. See [planning evidence and arithmetic](docs/section-planning.md).
 Missing transitions produce an actionable **needs-setup/partial** result, preserving
 publishing. Unsupported natural cuts or incompatible evidence produce an unavailable
-result. Automatic natural-cut discovery remains issue #24; there is no transition-duration
-guess. Evidence referencing an older
-corrected transcript must be replaced with matching evidence. A synthetic feasible
-proposal proves arithmetic, not real audio quality or safe natural cuts.
+result. Discovery failure is partial and is distinguished from a completed search with
+insufficient cuts and from impossible duration constraints. Unchanged discovery is
+reused; corrections trigger discovery against the new transcript without retranscription.
+Advanced explicit evidence referencing an older transcript must be replaced.
+Generated suggestions remain transcript-supported until independently source-reviewed.
+A synthetic feasible proposal proves arithmetic, not real audio quality or safe cuts.
+
+`podcast-process plan WORKSPACE` discovers/replans using saved episode inputs without
+transcribing or regenerating publishing. It uses `ANTHROPIC_API_KEY` for new discovery
+requests. `plan WORKSPACE --fresh` grants a new three-attempt discovery operation,
+retaining earlier attempts and unknown charges. `plan --evidence FILE` remains local.
 
 ## Separate operations and selected regeneration
 

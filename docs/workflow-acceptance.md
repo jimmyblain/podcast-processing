@@ -34,6 +34,23 @@ three real approved WAVs verified unchanged original fingerprints, exact retaine
 source frames and 88,200 frames of ending silence each. The user listening approval
 is recorded separately from deterministic test evidence in the show setup record.
 
+## Automatic boundary discovery corrective work — issue #24
+
+The normal full operation now produces semantic candidates before timing validation
+and duration selection. The [discovery evidence record](boundary-discovery-acceptance.md)
+separates controlled production-stage tests from a real feasible Ashlee proposal.
+The user-approved production trial used one request, retained 12 initial generated
+candidates, and selected two cuts without operator-authored evidence. Source review
+of those saved generated cuts remains in #28; this does not certify safe real cuts
+or complete the remaining ordinary-episode acceptance.
+
+The dedicated discovery and subprocess recovery suites exercise actual candidate
+production, alternatives around unusable timing, durable request/response evidence,
+bounded failures, selective invalidation, explicit fresh allowances and reuse. No live
+paid request is part of deterministic tests. Final verification passed mypy for all
+33 source files and **290 tests in 114.55 seconds**; both independent review axes
+have zero remaining findings after the timing regression fix.
+
 ## Parent specification reconciliation — issue #12
 
 On 2026-09-10, the completed #13–#19 tickets were reconciled against the

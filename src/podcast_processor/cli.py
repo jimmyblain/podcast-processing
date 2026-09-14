@@ -496,13 +496,23 @@ def correct_command(workspace: Path, corrections: Path) -> None:
 
 
 @app.command("plan")
-def plan_command(workspace: Path, evidence: Annotated[Path, typer.Option(help="Source, prepared transitions and natural-cut evidence JSON")]) -> None:
+def plan_command(workspace: Path,
+                 evidence: Annotated[Optional[Path], typer.Option(help="Optional explicit planning evidence; skips discovery")] = None,
+                 api_key: Annotated[Optional[str], typer.Option(envvar="ANTHROPIC_API_KEY")] = None,
+                 fresh: Annotated[bool, typer.Option(help="New discovery allowance; retain earlier attempts")] = False) -> None:
     """Propose three source-relative episode parts, or explain unavailability."""
     from .planning import plan_episode, planning_report
     from .workspace import Workspace
     try:
-        state = plan_episode(workspace, evidence)
+        settings = get_settings()
+        state = plan_episode(workspace, evidence, api_key=api_key or settings.anthropic_api_key,
+                             model=settings.claude_model, fresh=fresh)
         typer.echo(planning_report(Workspace(workspace), state))
+        if state.runs[-1].status == 'partial' and state.runs[-1].operation == 'plan':
+            from .planning_models import PlanningOutcome
+            outcome = PlanningOutcome.model_validate_json(Workspace(workspace).artifact_bytes(state.artifacts['section-plan.json']))
+            if outcome.discovery.status == 'failed':
+                raise typer.Exit(1)
     except (WorkspaceError, OSError, ValueError) as error:
         typer.echo(f"Error: {error}")
         raise typer.Exit(1)

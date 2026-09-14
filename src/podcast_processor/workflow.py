@@ -96,10 +96,10 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
                     state = generate_package(workspace.path, api_key, model, chapters, only, fresh, chapter_labels)
                     stage_failed |= state.runs[-1].status != 'completed'
                 else:
-                    state = plan_episode(workspace.path, evidence)
+                    state = plan_episode(workspace.path, evidence, api_key=api_key, model=model, fresh=fresh and only is None)
                     from .planning_models import PlanningOutcome
                     planning_outcome = PlanningOutcome.model_validate_json(workspace.artifact_bytes(state.artifacts['section-plan.json']))
-                    stage_failed |= planning_outcome.status == 'needs-setup'
+                    stage_failed |= planning_outcome.status == 'needs-setup' or planning_outcome.discovery.status == 'failed'
             except (WorkspaceError, OSError, ValueError) as error:
                 state = workspace.read()
                 notes.append(f'{stage.capitalize()} unavailable: {error}')
@@ -157,6 +157,10 @@ def completion_report(workspace: Workspace, state: WorkspaceState) -> str:
     for publishing in state.publishing_operations:
         lines.append(f'- {publishing.stage} operation {publishing.id}: {len(publishing.attempts)}/3 attempts; '
                      + ', '.join(f'{a.status} (usage {a.usage})' for a in publishing.attempts))
+    lines.extend(['', 'Discovery usage (separate from publishing; billing cost unknown):'])
+    for operation in state.discovery_operations:
+        lines.append(f'- {operation.stage} operation {operation.id}: {len(operation.attempts)}/3 attempts; '
+                     + ', '.join(f'{a.status} (usage {a.usage})' for a in operation.attempts))
     lines.extend(['', *('- ' + note for note in run.limitations)])
     if 'transcript.json' in state.artifacts:
         transcript = current_transcript(workspace, state)

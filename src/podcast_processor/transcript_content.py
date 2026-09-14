@@ -44,6 +44,10 @@ def supersede_consumers(state: WorkspaceState, before: PreservedTranscript,
     changed = {key for key in old if old[key] != new[key]}
     superseded: list[str] = []
     old_transcript = state.artifacts['transcript.json'].sha256
+    candidates = state.evidence.get('section-candidates.json')
+    if candidates and candidates.dependencies.get('transcript') == old_transcript:
+        state.evidence.pop('section-candidates.json')
+        superseded.append('section-candidates.json')
     invalid_hashes = {old_transcript}
     while True:
         removed = []
