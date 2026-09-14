@@ -273,6 +273,7 @@ class WorkspaceState(Record):
     source_revision: str
     sources: list[SourceRevision]
     show_profile: ShowProfile | None = None
+    show_setup_revision: str | None = None
     episode_metadata: EpisodeMetadata | None = None
     input_revision: str
     import_hash: str

@@ -10,10 +10,10 @@ from .planning_models import (
 from .workspace import Workspace, digest, identifier, now, ownership
 from .workspace_models import PreservedSegment, PreservedTranscript, PreservedWord, Run, WorkspaceState
 
-VERSION = 'section-planner-v2'
+VERSION = 'section-planner-v3'
 PLAN_FILES = ('section-plan.json', 'section-boundaries.json')
 LIMITATIONS = [
-    'No transition preparation, trimming, media cutting, stitching or export was performed.',
+    'Section planning performs no media cutting, stitching or export.',
     'Natural-boundary assertions are supplied evidence, not inferred from punctuation or waveform silence.',
     'Source-audited point error <=1.0 second and cuts inside independently reviewed safe intervals remain pending evaluation.',
 ]
@@ -87,9 +87,11 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
     if source.basis == 'fixture':
         limitations.append('Source identity/duration use labeled fixture assumptions; this is not verified real audio quality.')
     assets = {'episode_start': evidence.episode_start, 'transition_in': evidence.transition_in, 'transition_out': evidence.transition_out}
+    needs_setup = False
     for name, asset in assets.items():
-        problem = asset.problem() if asset else 'Prepared transition evidence is unavailable.'
+        problem = asset.problem(evidence.settings.transition_ending_silence) if asset else 'Prepared transition evidence is unavailable.'
         if problem:
+            needs_setup = True
             reasons.append(f'{name}: {problem}')
         if asset and asset.basis == 'fixture':
             limitations.append(f'{name}: prepared duration is a fixture assumption, not a measured real asset.')
@@ -107,7 +109,7 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
         overhead.append(budget)
         limits.append((settings.minimum - budget, settings.maximum - budget) if budget is not None else None)
     duration = source.duration
-    if duration is not None:
+    if duration is not None and not needs_setup:
         excess = duration - 3 * settings.maximum
         if excess > 0:
             reasons.append(f'Source alone exceeds three {settings.maximum}-second finished sections by {excess} seconds before overhead.')
@@ -160,7 +162,10 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
                 proposal = SectionProposal(evidence=evidence, boundaries=[first, second], sections=sections, limitations=selected_limits)
         if proposal is None:
             reasons.append(f'No pair among {len(supported)} supported natural boundaries meets all three source-part duration budgets. No cut was forced.')
-    return PlanningOutcome(status='valid' if proposal else 'unavailable', evidence=evidence, dependencies=dependencies,
+    if needs_setup:
+        from .show_setup import NEEDS_SETUP
+        reasons.insert(0, NEEDS_SETUP)
+    return PlanningOutcome(status='valid' if proposal else 'needs-setup' if needs_setup else 'unavailable', evidence=evidence, dependencies=dependencies,
         overhead=overhead, source_part_limits=limits, reasons=reasons, rejected_boundaries=rejected,
         limitations=proposal.limitations if proposal else limitations, proposal=proposal)
 
@@ -171,13 +176,18 @@ def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceStat
         state = workspace.read()
         workspace.reconcile(state)
         transcript = current_transcript(workspace, state)
+        explicit_evidence = evidence_path is not None
         if evidence_path is not None:
             evidence = PlanningEvidence.model_validate_json(evidence_path.read_bytes())
         else:
-            previous = next((run.inputs['evidence'] for run in reversed(state.runs)
+            from .show_setup import episode_setup, planning_transitions
+            setup = episode_setup(workspace, state)
+            previous_run = next((run for run in reversed(state.runs)
                              if run.operation == 'plan' and 'evidence' in run.inputs), None)
-            if previous:
-                evidence = PlanningEvidence.model_validate(previous)
+            if previous_run:
+                evidence = PlanningEvidence.model_validate(previous_run.inputs['evidence'])
+                explicit_evidence = previous_run.inputs.get('explicit_evidence', any(
+                    asset is not None for asset in (evidence.episode_start, evidence.transition_in, evidence.transition_out)))
             else:
                 from .planning_models import SourceEvidence
                 source = next(s for s in state.sources if s.id == state.source_revision)
@@ -190,6 +200,11 @@ def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceStat
                     basis='verified' if verified else 'unknown',
                     evidence='Preserved source inspection.' if verified else ''),
                     transcript_sha256=state.artifacts['transcript.json'].sha256)
+            if setup and not explicit_evidence:
+                # Keep source/boundary evidence independent of prepared audio.
+                # Explicit evidence files still support historical fixture studies.
+                evidence = evidence.model_copy(update=planning_transitions(setup))
+                evidence.settings.transition_ending_silence = setup.ending_silence
         dependencies = {'source_revision': state.source_revision, 'transcript': state.artifacts['transcript.json'].sha256,
                         'planning_evidence': digest(evidence.model_dump_json().encode()), 'planner': VERSION}
         prior = state.artifacts.get('section-plan.json')
@@ -198,7 +213,8 @@ def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceStat
             if outcome.proposal is None or 'section-boundaries.json' in state.artifacts:
                 return state
         run = Run(id=identifier(), operation_id=identifier(), operation='plan', status='running', started_at=now(),
-                  inputs={'evidence': evidence.model_dump(mode='json'), 'dependencies': dependencies})
+                  inputs={'evidence': evidence.model_dump(mode='json'), 'dependencies': dependencies,
+                          'explicit_evidence': explicit_evidence})
         state.runs.append(run)
         for name in PLAN_FILES:
             state.artifacts.pop(name, None)
@@ -207,7 +223,7 @@ def plan_episode(path: Path, evidence_path: Path | None = None) -> WorkspaceStat
         workspace.add_artifact(state, 'section-plan.json', outcome.model_dump_json(indent=2).encode(), dependencies, VERSION)
         if outcome.proposal:
             workspace.add_artifact(state, 'section-boundaries.json', outcome.proposal.model_dump_json(indent=2).encode(), dependencies, VERSION)
-        run.status, run.finished_at = 'completed', now()
+        run.status, run.finished_at = ('partial' if outcome.status == 'needs-setup' else 'completed'), now()
         run.limitations = outcome.limitations + outcome.reasons
         workspace.commit(state)
         return state
@@ -218,6 +234,9 @@ def planning_report(workspace: Workspace, state: WorkspaceState) -> str:
     if artifact is None:
         return 'Section planning: no current outcome.\n'
     result = PlanningOutcome.model_validate_json(workspace.artifact_bytes(artifact))
+    if result.status == 'needs-setup':
+        from .show_setup import NEEDS_SETUP
+        return f'Section planning: needs-setup.\n{NEEDS_SETUP}\n'
     evidence = result.evidence
     lines = [f'Section planning: {result.status}.', f'Original-source duration: {evidence.source.duration} seconds.',
              f'Finished-section limits: {evidence.settings.minimum}–{evidence.settings.maximum} seconds inclusive.',

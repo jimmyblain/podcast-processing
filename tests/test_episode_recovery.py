@@ -11,6 +11,8 @@ import pytest
 from test_episode_workflow import recording
 from test_workspace import authority, inspect
 
+pytestmark = pytest.mark.usefixtures('approved_show_setup')
+
 SCRIPT = r'''
 import json, os, socket, sys, time
 from pathlib import Path

@@ -8,6 +8,9 @@ not require a publishing package or an API key and does not prepare or export me
 The result is a versioned `section-plan.json` outcome. A valid outcome also exposes
 `section-boundaries.json`; an unavailable outcome explains the limiting evidence or
 duration constraints and exposes no proposal. Independent outputs remain usable.
+Missing or unprepared transitions yield `needs-setup`; a full `process` then exits 1
+with a partial result. Run [show setup](show-setup.md) once to prepare, hear and approve
+the supplied transitions. New full episode operations snapshot and reuse them automatically.
 
 Candidate evidence must identify complete thoughts and natural topic breaks on the
 original source timeline. Supplying evidence is not a review queue: the operation
@@ -90,10 +93,11 @@ arithmetic.
 ```
 
 Source and asset `basis` values are `verified`, `fixture`, or `unknown`.
-Missing transitions, prepared revisions, durations, source identity or supporting
-evidence yield an unavailable outcome. Real measurements must identify the verified
+Missing/unprepared transitions yield `needs-setup`; missing source identity or supporting
+boundary evidence yields `unavailable`. Real measurements must identify the verified
 revision and evidence; preliminary silence-detector estimates are not prepared
-durations. No default transition durations are supplied.
+durations. Saved approved setup provides measured transition defaults; there are no
+hard-coded duration guesses.
 
 Boundary `basis` values are `transcript-supported`, `source-reviewed`, or `fixture`.
 The evidence producer supplies the complete-thought/topic judgment and reason.
@@ -116,7 +120,9 @@ finished durations are 616.5, 711.5 and 805 seconds.
 
 ## Duration accounting and outcomes
 
-Every prepared duration includes its total 2.5-second ending silence **once**.
+Every prepared duration includes its saved ending silence **once**. The original
+contract and historical evidence default to 2.5 seconds; the user-approved September 14
+setup uses 2.0 seconds. `settings.transition_ending_silence` snapshots that setting.
 Preparation evidence must attest that natural decay is preserved and excess dead
 space replaced. This operation does not trim or append silence. The separate pause
 before transition-out remains 1.5 seconds under the default contract.
@@ -128,7 +134,7 @@ before transition-out remains 1.5 seconds under the default contract.
 Section 3 plays through the original episode ending. It has an opening transition,
 but no added closing pause or transition-out, as clarified by the user during
 issue #19 review. Only the first two sections have a closing transition.
-New outcomes/proposals use schema version 2 and `section-planner-v2`; final-section
+New outcomes/proposals use schema version 2 and `section-planner-v3`; final-section
 `pause` and `closing_duration` are zero. Version 1 proposals remain readable as
 historical evidence of the earlier rule. Resuming planning replaces current plans
 under the new rule while retaining history and independent publishing outputs.
@@ -140,7 +146,7 @@ For Erica at 3369.842358 seconds, the source alone exceeds three default maximum
 durations by 129.842358 seconds, before transition overhead.
 
 Exit code 0 means the planning operation completed, including an explained
-`unavailable` outcome; consumers must inspect `section-plan.json.status` to
+`unavailable` or `needs-setup` outcome; consumers must inspect `section-plan.json.status` to
 distinguish feasibility. Invalid JSON/configuration or workspace failures exit 1.
 An unavailable outcome never exposes `section-boundaries.json`.
 

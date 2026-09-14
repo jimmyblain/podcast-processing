@@ -160,7 +160,7 @@ def test_missing_or_unprepared_transition_evidence_is_reported(tmp_path, field, 
     workspace, evidence = episode(tmp_path)
     evidence['transition_out'][field] = value
     result = plan(workspace, evidence)
-    assert result['status'] == 'unavailable'
+    assert result['status'] == 'needs-setup'
     assert any('transition_out' in reason for reason in result['reasons'])
     if field == 'duration':
         assert result['overhead'] == [None, None, '5']
@@ -330,12 +330,12 @@ def test_direct_edits_preserved_without_leaving_validity_claims(tmp_path, filena
     assert plan(workspace, evidence)['status'] == 'valid'
 
 
-def test_missing_transition_and_natural_candidates_finish_without_review(tmp_path):
+def test_missing_transition_and_natural_candidates_report_needs_setup(tmp_path):
     workspace, evidence = episode(tmp_path)
     evidence['transition_in'] = None
     evidence['boundaries'] = []
     outcome = plan(workspace, evidence)
-    assert outcome['status'] == 'unavailable'
+    assert outcome['status'] == 'needs-setup'
     assert outcome['overhead'] == ['16.5', None, None]
     assert 'transition_in' in ' '.join(outcome['reasons'])
 

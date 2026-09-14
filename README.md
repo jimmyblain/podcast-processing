@@ -2,8 +2,8 @@
 
 A resumable CLI for a speaker-aware timed transcript, a YouTube publishing package,
 and a three-section proposal when the available evidence supports one. It prepares
-copy and planning data; it does not upload to YouTube, generate thumbnail images,
-or cut, stitch, or export media.
+copy, reusable transition audio and planning data; it does not upload to YouTube,
+generate thumbnail images, or cut, stitch, or export episode sections.
 
 ## Install and configure
 
@@ -24,6 +24,24 @@ selects the publishing model; the configured requested alias and returned model
 are recorded. Saved completed work is reusable without credentials or the media.
 Install `.[local]` only for the explicit legacy Whisper commands.
 
+## Set up the show once
+
+```sh
+podcast-process setup
+```
+
+Setup finds the three supplied recordings in `audio-files/`, preserves the originals,
+prepares and measures them, and plays them one at a time for listening approval.
+It saves the approved show identity, audience, voice and the three approved recurring
+links, without an extra promotional paragraph. No evidence JSON or duration arithmetic
+is required. New episodes automatically reuse the approved setup.
+
+The saved local transitions were approved on September 14 with **2.0 seconds of
+ending silence**, after the user requested each initial 2.5-second version be shortened
+by half a second. For a new installation reproducing that setting, use
+`podcast-process setup --ending-silence 2`. Setup retains its saved setting on later runs.
+See [show setup](docs/show-setup.md) for listening files, storage and explicit changes.
+
 ## Run once, then resume
 
 ```sh
@@ -43,9 +61,8 @@ remain separate. `--output`/`-o` is an alternative explicit workspace for `proce
 For changed recording bytes within an existing episode, pass the new recording
 with the same `--workspace`; dependent current outputs are superseded coherently.
 
-The approved reusable show identity, audience and voice are included. Selected links
-and recurring promotional copy remain optional configuration, with no guessed
-links. To supply them or change editorial inputs, use `--show-profile show.json`.
+The approved reusable show identity, audience, voice and recurring links are included.
+To override editorial inputs for an episode, use `--show-profile show.json`.
 Use `--metadata episode.json` instead of `--solo`/`--guest` for optional angle,
 participant biographies, links, sponsors or current context. See the
 [authority JSON examples](docs/workspace-import.md#supply-authoritative-publishing-inputs).
@@ -64,22 +81,24 @@ Open files under the workspace's `current/` directory:
 | `description.md` | Complete description, embedded chapters and approved supplied extras; ≤5,000 characters |
 | `titles.json` | Exactly 15 title concepts with 2–4-word overlays, visual directions and rationale |
 | `chapters.txt` | 3–10 timestamp/title lines, identical to the embedded chapter list |
-| `section-plan.json` | Valid or explained unavailable planning outcome |
+| `section-plan.json` | Valid, explained unavailable, or needs-setup planning outcome |
 | `section-boundaries.json` | Three contiguous source parts with transition-inclusive duration calculations, when feasible |
 | `completion-report.md` | Full-operation status, reuse/supersession, failures/fallbacks, edits and separate usage ledgers |
 
 Exit **0** means required timed-transcript/publishing outputs and a planning outcome
 completed. An explained impossible/unavailable section proposal does not block publishing.
-Exit **1** means required outputs are partial/missing or an input, service or local
-stage failed. Successful independent work remains usable. If chapters fail, the
+Exit **1** means required outputs are partial/missing, show setup is missing/unapproved,
+or an input, service or local stage failed. Successful independent work remains usable. If chapters fail, the
 saved description body remains a checkpoint in `state.json`'s `evidence` and the
 immutable artifact store; it is not exposed as a complete `description.md`.
 
-Section planning consumes optional `--evidence planning.json`, or the last saved
-planning evidence. See [planning evidence and arithmetic](docs/section-planning.md).
-With missing transitions, unsupported natural cuts or incompatible evidence, the
-operation records an unavailable result immediately. There is no default semantic
-candidate generator or transition-duration guess. Evidence referencing an older
+Section planning automatically consumes the episode's saved approved transitions.
+Optional `--evidence planning.json` supplies advanced planning evidence; explicit
+evidence persists on resume. See [planning evidence and arithmetic](docs/section-planning.md).
+Missing transitions produce an actionable **needs-setup/partial** result, preserving
+publishing. Unsupported natural cuts or incompatible evidence produce an unavailable
+result. Automatic natural-cut discovery remains issue #24; there is no transition-duration
+guess. Evidence referencing an older
 corrected transcript must be replaced with matching evidence. A synthetic feasible
 proposal proves arithmetic, not real audio quality or safe natural cuts.
 

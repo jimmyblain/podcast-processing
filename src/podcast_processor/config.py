@@ -47,6 +47,7 @@ class Settings(BaseSettings):
         default=Path("output"),
         description="Default output directory",
     )
+    show_setup_dir: Path = Field(default=Path('output/show-setup'), validation_alias='PODCAST_SHOW_SETUP')
 
     # Chapter settings
     default_chapter_count: int = Field(

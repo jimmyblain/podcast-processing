@@ -150,6 +150,78 @@ def process_local(
     )
 
 
+@app.command('setup')
+def setup_command(
+    transitions: Annotated[Optional[Path], typer.Option(help='Directory containing the three supplied transition WAV recordings')] = None,
+    prepare_only: Annotated[bool, typer.Option(help='Prepare and show listening files; leave approval pending')] = False,
+    play: Annotated[bool, typer.Option('--play/--no-play', help='Open prepared recordings in your audio player')] = True,
+    reprepare: Annotated[bool, typer.Option(help='Explicitly prepare a new version and repeat listening approval')] = False,
+    ending_silence: Annotated[Optional[float], typer.Option(help='Explicit change to total ending silence in seconds; requires new listening approval')] = None,
+) -> None:
+    """Set up the show once, then reuse approved defaults on new episodes."""
+    from .show_setup import LABELS, approve_setup, prepare_setup, setup_directory
+    from decimal import Decimal
+    import shutil
+    import subprocess
+    try:
+        root = setup_directory()
+        setup = prepare_setup(root, transitions, reprepare=reprepare,
+                              ending_silence=Decimal(str(ending_silence)) if ending_silence is not None else None)
+        if setup.approved_at:
+            typer.echo('Show setup already approved. New episodes reuse these defaults automatically.')
+            return
+        typer.echo(f'{setup.profile.name} — {setup.profile.host}')
+        typer.echo('Recurring links:\n' + '\n'.join(setup.profile.links))
+        typer.echo('No additional recurring promotional paragraph.')
+        typer.echo(f'Listen to each prepared transition, including its natural decay and {setup.ending_silence}-second ending silence:')
+        for name, asset in setup.transitions.items():
+            path = root / asset.path
+            typer.echo(f'{LABELS[name]} ({asset.duration:.3f} seconds): {path}')
+            if play and not prepare_only:
+                native_player = shutil.which('afplay')
+                ffplay = shutil.which('ffplay')
+                command = ([native_player, str(path)] if native_player else
+                           [ffplay, '-nodisp', '-autoexit', '-loglevel', 'error', str(path)] if ffplay else None)
+                if command:
+                    try:
+                        subprocess.run(command, check=True, timeout=float(asset.duration) + 30)
+                    except (OSError, subprocess.SubprocessError):
+                        typer.echo('Playback unavailable. Open the saved WAV file to listen before approving.')
+                else:
+                    typer.echo('Open the saved WAV file in your audio player before approving.')
+        if prepare_only:
+            typer.echo('Prepared, not approved. Run podcast-process setup after listening to save approved defaults.')
+            return
+        if not typer.confirm('Have you listened to all three and approve them for recurring use?', default=False):
+            typer.echo('Show setup is not approved. Rerun podcast-process setup when ready.')
+            raise typer.Exit(1)
+        approve_setup(root, setup.revision)
+        typer.echo('Show setup approved. New episodes reuse it automatically.')
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f'Error: {error}')
+        raise typer.Exit(1)
+
+
+@app.command('inspect-setup')
+def inspect_setup_command(as_json: Annotated[bool, typer.Option('--json')] = False) -> None:
+    """Show saved setup and its measured audio provenance."""
+    from .show_setup import LABELS, NEEDS_SETUP, read_setup, setup_directory
+    try:
+        root = setup_directory()
+        setup = read_setup(root)
+        if setup is None:
+            raise WorkspaceError(NEEDS_SETUP)
+        if as_json:
+            typer.echo(setup.model_dump_json(indent=2))
+        else:
+            typer.echo('Show setup: ' + ('approved' if setup.approved_at else 'not approved'))
+            for name, asset in setup.transitions.items():
+                typer.echo(f'{LABELS[name]}: {asset.duration:.3f} seconds — {root / asset.path}')
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f'Error: {error}')
+        raise typer.Exit(1)
+
+
 @app.command()
 def process(
     audio_file: Annotated[Path, typer.Argument(help="Recording or episode workspace")],

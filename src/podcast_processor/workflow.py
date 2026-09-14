@@ -25,6 +25,7 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
     from .managed import transcribe_episode
     from .package import generate_package
     from .planning import plan_episode
+    from .show_setup import NEEDS_SETUP, read_setup, setup_directory, snapshot_setup
 
     if only not in (None, 'titles', 'description', 'chapters') or not 3 <= chapters <= 10:
         raise WorkspaceError('Select titles, description or chapters; chapter limit must be 3–10.')
@@ -43,6 +44,14 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
         first_run = len(before.runs) if before else 0
         notes = []
         stage_failed = False
+        setup = None
+        if before is None or 'show-setup.json' not in before.evidence:
+            try:
+                candidate = read_setup(setup_directory())
+                if candidate and candidate.approved_at:
+                    setup = candidate
+            except (WorkspaceError, OSError, ValueError) as error:
+                notes.append(f'{NEEDS_SETUP} Saved setup unavailable: {error}')
         if before:
             note_count = len(before.runs[-1].limitations)
             interrupted = before.runs[-1].status in ('running', 'interrupted')
@@ -64,12 +73,14 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
                     raise WorkspaceError('Supply an approved show profile and confirmed participants or solo status.')
                 state.input_revision = input_revision(state)
                 prune_inputs(state, current_transcript(workspace, state))
+                if setup:
+                    snapshot_setup(workspace, state, setup)
                 workspace.commit(state)
                 state = map_episode(workspace.path)
             else:
                 state = transcribe_episode(source, workspace_path=workspace.path, show_profile=show_profile,
                     metadata=metadata, primary_key=primary_key, backup_key=backup_key, policy=policy,
-                    fresh=fresh and only is None)
+                    fresh=fresh and only is None, show_setup=setup)
         except (WorkspaceError, OSError, ValueError) as error:
             if not (workspace.path / 'current').exists():
                 raise
@@ -86,6 +97,9 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
                     stage_failed |= state.runs[-1].status != 'completed'
                 else:
                     state = plan_episode(workspace.path, evidence)
+                    from .planning_models import PlanningOutcome
+                    planning_outcome = PlanningOutcome.model_validate_json(workspace.artifact_bytes(state.artifacts['section-plan.json']))
+                    stage_failed |= planning_outcome.status == 'needs-setup'
             except (WorkspaceError, OSError, ValueError) as error:
                 state = workspace.read()
                 notes.append(f'{stage.capitalize()} unavailable: {error}')

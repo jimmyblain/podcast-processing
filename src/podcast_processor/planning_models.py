@@ -25,18 +25,19 @@ class PreparedTransition(Record):
     basis: Literal['verified', 'fixture', 'unknown'] = 'unknown'
     evidence: str = ''
 
-    def problem(self) -> str | None:
+    def problem(self, ending_silence: Decimal = Decimal('2.5')) -> str | None:
         if (not self.asset_revision.strip() or not self.prepared_revision or not self.prepared_revision.strip()
                 or self.duration is None or self.basis == 'unknown' or not self.evidence.strip()):
             return 'Verified prepared-duration evidence or labeled fixture assumptions are unavailable.'
-        if (self.ending_silence != Decimal('2.5') or self.duration < Decimal('2.5')
+        if (self.ending_silence != ending_silence or self.duration < ending_silence
                 or not self.preserves_decay or not self.replaces_excess_tail):
             return ('Preparation must preserve decay and replace excess dead space with a total '
-                    '2.5-second ending silence, already included once.')
+                    f'{ending_silence}-second ending silence, already included once.')
         return None
 
 
 class PlanningSettings(Record):
+    transition_ending_silence: Decimal = Field(default=Decimal('2.5'), gt=0)
     pause: Decimal = Field(default=Decimal('1.5'), ge=0)
     minimum: Decimal = Field(default=Decimal('600'), gt=0)
     maximum: Decimal = Field(default=Decimal('1080'), gt=0)
@@ -101,8 +102,8 @@ class SectionProposal(Record):
                 or evidence.source.basis == 'unknown' or not evidence.source.evidence.strip()):
             raise ValueError('A proposal requires explicit original-source identity/duration evidence.')
         for asset in (evidence.episode_start, evidence.transition_in, evidence.transition_out):
-            if asset is None or asset.problem():
-                raise ValueError(asset.problem() if asset else 'Prepared transition evidence is unavailable.')
+            if asset is None or asset.problem(evidence.settings.transition_ending_silence):
+                raise ValueError(asset.problem(evidence.settings.transition_ending_silence) if asset else 'Prepared transition evidence is unavailable.')
         if any(not b.complete_thought or not b.natural_topic_boundary for b in self.boundaries):
             raise ValueError('Cuts require complete thoughts and natural topic boundaries.')
         if any(b not in evidence.boundaries for b in self.boundaries):
@@ -132,7 +133,7 @@ class SectionProposal(Record):
 
 class PlanningOutcome(Record):
     schema_version: Literal[1, 2] = 2
-    status: Literal['valid', 'unavailable']
+    status: Literal['valid', 'unavailable', 'needs-setup']
     evidence: PlanningEvidence
     dependencies: dict[str, str]
     overhead: list[Decimal | None]
@@ -146,6 +147,6 @@ class PlanningOutcome(Record):
     def consistent(self) -> 'PlanningOutcome':
         if (self.status == 'valid') != (self.proposal is not None):
             raise ValueError('Only valid outcomes may contain a proposal.')
-        if self.status == 'unavailable' and not self.reasons:
+        if self.status != 'valid' and not self.reasons:
             raise ValueError('Unavailable planning must explain its limiting conditions.')
         return self

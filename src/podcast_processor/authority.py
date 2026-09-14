@@ -11,7 +11,9 @@ def approved_show_profile() -> ShowProfile:
                  'and personal growth—who welcome honest conversation, practical encouragement, and a Christian perspective.',
         voice='Warm and familiar; candid and challenging; practical; faith-grounded; playful and human. '
               'Address listeners directly and refer to Lish in third person in the overview. Preserve Christian themes '
-              'present in the episode; do not add religious claims, force slang, invent controversy or promise unsupported results.')
+              'present in the episode; do not add religious claims, force slang, invent controversy or promise unsupported results.',
+        links=['https://www.lishspeaks.com/', 'https://www.instagram.com/lishspeaks/',
+               'https://www.illjustletmyselfin.com/'])
 
 
 def confirmed_metadata(path: Path | None, solo: bool, guests: list[str] | None) -> EpisodeMetadata | None:

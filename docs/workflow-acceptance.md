@@ -4,11 +4,35 @@
 
 The [user-approved experience audit](specs/podcast-pipeline-v2-experience-audit.md)
 qualifies the initial completion claim: automatic candidate discovery and reusable
-transition setup are missing, and a fresh interview exposed participant-mapping
+transition setup were missing, and a fresh interview exposed participant-mapping
 and publishing-attribution concerns. The passing tests below prove their stated
 mechanics; manually supplied boundary candidates and corrected participant inputs
 did not prove the intended normal new-episode workflow. Corrective acceptance must
 exercise those production stages before the workflow is declared complete.
+
+## Show setup corrective work — issue #23
+
+The [show setup record](show-setup.md) now documents measured preparation, recurring
+profile/links, one-time listening approval and episode reuse. On September 14 the
+user requested a half-second reduction from each initial prepared file, then listened
+and approved all three with **2.0 seconds of ending silence**. The supplied originals,
+initial prepared versions and historical episode artifacts are retained.
+
+`test_show_setup.py` exercises the public CLI with generated PCM audio, including
+quiet decay, an interior pause and stereo channel asymmetry. It verifies exact
+prepared frames, duration provenance, the three approved links, approval gating,
+two isolated new episodes, settings/asset changes, pinned resume, and missing setup
+with usable publishing. Workflow and subprocess recovery tests now start from a
+real prepared/approved synthetic setup, keeping their recovery assertions intact.
+These controlled services make no paid requests. Automatic cut discovery and the
+remaining ordinary-episode acceptance still belong to #24 and #28.
+
+Final verification on September 14: `mypy src/podcast_processor` passed all 32 source
+files; `pytest -q tests/` passed **267 tests in 71.58 seconds**. Independent standards
+and issue-specification reviews found no actionable issues. A separate check of the
+three real approved WAVs verified unchanged original fingerprints, exact retained
+source frames and 88,200 frames of ending silence each. The user listening approval
+is recorded separately from deterministic test evidence in the show setup record.
 
 ## Parent specification reconciliation — issue #12
 

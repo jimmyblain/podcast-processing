@@ -12,6 +12,7 @@ from .managed_models import ProviderName, TranscriptionAttempt, TranscriptionOpe
 from .managed_providers import BASELINES, ManagedProvider, ProviderError, response_object
 from .operations import input_revision, input_snapshot, update_source
 from .sources import inspect_source, prepare_transport
+from .show_setup import ShowSetup, snapshot_setup
 from .workspace import (Workspace, WorkspaceError, digest, file_hash, identifier, json_bytes,
                         now, ownership, write_file, flush_directory)
 from .workspace_models import EpisodeMetadata, Run, ShowProfile, WorkspaceState
@@ -20,7 +21,8 @@ from .workspace_models import EpisodeMetadata, Run, ShowProfile, WorkspaceState
 def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None = None,
                        show_profile: ShowProfile | None = None, metadata: EpisodeMetadata | None = None,
                        primary_key: str = '', backup_key: str = '',
-                       policy: TranscriptionPolicy | None = None, fresh: bool = False) -> WorkspaceState:
+                       policy: TranscriptionPolicy | None = None, fresh: bool = False,
+                       show_setup: ShowSetup | None = None) -> WorkspaceState:
     invoked_at = time.time()
     source = inspect_source(source_or_workspace) if source_or_workspace.is_file() else None
     if source:
@@ -48,7 +50,8 @@ def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None
             from .authority import approved_show_profile
             state = WorkspaceState(episode_id=identity, name=source_or_workspace.stem,
                 source_revision=source.id, sources=[source], import_hash='', input_revision='',
-                show_profile=show_profile or approved_show_profile(), episode_metadata=metadata)
+                show_profile=show_profile or (show_setup.profile if show_setup else approved_show_profile()),
+                episode_metadata=metadata)
             state.input_revision = input_revision(state)
         if state.show_profile is None or state.episode_metadata is None:
             raise WorkspaceError('Managed transcription requires an approved --show-profile and confirmed --metadata (guests or solo).')
@@ -61,6 +64,8 @@ def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None
             operation = TranscriptionOperation(id=identifier(), dependencies=dependencies, policy=policy,
                                               started_at=started, deadline_at=started + policy.deadline_seconds)
             state.transcription_operations.append(operation)
+        if show_setup:
+            snapshot_setup(workspace, state, show_setup)
         expected = {**dependencies, 'operation': operation.id, 'normalization': normalization.NORMALIZATION_VERSION}
         reusable = ('transcript.json' in state.artifacts and all(
             state.artifacts['transcript.json'].dependencies.get(k) == v for k, v in expected.items()))

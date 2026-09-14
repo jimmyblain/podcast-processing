@@ -9,6 +9,9 @@ from podcast_processor.cli import app
 from podcast_processor.llm import ClaudeClient
 from publishing_responses import compatible_response
 from test_workspace import authority, inspect, runner
+from setup_audio import LINKS
+
+pytestmark = pytest.mark.usefixtures('approved_show_setup')
 
 
 def primary_words():
@@ -143,7 +146,7 @@ def test_required_participants_use_approved_defaults_without_context(tmp_path, f
     assert result.exit_code == 0, result.output
     state = inspect(workspace)
     assert 'People ready to take a chance on themselves' in state['show_profile']['audience']
-    assert state['show_profile']['links'] == []
+    assert state['show_profile']['links'] == LINKS
     assert state['episode_metadata']['angle'] is None
     assert len(state['episode_metadata']['participants']) == (1 if '--solo' in participants else 2)
 

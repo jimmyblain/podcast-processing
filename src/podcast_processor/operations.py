@@ -110,6 +110,7 @@ def import_episode(transcript_file: Path, root: Path, source_path: Path | None =
 
 def input_snapshot(state: WorkspaceState) -> dict:
     return {'source_revision': state.source_revision, 'import_hash': state.import_hash,
+            **({'show_setup_revision': state.show_setup_revision} if state.show_setup_revision else {}),
             'show_profile': state.show_profile.model_dump() if state.show_profile else None,
             'episode_metadata': state.episode_metadata.model_dump() if state.episode_metadata else None}
 
