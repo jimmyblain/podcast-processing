@@ -42,8 +42,10 @@ def completion_summary(workspace: Workspace, state: WorkspaceState) -> str:
     run = state.runs[-1]
     names = [('transcript.txt', 'timed transcript'), ('description.md', 'description'),
              ('titles.json', 'title/thumbnail concepts'), ('chapters.txt', 'YouTube chapters')]
-    ready = [label for name, label in names if name in state.artifacts]
+    ready = [label for name, label in names if name in state.artifacts and name not in state.publishing_issues]
     lines = [f'Status: {run.status}', 'Ready: ' + (', '.join(ready) or 'none')]
+    for name, issues in state.publishing_issues.items():
+        lines.append(f'{name} retained: ' + ' '.join(issues))
     if run.operation == 'process':
         artifact = state.artifacts.get('section-plan.json')
         if artifact:

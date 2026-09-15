@@ -147,6 +147,7 @@ class Workspace:
 
     def commit(self, state: WorkspaceState) -> None:
         """Validate files and state before one atomic namespace switch."""
+        self.validate_publishing_edits(state)
         state = WorkspaceState.model_validate(state.model_dump())
         snapshot = self.path / 'snapshots' / identifier()
         snapshot.mkdir(parents=True)
@@ -164,6 +165,26 @@ class Workspace:
         flush_directory(self.path)
 
     def report(self, state: WorkspaceState) -> str:
+        report = self._report(state)
+        edits = [name for name, artifact in state.artifacts.items() if artifact.status == 'human-edited']
+        if edits:
+            report += '\nOperator edits preserved in current outputs: ' + ', '.join(edits) + '.\n'
+        for name, issues in state.publishing_issues.items():
+            report += f'\n{name}: ' + ' '.join(issues) + ' Files retained without rewriting.\n'
+        return report
+
+    def validate_publishing_edits(self, state: WorkspaceState) -> bool:
+        from .publishing_edits import publishing_issues
+
+        issues = publishing_issues(self, state)
+        changed = issues != state.publishing_issues
+        state.publishing_issues = issues
+        if issues and state.runs[-1].operation in ('generate', 'process') and state.runs[-1].status == 'completed':
+            state.runs[-1].status = 'partial'
+            changed = True
+        return changed
+
+    def _report(self, state: WorkspaceState) -> str:
         from .participants import current_transcript, uncertainty_report
         from .planning import planning_report
 
@@ -187,7 +208,7 @@ class Workspace:
             return ('# Completion report\n\n'
                     f'Episode: {state.episode_id}\nOperation: transcribe\nStatus: {run.status}\n'
                     f'Operation ledger: {operation.id}\n\n'
-                    f'Usable outputs: {", ".join(state.artifacts) or "none"}\n'
+                    f'Current outputs: {", ".join(state.artifacts) or "none"}\n'
                     'Publishing text was not requested.\n\n'
                     f'Allowance: ${operation.policy.allowance_usd:.2f}; elapsed {operation.elapsed_seconds:.1f}s; '
                     f'deadline (Unix seconds): {operation.deadline_at:.3f}.\n'
@@ -201,7 +222,7 @@ class Workspace:
         missing = [name for name in PUBLISHING_FILES if name not in state.artifacts]
         return ('# Completion report\n\n'
                 f'Episode: {state.episode_id}\nOperation: {run.operation}\nStatus: {run.status}\n\n'
-                f'Usable outputs: {", ".join(state.artifacts) or "none"}\n\n'
+                f'Current outputs: {", ".join(state.artifacts) or "none"}\n\n'
                 f'Missing publishing results: {", ".join(missing) or "none"}\n\n'
                 'Publishing uses the v2 package contract. Automated checks do not establish human editorial or source-timing acceptance.\n'
                 'Imported speaker identity, original settings and timing confidence may be unknown.\n'
@@ -210,7 +231,7 @@ class Workspace:
                 + '\n'.join(f'- {item}' for item in run.limitations) + '\n' + uncertainty + '\n')
 
     def reconcile(self, state: WorkspaceState) -> bool:
-        """Preserve edits and stop exposing damaged outputs before any new work."""
+        """Keep publishing edits current; reject damaged immutable evidence."""
         changed = False
         for name, artifact in list(state.artifacts.items()):
             visible = self.path / 'current' / name
@@ -223,19 +244,29 @@ class Workspace:
             except (OSError, WorkspaceError):
                 original = None
             if data is None or digest(data) != artifact.sha256 or original is None:
-                if data is not None and digest(data) != artifact.sha256:
+                if data is None and original is not None and name in PUBLISHING_FILES and artifact.status == 'human-edited':
+                    changed = True  # Restore a missing current copy from verified edited history.
+                    continue
+                if data is not None and (digest(data) != artifact.sha256 or artifact.status == 'human-edited'):
                     edited = self.add_artifact(state, name, data, artifact.dependencies, 'manual-edit-v1')
                     edited.status = 'human-edited'
-                    state.runs[-1].limitations.append(f'Preserved direct edit of {name} in history.')
+                    edited.edited_from = artifact.id
+                    edited.edit_source_revision = artifact.edit_source_revision or state.source_revision
+                    location = 'in place and in history' if name in PUBLISHING_FILES else 'in history'
+                    state.runs[-1].limitations.append(f'Preserved direct edit of {name} {location}.')
                     from .progress import progress
-                    progress(f'Preserved direct edit of {name} in history')
+                    progress(f'Preserved direct edit of {name} {location}')
+                    if name in PUBLISHING_FILES:
+                        changed = True
+                        continue
                 state.artifacts.pop(name, None)
                 state.runs[-1].limitations.append(f'{name} failed committed hash verification; unavailable.')
                 changed = True
         description = state.artifacts.get('description.md')
         chapters = state.artifacts.get('chapters.txt')
-        if description and 'chapters_version' in description.dependencies and (
-                chapters is None or description.dependencies['chapters_version'] != chapters.id):
+        if (description and not state.is_edited('description.md') and not state.is_edited('chapters.txt')
+                and 'chapters_version' in description.dependencies and (
+                chapters is None or description.dependencies['chapters_version'] != chapters.id)):
             state.artifacts.pop('description.md')
             state.runs[-1].limitations.append('Description unavailable because its shared chapter version is unavailable.')
             changed = True
@@ -253,19 +284,20 @@ class Workspace:
             state.artifacts.pop('section-boundaries.json')
             changed = True
         if 'transcript.json' not in state.artifacts:
-            state.artifacts.clear()
+            state.supersede_outputs(*state.artifacts)
         if state.runs[-1].status == 'running':
             state.runs[-1].status = 'interrupted'
             state.runs[-1].finished_at = now()
             changed = True
+        changed |= self.validate_publishing_edits(state)
         if changed:
-            if state.runs[-1].status == 'completed':
-                state.runs[-1].status = 'partial'
             required: tuple[str, ...] = ('transcript.json', 'transcript.txt')
             if state.runs[-1].operation in ('generate', 'process'):
                 required += PUBLISHING_FILES
             if state.runs[-1].operation == 'process':
                 required = PROCESS_FILES
             state.runs[-1].missing = [name for name in required if name not in state.artifacts]
+            if state.runs[-1].missing and state.runs[-1].status == 'completed':
+                state.runs[-1].status = 'partial'
             self.commit(state)
         return changed

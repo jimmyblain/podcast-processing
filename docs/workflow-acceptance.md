@@ -84,6 +84,27 @@ Final verification passed mypy for **34 source files** and **315 tests in 119.97
 seconds**. Independent standards and issue-specification reviews have zero remaining
 findings after the four attribution/identity regression fixes.
 
+## Publishing edit preservation corrective work — issue #27
+
+Inspection and ordinary resume now retain exact operator publishing bytes in `current/`,
+with distinct immutable edited hashes and provenance. Invalid or stale edits and chapter
+conflicts stay delivered and receive specific `publishing_issues`; they cannot count as
+ready publishing results. Explicit selected replacement keeps earlier edited history.
+
+`test_publishing_edits.py` exercises public inspection/resume, exact whitespace/encoding,
+validation and conflicting chapters, selective regeneration, unchanged request counts,
+history corruption, missing-current recovery, process death before/after edit commit and
+receipt recovery during replacement. Integrated workflow tests retain edits across
+ordinary full resume, transcript corrections and changed recordings, without automatic
+publishing replacements. Existing ownership and recovery suites remain applicable.
+These are deterministic checks; ordinary new-episode acceptance with the readable
+publishing handoff and real editorial/source evaluation remains in #28.
+
+Final verification passed mypy for **37 source files** and **351 tests in 149.47
+seconds**. Both independent review axes have zero remaining findings. The suite's
+ASR clock fixture now scopes simulated sleeps to transcription, preventing subprocess
+polling from changing the retry/deadline observations. No production retry policy changed.
+
 ## Parent specification reconciliation — issue #12
 
 On 2026-09-10, the completed #13–#19 tickets were reconciled against the

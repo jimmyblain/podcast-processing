@@ -148,7 +148,7 @@ def completion_report(workspace: Workspace, state: WorkspaceState) -> str:
 
     run = state.runs[-1]
     lines = ['# Completion report', '', f'Episode: {state.episode_id}', 'Operation: process',
-             f'Status: {run.status}', '', f'Usable outputs: {", ".join(state.artifacts) or "none"}',
+             f'Status: {run.status}', '', f'Current outputs: {", ".join(state.artifacts) or "none"}',
              f'Missing required outputs: {", ".join(run.missing) or "none"}', '',
              planning_report(workspace, state), 'Transcription usage (separate from publishing):']
     for op in state.transcription_operations:

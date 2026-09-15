@@ -91,7 +91,7 @@ def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None
                   started_at=now(), inputs={**input_snapshot(state), 'requests': copy.deepcopy(BASELINES)})
         state.runs.append(run)
         if 'transcript.json' in state.artifacts and state.artifacts['transcript.json'].dependencies != expected:
-            state.artifacts.clear()
+            state.supersede_outputs(*state.artifacts)
         workspace.commit(state)
         session = ManagedSession(workspace, state, operation, primary_key, backup_key, expected)
         try:

@@ -9,7 +9,7 @@ from pydantic import TypeAdapter
 from .progress import progress
 from .attribution import ATTRIBUTION_VERSION, attribution_context, validate_attribution
 from .publishing import PreservedPublishingClient
-from .publishing_models import DescriptionBody, PublishingChapter, TitleConcept, timestamp
+from .publishing_models import DescriptionBody, PublishingChapter, timestamp, validate_title_concepts
 from .publishing_prompts import VERSIONS, request_prompt
 from .speech import clear_sentence_spans, supported_passages
 from .transcript_content import publishing_transcript, transcript_inputs
@@ -132,12 +132,7 @@ def validate_copy(stage: str, raw: str, state: WorkspaceState, transcript: Prese
             check(chapter['reason'])
         return chapters
     if stage == 'titles':
-        titles = TypeAdapter(list[TitleConcept]).validate_json(raw)
-        if len(titles) != 15:
-            raise ValueError('Exactly fifteen title concepts are required.')
-        normalized = [re.sub(r'[^\w]', '', t.title.casefold()) for t in titles]
-        if len(set(normalized)) != 15:
-            raise ValueError('Title concepts must be distinct, including case/punctuation variants.')
+        titles = validate_title_concepts(raw)
         for title in titles:
             for field in ('title', 'category', 'thumbnail_text', 'reasoning'):
                 check(getattr(title, field))
@@ -166,19 +161,21 @@ def dependencies_match(artifact: Artifact | None, expected: dict[str, str]) -> b
 
 
 def supersede_stage(state: WorkspaceState, stage: str) -> None:
-    target = state.artifacts if stage == 'titles' else state.evidence
-    target.pop(STAGE_FILES[stage], None)
+    if stage == 'titles':
+        state.supersede_outputs(STAGE_FILES[stage])
+    else:
+        state.evidence.pop(STAGE_FILES[stage], None)
     if stage == 'chapters':
-        state.artifacts.pop('chapters.txt', None)
+        state.supersede_outputs('chapters.txt')
     if stage in ('body', 'chapters'):
-        state.artifacts.pop('description.md', None)
+        state.supersede_outputs('description.md')
 
 
 def supersede_assembly(state: WorkspaceState) -> None:
     description = state.artifacts.get('description.md')
     if description and (description.dependencies.get('appendix') != digest(supplied_appendix(state).encode())
                         or 'chapters.txt' not in state.artifacts):
-        state.artifacts.pop('description.md', None)
+        state.supersede_outputs('description.md')
 
 
 def prune_inputs(state: WorkspaceState, transcript: PreservedTranscript) -> None:
@@ -235,6 +232,12 @@ def generate_package(path: Path, api_key: str, model: str, chapters: int = 10,
                           'selected': sorted(selected), 'fresh': fresh, 'stage_version': 'publishing-package-v2'},
                   limitations=preserved_edits)
         state.runs.append(run)
+        delivered = {'body': 'description.md', 'titles': 'titles.json', 'chapters': 'chapters.txt'}
+        if fresh:
+            for stage in fresh_stages:
+                # Explicit replacement releases only the selected operator copy.
+                state.artifacts.pop(delivered[stage], None)
+        selected = {stage for stage in selected if not state.is_edited(delivered[stage])}
         run.limitations.append('Attribution policy: participant presence does not establish story ownership; '
                                'copy uses neutral topics or exact clear quotations from supported voices. '
                                'Unsupported personal references require bounded repair; other stages remain independent.')
@@ -302,23 +305,25 @@ def generate_package(path: Path, api_key: str, model: str, chapters: int = 10,
                     for chapter, label in zip(data, labels):
                         chapter['title'] = label
                     data = validate_chapters(json.dumps(data), transcript, chapters)
+                    if state.is_edited('chapters.txt'):
+                        state.artifacts.pop('chapters.txt')
                     if json_bytes(data) != workspace.artifact_bytes(chapter_artifact):
                         chapter_artifact = workspace.add_artifact(state, 'chapters.json', json_bytes(data),
                             {**chapter_artifact.dependencies, 'labels': digest(label_bytes),
                              'base_chapters': chapter_artifact.id}, 'chapter-labels-v2', exposed=False)
                         state.artifacts.pop('chapters.txt', None)
-                        state.artifacts.pop('description.md', None)
+                        state.supersede_outputs('description.md')
                 chapter_bytes = ('\n'.join(f'{timestamp(c["start_time"])} {c["title"]}' for c in data) + '\n').encode()
                 rendered = state.artifacts.get('chapters.txt')
-                if rendered is None or rendered.dependencies.get('chapter_data') != chapter_artifact.sha256:
-                    state.artifacts.pop('description.md', None)
+                if not state.is_edited('chapters.txt') and (rendered is None or rendered.dependencies.get('chapter_data') != chapter_artifact.sha256):
+                    state.supersede_outputs('description.md')
                     workspace.add_artifact(state, 'chapters.txt', chapter_bytes,
                         {**chapter_artifact.dependencies, 'chapter_data': chapter_artifact.sha256}, 'chapter-render-v2')
                 # Chapters and final description always refer to a committed common version.
                 workspace.commit(state)
             body_artifact = state.evidence.get('description-body.json')
             rendered = state.artifacts.get('chapters.txt')
-            if body_artifact and rendered:
+            if body_artifact and rendered and not state.is_edited('chapters.txt') and not state.is_edited('description.md'):
                 appendix = supplied_appendix(state)
                 dependencies = {'body': body_artifact.sha256, 'chapters': rendered.sha256,
                                 'chapters_version': rendered.id, 'appendix': digest(appendix.encode()), 'template': 'assembly-v2'}

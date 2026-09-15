@@ -59,7 +59,8 @@ Without `--workspace`, the command prints a content-addressed location under
 `output/episodes/episode-<identity>`. Different recordings with the same basename
 remain separate. `--output`/`-o` is an alternative explicit workspace for `process`.
 For changed recording bytes within an existing episode, pass the new recording
-with the same `--workspace`; dependent current outputs are superseded coherently.
+with the same `--workspace`; dependent generated outputs are superseded coherently.
+Operator publishing edits stay in place and are reported as stale.
 
 The approved reusable show identity, audience, voice and recurring links are included.
 To override editorial inputs for an episode, use `--show-profile show.json`.
@@ -98,6 +99,15 @@ Open files under the workspace's `current/` directory:
 | `section-plan.json` | Valid, explained unavailable, or needs-setup planning outcome |
 | `section-boundaries.json` | Three contiguous source parts with transition-inclusive duration calculations, when feasible |
 | `completion-report.md` | Full-operation status, reuse/supersession, failures/fallbacks, edits and separate usage ledgers |
+
+You can edit the delivered description, titles and chapters directly. Inspection and
+ordinary resume keep their exact bytes in `current/` and retain immutable generated
+and edited history. Invalid copy, conflicting chapter lists and stale edits stay in
+place with specific issues in the report and `inspect --json`'s `publishing_issues`.
+They are excluded from the ready list and publishing completion stays partial.
+`generate WORKSPACE --only titles --fresh` explicitly replaces edited titles;
+use `--only description` or `--only chapters` for those outputs, or `--fresh` for
+the whole package. Earlier edits remain in history. See [publishing edits](docs/publishing-package.md#direct-publishing-edits).
 
 Exit **0** means the outputs required by the selected command completed. For full
 `process`, a valid proposal, a completed search/evidence evaluation without supported

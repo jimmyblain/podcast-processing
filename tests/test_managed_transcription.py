@@ -165,13 +165,17 @@ def test_ambiguous_primary_reconciles_known_upload_without_rebuying(tmp_path, se
 @pytest.fixture
 def clock(monkeypatch):
     import time
+    from types import SimpleNamespace
+    from podcast_processor import managed as managed_module
+
     current = [time.time()]
     sleeps = []
     monkeypatch.setattr(time, 'time', lambda: current[0])
     def sleep(seconds):
         sleeps.append(seconds)
         current[0] += seconds
-    monkeypatch.setattr(time, 'sleep', sleep)
+    # Subprocess polling also calls time.sleep; it must not advance the ASR clock.
+    monkeypatch.setattr(managed_module, 'time', SimpleNamespace(time=time.time, sleep=sleep))
     return current, sleeps
 
 

@@ -80,7 +80,7 @@ def import_episode(transcript_file: Path, root: Path, source_path: Path | None =
                     from .participants import current_transcript
                     prune_inputs(state, current_transcript(workspace, state))
                 elif not preserve_transcript:
-                    state.artifacts.clear()
+                    state.supersede_outputs(*state.artifacts)
             else:
                 source = source or SourceRevision(id=identifier(), created_at=now())
                 if copy:
@@ -130,7 +130,7 @@ def update_source(state: WorkspaceState, source: SourceRevision, copy: bool, wor
         copy_source(source, workspace.path)
     if state.source_revision != source.id:
         # Attaching previously unknown media still changes consumed input evidence.
-        state.artifacts.clear()
+        state.supersede_outputs(*state.artifacts)
         state.source_revision = source.id
     state.input_revision = input_revision(state)
 

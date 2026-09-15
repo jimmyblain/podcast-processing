@@ -57,7 +57,7 @@ def supersede_consumers(state: WorkspaceState, before: PreservedTranscript,
     while True:
         removed = []
         for name, artifact in state.artifacts.items():
-            if name in ('transcript.json', 'transcript.txt', 'import-original.json'):
+            if name in ('transcript.json', 'transcript.txt', 'import-original.json') or state.is_edited(name):
                 continue
             if (any(key in artifact.dependencies for key in changed)
                     or any(value in invalid_hashes for value in artifact.dependencies.values())):

@@ -241,6 +241,8 @@ class Artifact(Record):
     run_id: str
     created_at: str
     status: Literal['completed', 'human-edited'] = 'completed'
+    edited_from: str | None = None
+    edit_source_revision: str | None = None
 
 
 class Run(Record):
@@ -297,7 +299,18 @@ class WorkspaceState(Record):
     artifacts: dict[str, Artifact] = Field(default_factory=dict)
     evidence: dict[str, Artifact] = Field(default_factory=dict)
     history: list[Artifact] = Field(default_factory=list)
+    publishing_issues: dict[str, list[str]] = Field(default_factory=dict)
     runs: list[Run] = Field(default_factory=list)
     publishing_operations: list[PublishingOperation] = Field(default_factory=list)
     discovery_operations: list[GenerationOperation] = Field(default_factory=list)
     transcription_operations: list[TranscriptionOperation] = Field(default_factory=list)
+
+    def is_edited(self, name: str) -> bool:
+        artifact = self.artifacts.get(name)
+        return artifact is not None and artifact.status == 'human-edited'
+
+    def supersede_outputs(self, *names: str) -> None:
+        """Invalidate generated consumers without discarding operator deliverables."""
+        for name in names:
+            if not self.is_edited(name):
+                self.artifacts.pop(name, None)

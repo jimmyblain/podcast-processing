@@ -186,7 +186,8 @@ def test_full_preserves_direct_edit_exactly_before_regeneration(tmp_path, full_s
     (workspace / 'current/description.md').write_bytes(edited)
     count = len(full_services)
     result = process(tmp_path)
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == 1, result.output
+    assert (workspace / 'current/description.md').read_bytes() == edited
     state = inspect(workspace)
     versions = [a for a in state['history'] if a['status'] == 'human-edited']
     assert len(versions) == 1
@@ -376,9 +377,58 @@ def test_direct_edit_is_preserved_even_when_original_artifact_is_damaged(tmp_pat
     (workspace / 'current/titles.json').write_bytes(edited)
     (workspace / original['path']).unlink()
     result = process(tmp_path)
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == 1, result.output
+    assert (workspace / 'current/titles.json').read_bytes() == edited
+    assert inspect(workspace)['publishing_issues']['titles.json']
     history = inspect(workspace)['history']
     assert any(a['status'] == 'human-edited' and (workspace / a['path']).read_bytes() == edited for a in history)
+
+
+@pytest.mark.parametrize('change', ['correction', 'recording'])
+def test_full_workflow_keeps_publishing_edits_when_evidence_changes(tmp_path, full_services, change):
+    from test_participant_corrections import correct
+
+    assert process(tmp_path).exit_code == 0
+    workspace = tmp_path / 'episode'
+    edits = {}
+    for name in ('description.md', 'titles.json', 'chapters.txt'):
+        path = workspace / 'current' / name
+        edits[name] = path.read_bytes() + b'\r\n'
+        path.write_bytes(edits[name])
+    before = inspect(workspace)
+    calls = list(full_services)
+    assert process(tmp_path).exit_code == 0
+    assert full_services == calls
+    if change == 'correction':
+        transcript = json.loads((workspace / 'current/transcript.json').read_bytes())
+        word = transcript['words'][3]
+        correct(workspace, [{'op': 'replace', 'turn_id': word['turn_id'], 'first_word': word['id'],
+                             'last_word': word['id'], 'text': 'Know'}])
+        result = process(tmp_path)
+        assert full_services == calls
+    else:
+        source = recording(tmp_path, value=1)
+        result = runner.invoke(app, ['process', str(source), '--workspace', str(workspace)])
+        assert not any(call.startswith('STAGE:') for call in full_services[len(calls):])
+    assert result.exit_code == 1, result.output
+    after = inspect(workspace)
+    for name, data in edits.items():
+        assert (workspace / 'current' / name).read_bytes() == data
+        assert after['artifacts'][name] == before['artifacts'][name]
+        assert 'stale' in ' '.join(after['publishing_issues'][name]).lower()
+
+
+def test_transcription_completion_is_independent_of_invalid_publishing_edits(tmp_path, full_services):
+    assert process(tmp_path).exit_code == 0
+    workspace = tmp_path / 'episode'
+    edited = b'\xff\r\nOperator bytes'
+    (workspace / 'current/description.md').write_bytes(edited)
+    calls = list(full_services)
+    result = runner.invoke(app, ['transcribe', str(workspace)])
+    assert result.exit_code == 0, result.output
+    assert inspect(workspace)['runs'][-1]['status'] == 'completed'
+    assert (workspace / 'current/description.md').read_bytes() == edited
+    assert full_services == calls
 
 
 def test_repaired_current_files_report_recovery_without_new_paid_calls(tmp_path, full_services):

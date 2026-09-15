@@ -1,7 +1,7 @@
 """Structured publishing copy and a durable, publishing-only attempt ledger."""
 import re
 
-from pydantic import Field, field_validator
+from pydantic import Field, TypeAdapter, field_validator
 
 from .workspace_models import Record
 
@@ -70,6 +70,16 @@ class PublishingChapter(CopyRecord):
         if re.match(r'^(?:[#•*\-]|\d+:\d{2}|\d+[.)]\s)', value) or '`' in value:
             raise ValueError('Chapter labels must be plain titles, without timestamp, heading or bullet markup.')
         return value
+
+
+def validate_title_concepts(raw: str) -> list[TitleConcept]:
+    titles = TypeAdapter(list[TitleConcept]).validate_json(raw)
+    if len(titles) != 15:
+        raise ValueError('Exactly fifteen title concepts are required.')
+    normalized = [re.sub(r'[^\w]', '', t.title.casefold()) for t in titles]
+    if len(set(normalized)) != 15:
+        raise ValueError('Title concepts must be distinct, including case/punctuation variants.')
+    return titles
 
 
 def timestamp(seconds: float) -> str:

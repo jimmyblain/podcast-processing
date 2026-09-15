@@ -289,7 +289,10 @@ def test_attribution_change_supersedes_publishing_and_preserves_direct_copy_edit
     before = transcript(workspace)
     correct(workspace, [{'op': 'relabel', 'speaker': before['speakers'][0]['id'], 'participant': 'Lish Speaks'}])
     state = inspect(workspace)
-    assert all(n not in state['artifacts'] for n in ('description.md', 'titles.json', 'chapters.txt'))
+    assert all(n not in state['artifacts'] for n in ('description.md', 'chapters.txt'))
+    assert state['artifacts']['titles.json']['status'] == 'human-edited'
+    assert (workspace / 'current/titles.json').read_bytes() == edit
+    assert 'stale' in ' '.join(state['publishing_issues']['titles.json']).lower()
     saved_edit = next(a for a in state['history'] if a['status'] == 'human-edited')
     assert (workspace / saved_edit['path']).read_bytes() == edit
     assert transcript(workspace)['segments'] == before['segments']

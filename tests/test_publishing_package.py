@@ -185,9 +185,10 @@ def test_edited_outputs_preserved_as_exact_bytes_and_never_used_as_facts(tmp_pat
     previous = inspect(workspace)
     edited = b'\xff\x00\nInvented sponsor and biography\r\n'
     (workspace / 'current/description.md').write_bytes(edited)
-    assert generate(workspace).exit_code == 0
+    assert generate(workspace).exit_code == 1
     state = inspect(workspace)
     edit = next(a for a in state['history'] if a['status'] == 'human-edited')
+    assert (workspace / 'current/description.md').read_bytes() == edited
     assert (workspace / edit['path']).read_bytes() == edited
     assert edit['sha256'] != previous['artifacts']['description.md']['sha256']
     assert 'Preserved direct edit' in (workspace / 'current/completion-report.md').read_text()
@@ -257,10 +258,11 @@ def test_edited_chapters_cannot_leave_a_complete_description_under_old_version(t
     assert generate(workspace).exit_code == 0
     (workspace / 'current/chapters.txt').write_text('00:00 A direct edit\n')
     state = inspect(workspace)
-    assert 'chapters.txt' not in state['artifacts']
-    assert 'description.md' not in state['artifacts']
-    assert not (workspace / 'current/description.md').exists()
-    assert generate(workspace).exit_code == 0
+    assert state['artifacts']['chapters.txt']['status'] == 'human-edited'
+    assert state['publishing_issues']['description.md']
+    assert state['runs'][-1]['status'] == 'partial'
+    assert (workspace / 'current/description.md').exists()
+    assert generate(workspace).exit_code == 1
     assert len(publishing) == 3
 
 

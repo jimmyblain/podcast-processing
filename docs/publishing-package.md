@@ -50,10 +50,37 @@ podcast-process generate output/episodes/episode-id --chapter-labels labels.json
 ```
 
 This explicit operation validates the labels, versions the shared chapter data and locally
-reassembles the description from its saved body. It cannot change timestamps. Direct edits
-to exposed publishing files are instead preserved as exact bytes in distinct `human-edited`
-history records before recovery/replacement. They never become source facts or transcript
-corrections, and cannot keep the previous generated hash.
+reassembles a generated description from its saved body. It cannot change timestamps.
+An edited description stays intact; any chapter mismatch is reported.
+
+## Direct publishing edits
+
+Edit `current/description.md`, `current/titles.json` or `current/chapters.txt` in place.
+Inspection and ordinary `generate`/`process` resume preserve the exact bytes, including
+whitespace and line endings. Each observed edit becomes a current `human-edited`
+artifact with its own SHA-256, `edited_from` reference and original source revision.
+Generated and previously captured edited artifacts remain immutable in history.
+Publishing edits never enter model prompts, timed-transcript facts or episode metadata.
+
+The current artifact index records delivered files, including edits that need attention.
+`publishing_issues` in `inspect --json` and the completion report identify invalid UTF-8,
+title/concept limits, description length, chapter format/durations, conflicts between
+the description and standalone chapters, and stale or corrupt dependency evidence.
+Validation checks structure and preserved dependencies; it does not certify the truth
+of operator-authored claims or establish source support for manual chapter positions.
+Issues make publishing partial and remove affected files from the terminal's ready list,
+while preserving their exact bytes. Matching chapter edits can resolve a conflict;
+neither file is automatically chosen as authoritative or rewritten.
+
+Changed source, transcript or editorial inputs leave affected edits in place with a stale
+status. Ordinary reruns do not generate competing replacements for edited outputs.
+Different new recordings use separate workspaces by default. Explicit replacement via
+`--fresh` releases only the selected edited output (`--only titles`, `description` or
+`chapters`); without `--only`, it replaces the whole publishing package. A selected
+chapter replacement retains an edited description and reports any resulting conflict.
+Prior edits are committed to history before replacement begins, even if regeneration
+fails. A missing current edited copy is restored from its verified edited artifact.
+Damaged historical evidence is reported and is never trusted as a generated checkpoint.
 
 ## Dependencies and recovery
 
@@ -141,6 +168,12 @@ The CLI tests use isolated real workspaces, controlled publishing responses, the
 with controlled HTTP, and process/storage interruptions. They cover limits, unavailable
 chapters, recovery, usage, selective invalidation and preservation. They are structural and
 workflow evidence, not a claim of source accuracy or actual v2 editorial acceptance.
+
+`test_publishing_edits.py` additionally exercises exact current bytes through inspection,
+resume, selective explicit replacement, crashes around atomic edit commits and saved
+regeneration receipts, validation/conflicts, stale inputs, historical recovery and paid
+request counts. Integrated tests cover corrections and changed recordings while preserving
+edits. Final ordinary-episode acceptance with the readable handoff belongs to issue #28.
 
 The editorial reference is the user-approved communication prototype at commit
 `05cc30b76389b5ec0e029baf51014f2b98519d9b`, especially its description, 15 title/overlay/visual
