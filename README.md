@@ -95,8 +95,10 @@ Open files under the workspace's `current/` directory:
 | `transcript.txt` | Faithful readable timed transcript with supported names or anonymous labels |
 | `description.md` | Complete description, embedded chapters and approved supplied extras; ≤5,000 characters |
 | `titles.json` | Exactly 15 title concepts with 2–4-word overlays, visual directions and rationale |
+| `titles.md` | Copyable document with all 15 title/overlay pairings, subject/expression/composition and pairing rationale |
 | `chapters.txt` | 3–10 timestamp/title lines, identical to the embedded chapter list |
 | `section-plan.json` | Valid, explained unavailable, or needs-setup planning outcome |
+| `section-plan.md` | Readable source ranges, expected finished lengths and cut reasons, or an explanation and next action when unavailable |
 | `section-boundaries.json` | Three contiguous source parts with transition-inclusive duration calculations, when feasible |
 | `completion-report.md` | Full-operation status, reuse/supersession, failures/fallbacks, edits and separate usage ledgers |
 
@@ -108,6 +110,23 @@ They are excluded from the ready list and publishing completion stays partial.
 `generate WORKSPACE --only titles --fresh` explicitly replaces edited titles;
 use `--only description` or `--only chapters` for those outputs, or `--fresh` for
 the whole package. Earlier edits remain in history. See [publishing edits](docs/publishing-package.md#direct-publishing-edits).
+
+The readable documents use the same committed versions as their structured sources.
+Section ranges refer to the original recording; finished lengths include transitions
+and applicable pauses. They describe a proposal; no episode audio has been exported.
+`process`, workspace `generate`, and `plan` print the readable file locations.
+
+To add readable documents to an existing workspace, or restore missing copies locally:
+
+```sh
+podcast-process render output/episodes/my-episode
+```
+
+Rendering uses saved data only, with no transcription, publishing or discovery requests.
+It preserves edits to `titles.md`; agreement with `titles.json` then becomes unverified
+and is reported separately without changing your wording. To explicitly rebuild only
+that readable document from saved title data, retaining the edit in history, use
+`render WORKSPACE --replace-title-edits`. This also makes no service requests.
 
 Exit **0** means the outputs required by the selected command completed. For full
 `process`, a valid proposal, a completed search/evidence evaluation without supported

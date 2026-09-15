@@ -15,6 +15,29 @@ Missing or unprepared transitions yield `needs-setup`; a full `process` then exi
 with a partial result. Run [show setup](show-setup.md) once to prepare, hear and approve
 the supplied transitions. New full episode operations snapshot and reuse them automatically.
 
+## Readable proposals — issue #26
+
+`current/section-plan.md` accompanies every saved planning outcome. A valid proposal
+shows the three original-recording time ranges, source part lengths, expected
+finished lengths, included transitions/pauses and both selected cut reasons.
+Fractional source timestamps are retained exactly; finished lengths are expressed
+in minutes and seconds. Section 3 keeps its opening transition and original ending.
+Evidence labels and limitations distinguish generated suggestions, source-reviewed
+cuts and synthetic fixtures. The document describes a proposal, not exported audio.
+
+Unavailable outcomes show their reason and next action without proposed ranges.
+Missing setup explicitly says discovery was not run; it is not a searched-and-impossible
+split. Corrected evidence invalidates the old readable proposal along with its
+structured sources, retaining immutable history. A new outcome produces a new
+document; unchanged outcomes reuse their document version.
+
+`plan` and `process` hand off the readable file location. `render WORKSPACE` or
+inspection can add it to existing saved outcomes and rebuild missing copies locally,
+without discovery, publishing or transcription calls. Rendering uses the committed
+`section-plan.json`; document dependencies also pin the matching
+`section-boundaries.json` version for valid proposals. Direct planning-document edits
+are archived, and the document is rebuilt from those structured sources.
+
 ## Discovery and evidence strength
 
 The local search considers sentence endings, speaker-turn changes and word gaps.

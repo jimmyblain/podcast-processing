@@ -42,7 +42,8 @@ def completion_summary(workspace: Workspace, state: WorkspaceState) -> str:
     run = state.runs[-1]
     names = [('transcript.txt', 'timed transcript'), ('description.md', 'description'),
              ('titles.json', 'title/thumbnail concepts'), ('chapters.txt', 'YouTube chapters')]
-    ready = [label for name, label in names if name in state.artifacts and name not in state.publishing_issues]
+    ready = [label for name, label in names if name in state.artifacts and name not in state.publishing_issues
+             and not (name == 'titles.json' and 'titles.md' in state.publishing_issues)]
     lines = [f'Status: {run.status}', 'Ready: ' + (', '.join(ready) or 'none')]
     for name, issues in state.publishing_issues.items():
         lines.append(f'{name} retained: ' + ' '.join(issues))
@@ -97,6 +98,9 @@ def completion_summary(workspace: Workspace, state: WorkspaceState) -> str:
             lines.append(f'Identity notes: {unresolved} voices retain anonymous labels; optional refinement.')
     lines.extend([f'Workspace: {workspace.path}', f'Outputs: {workspace.path / "current"}',
                   f'Detailed report: {workspace.path / "current/completion-report.md"}'])
+    documents = [name for name in ('titles.md', 'section-plan.md') if name in state.artifacts]
+    if documents:
+        lines.append('Readable documents: ' + ', '.join(documents))
     if run.status == 'completed':
         lines.append('Next: generate the publishing package with podcast-process generate "' + str(workspace.path) + '".'
                      if run.operation == 'transcribe' else 'Next: use the ready publishing outputs.')

@@ -86,6 +86,9 @@ def test_full_workflow_completes_and_unchanged_resume_costs_nothing(tmp_path, fu
     assert set(before['artifacts']) >= {'transcript.json', 'transcript.txt', 'description.md',
                                        'titles.json', 'chapters.txt', 'section-plan.json'}
     assert len(json.loads((workspace / 'current/titles.json').read_bytes())) == 15
+    assert (workspace / 'current/titles.md').read_text().count('## Concept ') == 15
+    assert 'Status: unavailable' in (workspace / 'current/section-plan.md').read_text()
+    assert 'titles.md' in result.output and 'section-plan.md' in result.output
     assert (workspace / 'current/chapters.txt').read_text().strip() in (workspace / 'current/description.md').read_text()
     report = (workspace / 'current/completion-report.md').read_text()
     assert 'Section planning: unavailable' in report

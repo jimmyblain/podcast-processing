@@ -105,6 +105,27 @@ seconds**. Both independent review axes have zero remaining findings. The suite'
 ASR clock fixture now scopes simulated sleeps to transcription, preventing subprocess
 polling from changing the retry/deadline observations. No production retry policy changed.
 
+## Readable title and section handoffs — issue #26
+
+`titles.md` and `section-plan.md` now accompany the current structured results and
+pin their source artifact versions. The public CLI tests in `test_readable_outputs.py`
+cover all fifteen pairings, exact fractional/hour source timestamps, finished lengths
+including transitions, cut reasons, unavailable/needs-setup outcomes, unchanged reuse,
+corrected planning, stale title data and local rebuilding without service requests.
+
+Combined edit-preservation checks retain exact readable and structured title edits,
+report unverified/stale agreement, and preserve history through selected generation
+or explicit local readable replacement. The integrated process test exercises both
+documents in the normal handoff while retaining shared chapter consistency and
+unchanged service counts on resume. No media or ignored evaluation bundles were
+changed. These are deterministic workflow checks; ordinary new-episode source and
+editorial acceptance remain scoped to #28.
+
+Final verification passed mypy for **38 source files** and **366 tests in 160.82
+seconds**. Both independent review axes have zero remaining findings after adding
+the regression for individual-section overhead exceeding its limit while the
+combined finished length still fits. No live paid requests were made.
+
 ## Parent specification reconciliation — issue #12
 
 On 2026-09-10, the completed #13–#19 tickets were reconciled against the

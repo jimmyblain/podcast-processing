@@ -26,6 +26,9 @@ Successful current files:
   comment question and subscribe/share invitation, shared chapters, approved/supplied extras.
 - `titles.json`: exactly 15 concepts with `title`, `category`, `thumbnail_text`,
   `visual_direction` (`subject`, `expression`, `composition`) and `reasoning`.
+- `titles.md`: all 15 committed concepts in a copyable document, with separate title,
+  overlay, visual-direction and pairing-rationale fields. Its source version and hash
+  identify the exact `titles.json` used; rendering adds no new editorial claims.
 - `chapters.txt`: timestamp/title-only lines. The description names the same committed
   chapter version in its dependencies. Chapter source positions and boundary evidence
   are retained separately in the `chapters.json` evidence checkpoint.
@@ -81,6 +84,33 @@ chapter replacement retains an edited description and reports any resulting conf
 Prior edits are committed to history before replacement begins, even if regeneration
 fails. A missing current edited copy is restored from its verified edited artifact.
 Damaged historical evidence is reported and is never trusted as a generated checkpoint.
+
+### Readable title documents — issue #26
+
+Readable titles are created locally in the same atomic current snapshot as the
+structured titles. Unchanged data reuses the document version. Inspection and
+`render WORKSPACE` add missing documents to older workspaces or restore missing
+generated copies without a model request. Invalid structured title edits produce
+an unavailable readable document without invented concepts; structurally valid
+stale edits retain their concepts with a visible needs-attention status.
+
+Direct edits to `titles.md` also retain their exact bytes through inspection and
+ordinary resume. They do not change `titles.json` or become episode evidence.
+Because arbitrary Markdown edits cannot establish agreement with structured titles,
+the report and `publishing_issues` mark that agreement as unverified, exclude titles
+from the ready list, and leave publishing partial. Changed or unavailable structured
+data also marks the preserved readable edit stale. No competing readable draft is
+generated. To restore agreement locally, run:
+
+```sh
+podcast-process render WORKSPACE --replace-title-edits
+```
+
+This explicit operation saves the edit in history before replacing `titles.md` from
+current, structurally valid `titles.json`; it makes no service requests. Selected
+`generate WORKSPACE --only titles --fresh` replaces both title deliverables under
+the existing paid-generation contract. Chapter and description versions remain
+independent of local title rendering.
 
 ## Dependencies and recovery
 

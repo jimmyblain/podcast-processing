@@ -523,12 +523,32 @@ def plan_command(workspace: Path,
         state = plan_episode(workspace, evidence, api_key=api_key or settings.anthropic_api_key,
                              model=settings.claude_model, fresh=fresh)
         typer.echo(planning_report(Workspace(workspace), state))
+        typer.echo(f'Readable proposal: {workspace.resolve() / "current/section-plan.md"}')
         from .planning_models import PlanningOutcome
         outcome = PlanningOutcome.model_validate_json(Workspace(workspace).artifact_bytes(state.artifacts['section-plan.json']))
         if outcome.requires_action:
             raise typer.Exit(1)
     except (WorkspaceError, OSError, ValueError) as error:
         typer.echo(f"Error: {error}")
+        raise typer.Exit(1)
+
+
+@app.command("render")
+def render_command(workspace: Path,
+                   replace_title_edits: Annotated[bool, typer.Option(help="Replace edited titles.md from saved titles.json; retain history")] = False) -> None:
+    """Refresh readable documents locally from saved data, without service requests."""
+    from .readable import render_episode
+    try:
+        state = render_episode(workspace, replace_title_edits=replace_title_edits)
+        documents = [name for name in ('titles.md', 'section-plan.md') if name in state.artifacts]
+        for name in documents:
+            typer.echo(f'Readable document: {workspace.resolve() / "current" / name}')
+        if not documents:
+            typer.echo('No current title or planning data to render. Use generate or plan to create the missing outputs.')
+        for filename, issues in state.publishing_issues.items():
+            typer.echo(f'{filename} retained: ' + ' '.join(issues))
+    except (WorkspaceError, OSError, ValueError) as error:
+        typer.echo(f'Error: {error}')
         raise typer.Exit(1)
 
 

@@ -18,6 +18,7 @@ from uuid import uuid4
 from .workspace_models import Artifact, WorkspaceState
 
 PUBLISHING_FILES = ('description.md', 'titles.json', 'chapters.txt')
+EDITABLE_PUBLISHING_FILES = (*PUBLISHING_FILES, 'titles.md')
 PROCESS_FILES = ('transcript.json', 'transcript.txt', *PUBLISHING_FILES, 'section-plan.json')
 
 
@@ -147,7 +148,10 @@ class Workspace:
 
     def commit(self, state: WorkspaceState) -> None:
         """Validate files and state before one atomic namespace switch."""
+        from .readable import sync_readable
+
         self.validate_publishing_edits(state)
+        sync_readable(self, state)
         state = WorkspaceState.model_validate(state.model_dump())
         snapshot = self.path / 'snapshots' / identifier()
         snapshot.mkdir(parents=True)
@@ -244,7 +248,7 @@ class Workspace:
             except (OSError, WorkspaceError):
                 original = None
             if data is None or digest(data) != artifact.sha256 or original is None:
-                if data is None and original is not None and name in PUBLISHING_FILES and artifact.status == 'human-edited':
+                if data is None and original is not None and name in EDITABLE_PUBLISHING_FILES and artifact.status == 'human-edited':
                     changed = True  # Restore a missing current copy from verified edited history.
                     continue
                 if data is not None and (digest(data) != artifact.sha256 or artifact.status == 'human-edited'):
@@ -252,11 +256,11 @@ class Workspace:
                     edited.status = 'human-edited'
                     edited.edited_from = artifact.id
                     edited.edit_source_revision = artifact.edit_source_revision or state.source_revision
-                    location = 'in place and in history' if name in PUBLISHING_FILES else 'in history'
+                    location = 'in place and in history' if name in EDITABLE_PUBLISHING_FILES else 'in history'
                     state.runs[-1].limitations.append(f'Preserved direct edit of {name} {location}.')
                     from .progress import progress
                     progress(f'Preserved direct edit of {name} {location}')
-                    if name in PUBLISHING_FILES:
+                    if name in EDITABLE_PUBLISHING_FILES:
                         changed = True
                         continue
                 state.artifacts.pop(name, None)
@@ -290,6 +294,8 @@ class Workspace:
             state.runs[-1].finished_at = now()
             changed = True
         changed |= self.validate_publishing_edits(state)
+        from .readable import sync_readable
+        changed |= sync_readable(self, state)
         if changed:
             required: tuple[str, ...] = ('transcript.json', 'transcript.txt')
             if state.runs[-1].operation in ('generate', 'process'):

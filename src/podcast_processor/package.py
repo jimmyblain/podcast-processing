@@ -237,6 +237,8 @@ def generate_package(path: Path, api_key: str, model: str, chapters: int = 10,
             for stage in fresh_stages:
                 # Explicit replacement releases only the selected operator copy.
                 state.artifacts.pop(delivered[stage], None)
+                if stage == 'titles':
+                    state.artifacts.pop('titles.md', None)
         selected = {stage for stage in selected if not state.is_edited(delivered[stage])}
         run.limitations.append('Attribution policy: participant presence does not establish story ownership; '
                                'copy uses neutral topics or exact clear quotations from supported voices. '

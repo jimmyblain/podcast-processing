@@ -2,7 +2,7 @@
 import re
 
 from .publishing_models import PublishingChapter, validate_title_concepts
-from .workspace import Workspace, WorkspaceError, digest
+from .workspace import EDITABLE_PUBLISHING_FILES, Workspace, WorkspaceError, digest
 from .workspace_models import Artifact, PreservedTranscript, WorkspaceState
 
 
@@ -89,7 +89,7 @@ def publishing_issues(workspace: Workspace, state: WorkspaceState) -> dict[str, 
     except (OSError, ValueError, WorkspaceError):
         duration = None  # Each edit's dependency check reports unusable episode evidence.
     for name, artifact in state.artifacts.items():
-        if name not in ('description.md', 'titles.json', 'chapters.txt'):
+        if name not in EDITABLE_PUBLISHING_FILES:
             continue
         problems = []
         try:
@@ -109,7 +109,9 @@ def publishing_issues(workspace: Workspace, state: WorkspaceState) -> dict[str, 
             problems.append('Publishing copy is not valid UTF-8 text.')
         except ValueError as error:
             problems.append(str(error))
-        if artifact.status == 'human-edited':
+        if artifact.status == 'human-edited' and name == 'titles.md':
+            problems.append('Operator-edited readable titles: agreement with titles.json is unverified; exact bytes retained.')
+        elif artifact.status == 'human-edited':
             try:
                 if stale_edit(workspace, state, artifact):
                     problems.append('Operator edit is stale: its episode evidence or publishing inputs changed or are unavailable.')
@@ -117,6 +119,11 @@ def publishing_issues(workspace: Workspace, state: WorkspaceState) -> dict[str, 
                 problems.append('Operator edit is stale: its saved dependency evidence failed verification.')
         if problems:
             issues[name] = problems
+    if state.is_edited('titles.md'):
+        source = state.artifacts.get('titles.json')
+        if (source is None or state.artifacts['titles.md'].dependencies.get('titles_version') != source.id
+                or 'titles.json' in issues):
+            issues.setdefault('titles.md', []).append('Readable title edit is stale: its structured title data changed or is unavailable.')
     if state.is_edited('description.md') or state.is_edited('chapters.txt'):
         description = copies.get('description.md')
         chapters = copies.get('chapters.txt')
