@@ -10,6 +10,17 @@ mechanics; manually supplied boundary candidates and corrected participant input
 did not prove the intended normal new-episode workflow. Corrective acceptance must
 exercise those production stages before the workflow is declared complete.
 
+## Terminal feedback corrective work — issue #22
+
+`tests/test_terminal_progress.py` exercises startup before controlled media work,
+stage messages before HTTP calls, elapsed updates during blocked uploads in both
+a terminal subprocess and redirected output, concise success/partial/failure,
+recovered chapter retries, collapsed timing warnings and retained diagnostics.
+It also checks missing planning prerequisites, required publishing outputs,
+exhausted attempts, checkpoint reuse and valid `inspect --json` output. Existing
+managed and episode recovery tests continue to verify request counts and spending
+limits; no live paid trial is part of these checks.
+
 ## Show setup corrective work — issue #23
 
 The [show setup record](show-setup.md) now documents measured preparation, recurring

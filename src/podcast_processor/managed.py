@@ -7,6 +7,7 @@ from pathlib import Path
 import time
 
 from . import normalization
+from .progress import progress
 from .participants import current_transcript, ensure_readable, map_supported, save_mapped
 from .managed_models import ProviderName, TranscriptionAttempt, TranscriptionOperation, TranscriptionPolicy
 from .managed_providers import BASELINES, ManagedProvider, ProviderError, response_object
@@ -23,6 +24,7 @@ def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None
                        primary_key: str = '', backup_key: str = '',
                        policy: TranscriptionPolicy | None = None, fresh: bool = False,
                        show_setup: ShowSetup | None = None) -> WorkspaceState:
+    progress('Preparing audio and checking transcription checkpoints')
     invoked_at = time.time()
     source = inspect_source(source_or_workspace) if source_or_workspace.is_file() else None
     if source:
@@ -70,6 +72,8 @@ def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None
         reusable = ('transcript.json' in state.artifacts and all(
             state.artifacts['transcript.json'].dependencies.get(k) == v for k, v in expected.items()))
         if reusable and operation.status == 'completed':
+            progress('Reused completed timed transcript checkpoint')
+            progress('Processing speaker information')
             state.runs.append(Run(id=identifier(), operation_id=operation.id, operation='transcribe',
                 status='completed', started_at=now(), finished_at=now(),
                 inputs={**input_snapshot(state), 'requests': copy.deepcopy(BASELINES)},
@@ -97,7 +101,7 @@ def transcribe_episode(source_or_workspace: Path, *, workspace_path: Path | None
         except (WorkspaceError, OSError, ValueError) as error:
             operation.outcome = f'Local processing stopped ({type(error).__name__}); retained evidence is reusable.'
             session.finish()
-            raise WorkspaceError(operation.outcome) from error
+            raise WorkspaceError(operation.outcome, workspace_path=workspace.path) from error
         session.finish()
         return state
 
@@ -184,6 +188,8 @@ class ManagedSession:
             attempt.updated_at = time.time()
             self.checkpoint()
             try:
+                progress('Submitting transcription to AssemblyAI' if provider.name == 'assemblyai' else
+                         'Uploading audio and waiting for transcription — backup provider Deepgram')
                 raw = provider.submit(path, self.operation.upload_url, self.remaining())
             except ProviderError as error:
                 attempt.status = 'rejected' if error.rejected else 'ambiguous'
@@ -198,6 +204,7 @@ class ManagedSession:
                 if not error.rejected:
                     return
                 if attempt.submissions < self.operation.policy.submission_attempts and self.remaining() > 0:
+                    progress(f'Retrying rejected transcription submission ({attempt.submissions + 1}/{self.operation.policy.submission_attempts})')
                     time.sleep(min(2 ** attempt.submissions, self.remaining()))
                     attempt.reserved_usd = attempt.estimated_usd
                 continue
@@ -220,6 +227,7 @@ class ManagedSession:
             attempt.reconciliations += 1
             self.checkpoint()
             try:
+                progress('Checking possibly accepted transcription with provider; existing reservation retained')
                 raw = provider.list_jobs(min(30, self.remaining()) if self.remaining() else 5, before_id)
                 result = response_object(raw)
             except (ProviderError, ValueError) as error:
@@ -229,6 +237,7 @@ class ManagedSession:
                     raise
                 if self.remaining() <= 0:
                     return
+                progress('Retrying provider lookup for possibly accepted transcription')
                 time.sleep(min(2 ** attempt.reconciliations, self.remaining()))
                 continue
             jobs = result.get('transcripts', [])
@@ -248,6 +257,7 @@ class ManagedSession:
             return
         # One bounded non-waiting recovery read remains available after expiry per invocation.
         expired_read = self.remaining() <= 0
+        progress('Waiting for transcription — AssemblyAI; checking provider status')
         first_read = True
         while attempt.transient_reads < self.operation.policy.read_attempts or (expired_read and first_read):
             first_read = False
@@ -264,6 +274,7 @@ class ManagedSession:
                     raise
                 if expired_read or self.remaining() <= 0:
                     return
+                progress('Retrying transcription status check after provider read failure')
                 time.sleep(min(2 ** attempt.transient_reads, self.remaining()))
                 continue
             if result.get('status') in ('completed', 'error'):
@@ -278,6 +289,7 @@ class ManagedSession:
                 attempt.error = 'Unknown provider status; accepted job retained.'
                 self.checkpoint()
                 return
+            progress(f'Waiting for transcription — AssemblyAI reports {result.get("status")}')
             if expired_read or self.remaining() <= 0:
                 return
             time.sleep(min(3, self.remaining()))
@@ -287,6 +299,7 @@ class ManagedSession:
     def normalize_result(self, attempt: TranscriptionAttempt) -> bool:
         if attempt.raw_artifact is None or attempt.status == 'failed':
             return False
+        progress('Processing speaker information and timed transcript')
         artifact = self.state.evidence[attempt.raw_artifact]
         raw = self.workspace.artifact_bytes(artifact)
         assert self.operation.transport is not None
@@ -329,6 +342,7 @@ class ManagedSession:
             return None
         source = next(s for s in self.state.sources if s.id == self.state.source_revision)
         if op.transport is None:
+            progress('Preparing audio for managed transcription')
             op.transport = prepare_transport(source, self.workspace.path, op.deadline_at)
             self.checkpoint()
         rate = (op.policy.primary_reservation_per_hour if provider.name == 'assemblyai'
@@ -340,6 +354,7 @@ class ManagedSession:
             return None
         provider.validate()
         if provider.name == 'assemblyai' and op.upload_url is None:
+            progress('Uploading audio to AssemblyAI')
             upload = provider.upload(self.workspace.path / op.transport.path, self.remaining())
             op.upload_url = response_object(upload)['upload_url']
             self.checkpoint()
@@ -359,10 +374,13 @@ class ManagedSession:
             attempt = next((a for a in op.attempts if a.provider == name), None)
             provider = ManagedProvider(name, self.keys[name], attempt.request if attempt else copy.deepcopy(BASELINES[name]))
             if attempt is None:
+                if name == 'deepgram':
+                    progress('Primary transcription unavailable; checking backup-provider allowance')
                 attempt = self.start_attempt(provider)
                 if attempt is None:
                     return
             else:
+                progress('Reused transcription checkpoint; existing attempts and reservations retained')
                 if attempt.status == 'blocked':
                     op.outcome = (attempt.error or 'Provider configuration failed.') + ' Correct configuration and use --fresh to authorize a new operation.'
                     return
@@ -400,6 +418,8 @@ class ManagedSession:
         run = self.state.runs[-1]
         if op.status != 'completed' or any(n not in self.state.artifacts for n in ('transcript.json', 'transcript.txt')):
             op.status = 'unavailable'
+        if op.status != 'completed':
+            progress('Transcription unavailable: ' + (op.outcome or 'No usable result.'))
         run.status = 'completed' if op.status == 'completed' else 'partial'
         run.finished_at = now()
         run.missing = [n for n in ('transcript.json', 'transcript.txt') if n not in self.state.artifacts]

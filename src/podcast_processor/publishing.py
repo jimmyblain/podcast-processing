@@ -5,6 +5,7 @@ from collections.abc import Callable
 from typing import TypeVar
 
 from .llm import ClaudeClient
+from .progress import progress
 from .workspace import Workspace, WorkspaceError, digest, flush_directory, identifier, json_bytes, now, write_file
 from .workspace_models import GenerationAttempt, GenerationOperation, WorkspaceState
 
@@ -23,12 +24,17 @@ class PreservedGenerationClient:
         receipt storage and manifest commit recovers it without another paid request.
         A requested attempt without a receipt counts as possibly billed on resume.
         """
+        recovered = True
+        label = {'body': 'description', 'titles': 'title/thumbnail concepts',
+                 'chapters': 'chapters', 'section-discovery': 'section discovery'}[operation.stage]
         while True:
             pending = next((a for a in reversed(operation.attempts) if a.status in ('requested', 'responded', 'validated')), None)
             if pending is not None:
                 committed_receipt = self.workspace.path / pending.response_path
                 receipt = committed_receipt if committed_receipt.exists() else committed_receipt.with_suffix('.pending')
                 if receipt.exists():
+                    if recovered:
+                        progress(f'Reused saved {label} response checkpoint')
                     data = receipt.read_bytes()
                     if pending.response_hash and digest(data) != pending.response_hash:
                         raise WorkspaceError(f'Saved {self.purpose} response failed hash verification.')
@@ -76,6 +82,11 @@ class PreservedGenerationClient:
             rendered = prompt + ('\nRepair the previous invalid output. Validation feedback:\n' + repair if repair else '')
             if not self.api_key:
                 raise WorkspaceError(f'Anthropic API key required for a new {self.purpose} request; saved responses remain reusable.')
+            if operation.attempts:
+                reason = 'invalid output' if operation.attempts[-1].status == 'invalid' else 'provider/interrupted request failure'
+                progress(f'Retrying {label} after {reason} ({len(operation.attempts) + 1}/3)')
+            progress(f'Waiting for provider — {label}')
+            recovered = False
             attempt_id = identifier()
             attempt = GenerationAttempt(id=attempt_id, started_at=now(),
                 request={'model': self.model, 'prompt': rendered, 'max_tokens': 8192,

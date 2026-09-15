@@ -130,10 +130,10 @@ def test_imported_full_workflow_never_transcribes_and_keeps_legacy_bytes(tmp_pat
     workspace = episode(tmp_path)
     original = (tmp_path / 'timed.json').read_bytes()
     result = runner.invoke(app, ['process', str(workspace)])
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == 1, result.output  # Source evidence is missing for required planning.
     state = inspect(workspace)
     assert state['transcription_operations'] == []
-    assert 'Imported-with-limitations' in result.output
+    assert 'Imported-with-limitations' in (workspace / 'current/completion-report.md').read_text()
     assert (tmp_path / 'timed.json').read_bytes() == original
     assert all(call.startswith('STAGE:') for call in full_services)
 
@@ -223,7 +223,7 @@ def test_full_planning_valid_reuse_and_transition_only_change(tmp_path, full_ser
     monkeypatch.setattr(ClaudeClient, 'generate', lambda self, prompt, max_tokens=4096: compatible_response(prompt))
     workspace, evidence = episode(tmp_path)
     # Complete mapping once, then pin supplied boundary evidence to that revision.
-    assert runner.invoke(app, ['process', str(workspace)]).exit_code == 0
+    assert runner.invoke(app, ['process', str(workspace)]).exit_code == 1  # Matching planning evidence follows.
     before = inspect(workspace)
     evidence['transcript_sha256'] = before['artifacts']['transcript.json']['sha256']
     path = tmp_path / 'plan.json'

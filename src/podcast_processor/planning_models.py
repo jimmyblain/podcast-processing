@@ -164,6 +164,13 @@ class PlanningOutcome(Record):
     reason_code: PlanningReason | None = None
     discovery: DiscoveryOutcome = Field(default_factory=DiscoveryOutcome)
 
+    @property
+    def requires_action(self) -> bool:
+        """Only a usable proposal or a supported nonblocking outcome is complete."""
+        return self.status != 'valid' and (
+            self.status == 'needs-setup' or self.discovery.status == 'failed'
+            or self.reason_code not in ('duration-impossible', 'insufficient-boundaries'))
+
     @model_validator(mode='after')
     def consistent(self) -> 'PlanningOutcome':
         if (self.status == 'valid') != (self.proposal is not None):

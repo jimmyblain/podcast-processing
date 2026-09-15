@@ -50,11 +50,11 @@ def episode(tmp_path, duration='2100', cuts=('600', '1300'), mutate=None):
     return workspace, evidence
 
 
-def plan(workspace, evidence):
+def plan(workspace, evidence, expected_exit=0):
     path = workspace.parent / 'planning.json'
     path.write_text(json.dumps(evidence))
     result = runner.invoke(app, ['plan', str(workspace), '--evidence', str(path)])
-    assert result.exit_code == 0, (result.output, result.exception)
+    assert result.exit_code == expected_exit, (result.output, result.exception)
     return json.loads((workspace / 'current/section-plan.json').read_bytes())
 
 
@@ -159,7 +159,7 @@ def test_impossibility_explains_source_and_transition_budgets(tmp_path, duration
 def test_missing_or_unprepared_transition_evidence_is_reported(tmp_path, field, value):
     workspace, evidence = episode(tmp_path)
     evidence['transition_out'][field] = value
-    result = plan(workspace, evidence)
+    result = plan(workspace, evidence, expected_exit=1)
     assert result['status'] == 'needs-setup'
     assert any('transition_out' in reason for reason in result['reasons'])
     if field == 'duration':
@@ -171,7 +171,7 @@ def test_missing_or_unprepared_transition_evidence_is_reported(tmp_path, field, 
 def test_missing_or_mismatched_original_source_evidence_is_reported(tmp_path, field, value):
     workspace, evidence = episode(tmp_path)
     evidence['source'][field] = value
-    result = plan(workspace, evidence)
+    result = plan(workspace, evidence, expected_exit=1)
     assert result['status'] == 'unavailable'
     assert result['reasons']
 
@@ -299,7 +299,7 @@ def test_correction_invalidates_boundary_evidence_and_leaves_copy_reusable(tmp_p
     assert 'section-boundaries.json' not in corrected['artifacts']
     assert corrected['artifacts']['titles.json'] == before['artifacts']['titles.json']
     assert corrected['artifacts']['import-original.json'] == before['artifacts']['import-original.json']
-    stale = plan(workspace, evidence)
+    stale = plan(workspace, evidence, expected_exit=1)
     assert stale['status'] == 'unavailable'
     assert 'stale corrected timed transcript' in ' '.join(stale['reasons'])
     evidence['transcript_sha256'] = corrected['artifacts']['transcript.json']['sha256']
@@ -334,7 +334,7 @@ def test_missing_transition_and_natural_candidates_report_needs_setup(tmp_path):
     workspace, evidence = episode(tmp_path)
     evidence['transition_in'] = None
     evidence['boundaries'] = []
-    outcome = plan(workspace, evidence)
+    outcome = plan(workspace, evidence, expected_exit=1)
     assert outcome['status'] == 'needs-setup'
     assert outcome['overhead'] == ['16.5', None, None]
     assert 'transition_in' in ' '.join(outcome['reasons'])
@@ -358,6 +358,6 @@ def test_timing_outside_explicit_source_duration_cannot_support_a_proposal(tmp_p
         data['words'][-1]['end'] = 2110
         data['segments'][-1]['end'] = 2110
     workspace, evidence = episode(tmp_path, mutate=mutate)
-    outcome = plan(workspace, evidence)
+    outcome = plan(workspace, evidence, expected_exit=1)
     assert outcome['status'] == 'unavailable'
     assert 'outside the original-source duration' in ' '.join(outcome['reasons'])

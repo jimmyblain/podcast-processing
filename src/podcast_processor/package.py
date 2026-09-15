@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import TypeAdapter
 
+from .progress import progress
 from .attribution import ATTRIBUTION_VERSION, attribution_context, validate_attribution
 from .publishing import PreservedPublishingClient
 from .publishing_models import DescriptionBody, PublishingChapter, TitleConcept, timestamp
@@ -258,12 +259,16 @@ def generate_package(path: Path, api_key: str, model: str, chapters: int = 10,
             file = STAGE_FILES[stage]
             target = state.artifacts if stage == 'titles' else state.evidence
             if file in target:
+                progress(f'Reused {stage} publishing checkpoint')
                 run.limitations.append(f'Reused {stage}: {target[file].id}.')
                 continue
             if stage == 'chapters' and (transcript.duration is None or transcript.duration < 30
                                        or len(chapter_context(transcript)['turns']) < 2):
+                progress('Chapters unavailable: preserved timing cannot support three natural chapters')
                 run.limitations.append('Chapters unavailable: preserved timing cannot support three natural chapters; body preserved separately.')
                 continue
+            progress({'body': 'Generating description', 'titles': 'Generating title and thumbnail concepts',
+                      'chapters': 'Generating chapters'}[stage])
             dependencies, prompt = inputs[stage]
             operation = next((op for op in reversed(state.publishing_operations)
                               if op.stage == stage and op.dependencies == dependencies), None)
@@ -278,6 +283,7 @@ def generate_package(path: Path, api_key: str, model: str, chapters: int = 10,
                     run.limitations.extend(data.get('notes', []))
                 workspace.commit(state)
             except (WorkspaceError, OSError) as error:
+                progress(f'{stage.capitalize()} unavailable; details saved in the completion report')
                 run.limitations.append(f'{stage} unavailable ({type(error).__name__}): {error}')
                 # A failed artifact write must not discard independently successful stages.
                 continue

@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from .managed_models import TranscriptionPolicy
+from .progress import progress
 from .workspace import (PROCESS_FILES, Workspace, WorkspaceError, digest, file_hash,
                         identifier, now, ownership)
 from .workspace_models import EpisodeMetadata, Run, ShowProfile, WorkspaceState
@@ -59,6 +60,7 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
             notes.extend(before.runs[-1].limitations[note_count:])
             if interrupted:
                 notes.append('Recovered abandoned operation; committed checkpoints and allowances retained.')
+                progress('Recovered abandoned operation; committed checkpoints and allowances retained')
         try:
             if before and using_import and not (fresh and only is None) and source.is_dir():
                 from .operations import input_revision
@@ -76,6 +78,8 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
                 if setup:
                     snapshot_setup(workspace, state, setup)
                 workspace.commit(state)
+                progress('Reused imported timed transcript checkpoint')
+                progress('Processing speaker information')
                 state = map_episode(workspace.path)
             else:
                 state = transcribe_episode(source, workspace_path=workspace.path, show_profile=show_profile,
@@ -89,6 +93,7 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
             stage_failed = True
         for stage in ('publishing', 'planning'):
             if 'transcript.json' not in state.artifacts:
+                progress(f'{stage.capitalize()} unavailable: no current usable timed transcript')
                 notes.append(f'{stage.capitalize()} unavailable: no current usable timed transcript.')
                 continue
             try:
@@ -99,9 +104,10 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
                     state = plan_episode(workspace.path, evidence, api_key=api_key, model=model, fresh=fresh and only is None)
                     from .planning_models import PlanningOutcome
                     planning_outcome = PlanningOutcome.model_validate_json(workspace.artifact_bytes(state.artifacts['section-plan.json']))
-                    stage_failed |= planning_outcome.status == 'needs-setup' or planning_outcome.discovery.status == 'failed'
+                    stage_failed |= planning_outcome.requires_action
             except (WorkspaceError, OSError, ValueError) as error:
                 state = workspace.read()
+                progress(f'{stage.capitalize()} unavailable; resolve the failure described in the saved report')
                 notes.append(f'{stage.capitalize()} unavailable: {error}')
                 stage_failed = True
                 if stage == 'planning':
@@ -120,6 +126,8 @@ def process_episode(source: Path, *, workspace_path: Path | None = None,
                                    and old.dependencies == artifact.dependencies for old in prior_history):
                 outcome = 'Recovered'
             notes.append(f'{outcome} {name}: {artifact.id}.')
+            if outcome == 'Recovered':
+                progress(f'Recovered {name} from a saved checkpoint')
         for name, artifact in previous.items():
             if name not in state.artifacts or state.artifacts[name].id != artifact.id:
                 notes.append(f'Superseded {name}: {artifact.id}; immutable history retained.')
@@ -156,11 +164,11 @@ def completion_report(workspace: Workspace, state: WorkspaceState) -> str:
                   '', 'Publishing usage (billing cost unknown):'])
     for publishing in state.publishing_operations:
         lines.append(f'- {publishing.stage} operation {publishing.id}: {len(publishing.attempts)}/3 attempts; '
-                     + ', '.join(f'{a.status} (usage {a.usage})' for a in publishing.attempts))
+                     + ', '.join(f'{a.status} (usage {a.usage}; request {a.request_id}; response {a.response_id}) {a.error or ""}' for a in publishing.attempts))
     lines.extend(['', 'Discovery usage (separate from publishing; billing cost unknown):'])
     for operation in state.discovery_operations:
         lines.append(f'- {operation.stage} operation {operation.id}: {len(operation.attempts)}/3 attempts; '
-                     + ', '.join(f'{a.status} (usage {a.usage})' for a in operation.attempts))
+                     + ', '.join(f'{a.status} (usage {a.usage}; request {a.request_id}; response {a.response_id}) {a.error or ""}' for a in operation.attempts))
     lines.extend(['', *('- ' + note for note in run.limitations)])
     if 'transcript.json' in state.artifacts:
         transcript = current_transcript(workspace, state)

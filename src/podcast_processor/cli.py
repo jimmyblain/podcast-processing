@@ -8,6 +8,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from .progress import progress, terminal_progress
+from .completion import completion_summary
 from .config import WhisperModel, get_settings
 from .operations import generate_legacy, load_legacy_transcript, transcribe_legacy
 from .workspace import WorkspaceError
@@ -21,6 +23,16 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 console = Console()
+
+
+def _display_operation_error(error: Exception, path: Path) -> None:
+    if isinstance(error, WorkspaceError) and error.workspace_path:
+        path = error.workspace_path
+    typer.echo(f'Status: failed\nError: {error}')
+    if (path / 'current/completion-report.md').exists():
+        typer.echo(f'Existing outputs: {path.resolve() / "current"}')
+        typer.echo(f'Saved report (may describe the preceding run): {path.resolve() / "current/completion-report.md"}')
+    typer.echo('Next: resolve the reported input, configuration or local failure, then retry this command.')
 
 
 def _display_summary(transcript: Transcript, content: GeneratedContent | None) -> None:
@@ -253,24 +265,25 @@ def process(
     from .authority import confirmed_metadata
     settings = get_settings()
     try:
-        if workspace and output:
-            raise WorkspaceError('Supply --workspace or --output, not both.')
-        destination = episode_path(audio_file, workspace or output)
-        state = process_episode(audio_file, workspace_path=destination,
-            show_profile=ShowProfile.model_validate_json(show_profile.read_bytes()) if show_profile else None,
-            metadata=confirmed_metadata(metadata, solo, guest),
-            primary_key=settings.assemblyai_api_key, backup_key=settings.deepgram_api_key,
-            api_key=api_key or settings.anthropic_api_key, model=settings.claude_model,
-            policy=TranscriptionPolicy(allowance_usd=allowance, deadline_seconds=deadline,
-                primary_reservation_per_hour=settings.transcription_primary_reservation_per_hour,
-                backup_reservation_per_hour=settings.transcription_backup_reservation_per_hour),
-            fresh=fresh, only=only, chapters=chapters, chapter_labels=chapter_labels, evidence=evidence)
-        typer.echo(f"Workspace: {destination.resolve()}")
-        typer.echo(Workspace(destination).report(state))
+        with terminal_progress('process', audio_file):
+            progress('Preparing audio and checking workspace')
+            if workspace and output:
+                raise WorkspaceError('Supply --workspace or --output, not both.')
+            destination = episode_path(audio_file, workspace or output)
+            state = process_episode(audio_file, workspace_path=destination,
+                show_profile=ShowProfile.model_validate_json(show_profile.read_bytes()) if show_profile else None,
+                metadata=confirmed_metadata(metadata, solo, guest),
+                primary_key=settings.assemblyai_api_key, backup_key=settings.deepgram_api_key,
+                api_key=api_key or settings.anthropic_api_key, model=settings.claude_model,
+                policy=TranscriptionPolicy(allowance_usd=allowance, deadline_seconds=deadline,
+                    primary_reservation_per_hour=settings.transcription_primary_reservation_per_hour,
+                    backup_reservation_per_hour=settings.transcription_backup_reservation_per_hour),
+                fresh=fresh, only=only, chapters=chapters, chapter_labels=chapter_labels, evidence=evidence)
+        typer.echo(completion_summary(Workspace(destination), state))
         if state.runs[-1].status != 'completed':
             raise typer.Exit(1)
     except (WorkspaceError, OSError, ValueError, TranscriptionError) as error:
-        typer.echo(f"Error: {error}")
+        _display_operation_error(error, workspace or output or audio_file)
         raise typer.Exit(1)
 
 
@@ -305,22 +318,22 @@ def transcribe(
         from .managed import transcribe_episode
         from .managed_models import TranscriptionPolicy
         from .workspace_models import ShowProfile, EpisodeMetadata
-        state = transcribe_episode(audio_file, workspace_path=workspace or output,
-            show_profile=ShowProfile.model_validate_json(show_profile.read_bytes()) if show_profile else None,
-            metadata=confirmed_metadata(metadata, solo, guest),
-            primary_key=settings.assemblyai_api_key, backup_key=settings.deepgram_api_key,
-            policy=TranscriptionPolicy(allowance_usd=allowance, deadline_seconds=deadline,
-                primary_reservation_per_hour=settings.transcription_primary_reservation_per_hour,
-                backup_reservation_per_hour=settings.transcription_backup_reservation_per_hour), fresh=fresh)
+        with terminal_progress('transcribe', audio_file):
+            state = transcribe_episode(audio_file, workspace_path=workspace or output,
+                show_profile=ShowProfile.model_validate_json(show_profile.read_bytes()) if show_profile else None,
+                metadata=confirmed_metadata(metadata, solo, guest),
+                primary_key=settings.assemblyai_api_key, backup_key=settings.deepgram_api_key,
+                policy=TranscriptionPolicy(allowance_usd=allowance, deadline_seconds=deadline,
+                    primary_reservation_per_hour=settings.transcription_primary_reservation_per_hour,
+                    backup_reservation_per_hour=settings.transcription_backup_reservation_per_hour), fresh=fresh)
         destination = workspace or output or (audio_file if audio_file.is_dir() else
                       Path('output/episodes') / f'episode-{state.episode_id}')
-        typer.echo(f"Workspace: {destination.resolve()}")
-        typer.echo(f"Episode {state.episode_id}: {state.runs[-1].status}")
-        typer.echo(state.transcription_operations[-1].outcome or '')
+        from .workspace import Workspace
+        typer.echo(completion_summary(Workspace(destination), state))
         if state.runs[-1].status != 'completed':
             raise typer.Exit(1)
     except (WorkspaceError, OSError, ValueError, TranscriptionError) as error:
-        typer.echo(f"Error: {error}")
+        _display_operation_error(error, workspace or output or audio_file)
         raise typer.Exit(1)
 
 
@@ -358,14 +371,16 @@ def generate(
             raise typer.Exit(1)
         settings = get_settings()
         try:
-            state = generate_episode(transcript_file, api_key or settings.anthropic_api_key,
-                                     settings.claude_model, chapters, only, fresh, chapter_labels)
-            typer.echo(Workspace(transcript_file).report(state))
+            with terminal_progress('generate', transcript_file):
+                progress('Checking publishing checkpoints')
+                state = generate_episode(transcript_file, api_key or settings.anthropic_api_key,
+                                         settings.claude_model, chapters, only, fresh, chapter_labels)
+            typer.echo(completion_summary(Workspace(transcript_file), state))
             if state.runs[-1].status != 'completed':
                 raise typer.Exit(1)
             return
         except (WorkspaceError, OSError, ValueError) as error:
-            typer.echo(f"Error: {error}")
+            _display_operation_error(error, transcript_file)
             raise typer.Exit(1)
 
     if only is not None or fresh or chapter_labels is not None:
@@ -508,11 +523,10 @@ def plan_command(workspace: Path,
         state = plan_episode(workspace, evidence, api_key=api_key or settings.anthropic_api_key,
                              model=settings.claude_model, fresh=fresh)
         typer.echo(planning_report(Workspace(workspace), state))
-        if state.runs[-1].status == 'partial' and state.runs[-1].operation == 'plan':
-            from .planning_models import PlanningOutcome
-            outcome = PlanningOutcome.model_validate_json(Workspace(workspace).artifact_bytes(state.artifacts['section-plan.json']))
-            if outcome.discovery.status == 'failed':
-                raise typer.Exit(1)
+        from .planning_models import PlanningOutcome
+        outcome = PlanningOutcome.model_validate_json(Workspace(workspace).artifact_bytes(state.artifacts['section-plan.json']))
+        if outcome.requires_action:
+            raise typer.Exit(1)
     except (WorkspaceError, OSError, ValueError) as error:
         typer.echo(f"Error: {error}")
         raise typer.Exit(1)

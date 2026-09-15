@@ -61,17 +61,22 @@ No discovery operation implicitly submits transcription.
 
 | Reason | Discovery/result |
 | --- | --- |
-| `missing-setup` | Discovery not run; needs setup, full process partial |
-| `source-unavailable` | Source identity/timing prerequisites prevent a supported search |
+| `missing-setup` | Discovery not run; needs setup, process and plan exit 1 |
+| `source-unavailable` | Source identity/timing prerequisites prevent a supported search; partial, process and plan exit 1 |
 | `duration-impossible` | Source and prepared overhead cannot satisfy duration budgets; semantic request unnecessary |
 | `discovery-failed` | Provider/local stage failed; no completed search result, full process and standalone plan exit 1 |
 | `insufficient-boundaries` | Completed search/evidence evaluation cannot supply a feasible supported pair |
-| `invalid-evidence` | Supplied evidence is inconsistent, such as duplicate boundary IDs |
+| `invalid-evidence` | Supplied evidence is inconsistent, such as duplicate boundary IDs; partial, process and plan exit 1 |
 
 A valid proposal has no failure reason. `discovery.status` and `summary` distinguish
 completed semantic/local searches from failure and stages that were not run. A local
 search with no timing-supported opportunities records that limitation without claiming
 a semantic search occurred. All independent publishing outputs remain usable.
+Missing setup requires preparing and approving transitions; missing or stale evidence
+requires matching source/transcript inputs. These outcomes do not claim that a search
+found no suitable cuts. The concise process summary explains the distinction and
+links the full completion report. Standalone `plan` also returns exit 1 on reused
+outcomes that still need action.
 
 ## Advanced explicit evidence
 

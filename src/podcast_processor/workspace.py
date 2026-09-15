@@ -24,6 +24,10 @@ PROCESS_FILES = ('transcript.json', 'transcript.txt', *PUBLISHING_FILES, 'sectio
 class WorkspaceError(Exception):
     """An actionable episode workspace error."""
 
+    def __init__(self, message: str, *, workspace_path: Path | None = None):
+        super().__init__(message)
+        self.workspace_path = workspace_path
+
 
 def identifier() -> str:
     return uuid4().hex
@@ -192,7 +196,7 @@ class Workspace:
                     + '\n'.join(attempts) + '\n\n'
                     + '\n'.join(f'- {item}' for item in run.limitations) + '\n' + uncertainty + '\n')
         usage = '\n'.join(f'- {op.stage} operation {op.id}: {len(op.attempts)}/3 attempts; '
-                          + ', '.join(f'{a.status} (usage {a.usage})' for a in op.attempts)
+                          + ', '.join(f'{a.status} (usage {a.usage}; request {a.request_id}; response {a.response_id}) {a.error or ""}' for a in op.attempts)
                           for op in state.publishing_operations)
         missing = [name for name in PUBLISHING_FILES if name not in state.artifacts]
         return ('# Completion report\n\n'
@@ -223,6 +227,8 @@ class Workspace:
                     edited = self.add_artifact(state, name, data, artifact.dependencies, 'manual-edit-v1')
                     edited.status = 'human-edited'
                     state.runs[-1].limitations.append(f'Preserved direct edit of {name} in history.')
+                    from .progress import progress
+                    progress(f'Preserved direct edit of {name} in history')
                 state.artifacts.pop(name, None)
                 state.runs[-1].limitations.append(f'{name} failed committed hash verification; unavailable.')
                 changed = True

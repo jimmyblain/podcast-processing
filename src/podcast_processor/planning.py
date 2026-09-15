@@ -3,6 +3,7 @@ from decimal import Decimal
 from itertools import combinations
 from pathlib import Path
 
+from .progress import progress
 from .participants import current_transcript
 from .planning_models import (
     DiscoveryOutcome, FinishedSection, NaturalBoundary, PlanningEvidence, PlanningOutcome, PlanningReason, SectionProposal,
@@ -10,7 +11,7 @@ from .planning_models import (
 from .workspace import Workspace, digest, identifier, now, ownership
 from .workspace_models import PreservedSegment, PreservedTranscript, PreservedWord, Run, WorkspaceState
 
-VERSION = 'section-planner-v4'
+VERSION = 'section-planner-v5'
 PLAN_FILES = ('section-plan.json', 'section-boundaries.json')
 LIMITATIONS = [
     'Section planning performs no media cutting, stitching or export.',
@@ -224,6 +225,7 @@ def propose(evidence: PlanningEvidence, transcript: PreservedTranscript,
 
 def plan_episode(path: Path, evidence_path: Path | None = None, *, api_key: str = '',
                  model: str = 'claude-opus-4-8', fresh: bool = False) -> WorkspaceState:
+    progress('Planning sections')
     workspace = Workspace(path)
     with ownership(workspace.path, 'plan episode sections'):
         state = workspace.read()
@@ -274,6 +276,9 @@ def plan_episode(path: Path, evidence_path: Path | None = None, *, api_key: str 
         if prior and prior.dependencies == dependencies:
             outcome = PlanningOutcome.model_validate_json(workspace.artifact_bytes(prior))
             if outcome.proposal is None or 'section-boundaries.json' in state.artifacts:
+                from .completion import section_summary
+                progress('Reused section-planning checkpoint')
+                progress(section_summary(outcome, supplied_evidence=explicit_evidence))
                 return state
         run = Run(id=identifier(), operation_id=identifier(), operation='plan', status='running', started_at=now(),
                   inputs={'evidence': evidence.model_dump(mode='json'), 'dependencies': dependencies,
@@ -291,7 +296,9 @@ def plan_episode(path: Path, evidence_path: Path | None = None, *, api_key: str 
         workspace.add_artifact(state, 'section-plan.json', outcome.model_dump_json(indent=2).encode(), dependencies, VERSION)
         if outcome.proposal:
             workspace.add_artifact(state, 'section-boundaries.json', outcome.proposal.model_dump_json(indent=2).encode(), dependencies, VERSION)
-        run.status, run.finished_at = ('partial' if outcome.status == 'needs-setup' or discovery.status == 'failed' else 'completed'), now()
+        run.status, run.finished_at = ('partial' if outcome.requires_action else 'completed'), now()
+        from .completion import section_summary
+        progress(section_summary(outcome, supplied_evidence=explicit_evidence))
         run.limitations = outcome.limitations + outcome.reasons
         workspace.commit(state)
         return state

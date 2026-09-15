@@ -72,6 +72,20 @@ normal uncertainty produces conservative output and a report, without a review p
 
 ## Current outputs and partial completion
 
+Managed `process`, `transcribe`, and workspace `generate` acknowledge startup and
+show audio preparation, upload/provider waits, speaker processing, publishing and
+planning stages as applicable. The terminal elapsed indicator stays active during
+blocking work; provider waits do not imply a percentage complete or an estimated
+finish time. Retries, backup use and checkpoint reuse are announced as they occur.
+Progress goes to stderr. Redirected stderr uses plain stage lines and a heartbeat
+every ten seconds; `inspect --json` remains machine-readable.
+
+The default completion summary lists status, ready and unavailable outputs, reasons,
+locations and next actions. Recovered retries and optional timing/identity notes are
+separate from failures requiring action. Full usage, IDs, validation errors and
+individual word/turn diagnostics stay in the printed `current/completion-report.md`
+location. Read that file or run `podcast-process inspect WORKSPACE` for details.
+
 Open files under the workspace's `current/` directory:
 
 | File | Meaning |
@@ -85,10 +99,12 @@ Open files under the workspace's `current/` directory:
 | `section-boundaries.json` | Three contiguous source parts with transition-inclusive duration calculations, when feasible |
 | `completion-report.md` | Full-operation status, reuse/supersession, failures/fallbacks, edits and separate usage ledgers |
 
-Exit **0** means required timed-transcript/publishing outputs and a planning outcome
-completed. An explained impossible/unavailable section proposal does not block publishing.
+Exit **0** means the outputs required by the selected command completed. For full
+`process`, a valid proposal, a completed search/evidence evaluation without supported
+cuts, or proven impossible duration constraints completes the planning stage.
 Exit **1** means required outputs are partial/missing, show setup is missing/unapproved,
-or an input, service or local stage failed. Successful independent work remains usable. If chapters fail, the
+planning prerequisites are missing/inconsistent, or an input, service or local stage
+failed. Successful independent work remains usable. If chapters fail, the
 saved description body remains a checkpoint in `state.json`'s `evidence` and the
 immutable artifact store; it is not exposed as a complete `description.md`.
 
@@ -98,8 +114,9 @@ supplies no candidate timestamps or word IDs.
 Optional `--evidence planning.json` supplies advanced planning evidence; explicit
 evidence persists on resume. See [planning evidence and arithmetic](docs/section-planning.md).
 Missing transitions produce an actionable **needs-setup/partial** result, preserving
-publishing. Unsupported natural cuts or incompatible evidence produce an unavailable
-result. Discovery failure is partial and is distinguished from a completed search with
+publishing. Missing/incompatible source or planning evidence is also partial; supply
+matching evidence before continuing. An unchanged rerun cannot fix missing evidence.
+Discovery failure is partial and is distinguished from a completed search with
 insufficient cuts and from impossible duration constraints. Unchanged discovery is
 reused; corrections trigger discovery against the new transcript without retranscription.
 Advanced explicit evidence referencing an older transcript must be replaced.

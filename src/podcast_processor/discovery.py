@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from pydantic import Field
 
+from .progress import progress
 from .planning import boundary_problem
 from .planning_models import BoundarySupport, DiscoveryOutcome, NaturalBoundary, SourceEvidence
 from .publishing import PreservedGenerationClient
@@ -116,6 +117,7 @@ def discover(workspace: Workspace, state: WorkspaceState, transcript: PreservedT
             pass
         else:
             operation = next((op for op in reversed(state.discovery_operations) if op.dependencies == dependencies), None)
+            progress('Reused section-discovery checkpoint')
             return data.boundaries, DiscoveryOutcome(status='completed', summary=data.summary,
                 operation_id=operation.id if operation else None, candidates_sha256=prior.sha256)
     # Commit supersession before a possible request, leaving independent outputs usable.
@@ -129,6 +131,7 @@ def discover(workspace: Workspace, state: WorkspaceState, transcript: PreservedT
     operation = None
     try:
         assert source.duration is not None
+        progress('Planning sections: searching for supported natural cuts')
         available, rejected = opportunities(transcript, source.duration)
         if available:
             prompt = request_prompt(transcript, source, available)
